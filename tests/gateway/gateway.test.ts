@@ -7,6 +7,7 @@
 import { describe, expect, test, beforeAll, afterAll } from "bun:test";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { parseFuserOutput } from "../../src/commands/gateway";
 import {
 	computePromptHash,
 	formatCachedStreamChunks,
@@ -45,6 +46,26 @@ describe("1. Rules & Configuration", () => {
 		expect(rules.patterns.length).toBeGreaterThan(0);
 		expect(rules.fallback).toBeDefined();
 		expect(rules.fallback?.trigger_statuses).toContain(429);
+	});
+});
+
+describe("1b. PID resolver (fuser output parsing)", () => {
+	test("extracts the process PID, never the port, from fuser output", () => {
+		// Regression: sebelumnya strip non-digit membuat port 4010 jadi PID.
+		expect(parseFuserOutput("4010/tcp: 12345")).toBe(12345);
+		expect(parseFuserOutput("4010/tcp:  12345")).toBe(12345);
+		expect(parseFuserOutput("  12345")).toBe(12345);
+		expect(parseFuserOutput("12345")).toBe(12345);
+	});
+
+	test("takes the last PID when multiple are listed", () => {
+		expect(parseFuserOutput("4010/tcp: 12345 67890")).toBe(67890);
+	});
+
+	test("returns null for empty or non-numeric output", () => {
+		expect(parseFuserOutput("")).toBeNull();
+		expect(parseFuserOutput("4010/tcp:")).toBeNull();
+		expect(parseFuserOutput("no processes found")).toBeNull();
 	});
 });
 
@@ -368,6 +389,26 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 		expect(data.port).toBe(gwPort);
 	});
 
+	test("serves identical health JSON on /nexus/health (NexusRoute canonical)", async () => {
+		const [nexusRes, gnRes] = await Promise.all([
+			fetch(`http://127.0.0.1:${gwPort}/nexus/health`),
+			fetch(`http://127.0.0.1:${gwPort}/gn/health`),
+		]);
+
+		expect(nexusRes.status).toBe(200);
+		const nexusData: any = await nexusRes.json();
+		const gnData: any = await gnRes.json();
+
+		expect(nexusData.status).toBe("ok");
+		expect(nexusData.port).toBe(gwPort);
+		// Identical payload shape for both routes.
+		expect(nexusData.status).toBe(gnData.status);
+		expect(nexusData.version).toBe(gnData.version);
+		expect(nexusData.port).toBe(gnData.port);
+		expect(nexusData.cacheEnabled).toBe(gnData.cacheEnabled);
+		expect(nexusData.shieldEnabled).toBe(gnData.shieldEnabled);
+	});
+
 	test("proxies non-streaming completions and establishes cache on second hit", async () => {
 		const payload = {
 			model: "google-antigravity/gemini-3.1-pro",
@@ -383,6 +424,7 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 
 		expect(res1.status).toBe(200);
 		expect(res1.headers.get("X-GN-Cache")).toBe("MISS");
+		expect(res1.headers.get("X-Nexus-Cache")).toBe("MISS");
 		const data1: any = await res1.json();
 		expect(data1.choices[0].message.content).toContain("Hello world");
 
@@ -395,6 +437,7 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 
 		expect(res2.status).toBe(200);
 		expect(res2.headers.get("X-GN-Cache")).toBe("HIT");
+		expect(res2.headers.get("X-Nexus-Cache")).toBe("HIT");
 		const data2: any = await res2.json();
 		expect(data2.choices[0].message.content).toContain("Hello world");
 	});

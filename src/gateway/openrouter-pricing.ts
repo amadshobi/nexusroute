@@ -41,9 +41,45 @@ export interface ModelPricingRates {
 	matchedModelId?: string;
 }
 
-const CACHE_DIR = join(homedir(), ".cache", "gn");
-const PRICING_CACHE_FILE = join(CACHE_DIR, "openrouter-pricing-cache.json");
+// Kanonik baru: ~/.cache/nexus/openrouter-pricing.json
+const NEXUS_PRICING_CACHE_FILE = join(
+	homedir(),
+	".cache",
+	"nexus",
+	"openrouter-pricing.json",
+);
+// Legacy: ~/.cache/gn/openrouter-pricing.json (nama baru) dan nama lama
+// ~/.cache/gn/openrouter-pricing-cache.json — dua-duanya tetap dibaca.
+const LEGACY_PRICING_CACHE_FILE = join(
+	homedir(),
+	".cache",
+	"gn",
+	"openrouter-pricing.json",
+);
+const LEGACY_PRICING_CACHE_FILE_OLD = join(
+	homedir(),
+	".cache",
+	"gn",
+	"openrouter-pricing-cache.json",
+);
+
+/** File tulis kanonik (selalu di path NexusRoute baru). */
+const PRICING_WRITE_FILE = NEXUS_PRICING_CACHE_FILE;
+const CACHE_DIR = dirname(PRICING_WRITE_FILE);
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 jam
+
+/**
+ * Resolve file cache pricing sumber: pakai `~/.cache/nexus/openrouter-pricing.json`
+ * bila ada, fallback ke legacy `~/.cache/gn/openrouter-pricing.json`, lalu ke
+ * nama legacy lama `openrouter-pricing-cache.json`; default kanonik baru.
+ */
+function resolvePricingCacheFile(): string {
+	if (existsSync(NEXUS_PRICING_CACHE_FILE)) return NEXUS_PRICING_CACHE_FILE;
+	if (existsSync(LEGACY_PRICING_CACHE_FILE)) return LEGACY_PRICING_CACHE_FILE;
+	if (existsSync(LEGACY_PRICING_CACHE_FILE_OLD))
+		return LEGACY_PRICING_CACHE_FILE_OLD;
+	return NEXUS_PRICING_CACHE_FILE;
+}
 
 export class OpenRouterPricingEngine {
 	private cachedCatalog: Map<string, OpenRouterModelItem> = new Map();
@@ -71,11 +107,12 @@ export class OpenRouterPricingEngine {
 
 	private loadFromDisk(): void {
 		try {
-			if (!existsSync(PRICING_CACHE_FILE)) return;
-			const stats = statSync(PRICING_CACHE_FILE);
+			const sourceFile = resolvePricingCacheFile();
+			if (!existsSync(sourceFile)) return;
+			const stats = statSync(sourceFile);
 			this.lastFetchTs = stats.mtimeMs;
 
-			const raw = readFileSync(PRICING_CACHE_FILE, "utf-8");
+			const raw = readFileSync(sourceFile, "utf-8");
 			const items = JSON.parse(raw) as OpenRouterModelItem[];
 			if (Array.isArray(items)) {
 				this.cachedCatalog.clear();
@@ -94,7 +131,7 @@ export class OpenRouterPricingEngine {
 		try {
 			this.ensureDir();
 			writeFileSync(
-				PRICING_CACHE_FILE,
+				PRICING_WRITE_FILE,
 				JSON.stringify(items, null, 2),
 				"utf-8",
 			);
@@ -116,7 +153,7 @@ export class OpenRouterPricingEngine {
 			try {
 				const res = await fetch("https://openrouter.ai/api/v1/models", {
 					headers: {
-						"User-Agent": "GoblinNexus/2.2.0 (PricingEngine)",
+						"User-Agent": "NexusRoute/1.0.0 (PricingEngine)",
 						Accept: "application/json",
 					},
 					signal: AbortSignal.timeout(10000),

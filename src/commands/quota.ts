@@ -1,6 +1,6 @@
 /**
  * ─────────────────────────────────────────────────────────────
- * NexusRoute — Command: `gn quota` / `gn usage`
+ * NexusRoute — Command: `nexus quota` / `nexus usage`
  *
  * Real-time Multi-Account & Multi-Provider Quota Monitor.
  * Single Source of Truth powered by `src/quota/registry.ts`.
@@ -23,7 +23,7 @@ import {
 	ANSI_YELLOW,
 	ANSI_RED,
 	formatProgressBar,
-	printGnHeader,
+	printNexusHeader,
 } from "../utils/formatter";
 
 function formatRelativeTime(isoString?: string): string {
@@ -44,20 +44,23 @@ function formatRelativeTime(isoString?: string): string {
 }
 
 function showQuotaHelp(): void {
-	printGnHeader("QUOTA ENGINE MANUAL");
+	printNexusHeader("QUOTA ENGINE MANUAL");
 	console.log("USAGE");
-	console.log("  $ gn quota [flags]");
-	console.log("  $ gn q [flags]");
-	console.log("  $ gn usage [flags]");
+	console.log("  $ nexus quota [flags]");
+	console.log("  $ nexus q [flags]");
+	console.log("  $ nexus usage [flags]");
+	console.log("  $ nexus u [flags]");
 	console.log("");
 	console.log("FLAGS");
 	console.log("  --json       Keluarkan snapshot data mentah format JSON");
 	console.log("  -h, --help   Tampilkan panduan ini");
 	console.log("");
 	console.log("EXAMPLES");
-	console.log("  $ gn quota         # Tampilkan kuota live seluruh provider");
 	console.log(
-		"  $ gn q --json      # Export JSON snapshot untuk tooling eksternal",
+		"  $ nexus quota         # Tampilkan kuota live seluruh provider",
+	);
+	console.log(
+		"  $ nexus q --json      # Export JSON snapshot untuk tooling eksternal",
 	);
 	console.log("");
 }
@@ -85,7 +88,7 @@ export async function handleQuotaCommand(argv: string[]): Promise<number> {
 		return 0;
 	}
 
-	printGnHeader("MULTI-PROVIDER LIVE QUOTA");
+	printNexusHeader("MULTI-PROVIDER LIVE QUOTA");
 
 	const hasAccounts = providers.some((p) => p.accounts.length > 0);
 	if (providers.length === 0 || !hasAccounts) {

@@ -68,7 +68,14 @@ export interface AccessLogFilter {
 	since?: number;
 }
 
-export const DEFAULT_ACCESS_LOG_PATH = join(
+const NEW_ACCESS_LOG_PATH = join(
+	homedir(),
+	".cache",
+	"nexus",
+	"gateway",
+	"access.jsonl",
+);
+const LEGACY_ACCESS_LOG_PATH = join(
 	homedir(),
 	".cache",
 	"gn",
@@ -76,12 +83,26 @@ export const DEFAULT_ACCESS_LOG_PATH = join(
 	"access.jsonl",
 );
 
+/**
+ * Resolve default access log path: pakai `~/.cache/nexus/gateway/access.jsonl`
+ * bila ada, fallback ke legacy `~/.cache/gn/gateway/access.jsonl` bila ada,
+ * jika tidak default kanonik baru = `~/.cache/nexus/gateway/access.jsonl`.
+ */
+export function resolveDefaultAccessLogPath(): string {
+	if (existsSync(NEW_ACCESS_LOG_PATH)) return NEW_ACCESS_LOG_PATH;
+	if (existsSync(LEGACY_ACCESS_LOG_PATH)) return LEGACY_ACCESS_LOG_PATH;
+	return NEW_ACCESS_LOG_PATH;
+}
+
+/** Backward-compatible snapshot default (dievaluasi saat import). */
+export const DEFAULT_ACCESS_LOG_PATH = resolveDefaultAccessLogPath();
+
 const MAX_LOG_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB per log segment
 
 export class AccessLogManager {
 	private logPath: string;
 
-	constructor(logPath: string = DEFAULT_ACCESS_LOG_PATH) {
+	constructor(logPath: string = resolveDefaultAccessLogPath()) {
 		this.logPath = logPath;
 		this.ensureDir();
 	}

@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // ─────────────────────────────────────────────────────────────
-// Goblin Nexus — Command: `gn doctor` & `gn restart`
+// NexusRoute — Command: `nexus doctor` & `nexus restart`
 //
 // Tree-Structured Diagnostic for local AI infrastructure.
 // Full-chain check: Runtimes, Systemd Daemons, Network Ports,
@@ -22,7 +22,7 @@ import { Database } from "bun:sqlite";
 
 import type { DoctorCheckResult } from "../types";
 import {
-	printGnHeader,
+	printNexusHeader,
 	visibleWidth,
 	ANSI_BOLD,
 	ANSI_RESET,
@@ -73,19 +73,19 @@ function parseDoctorArgs(argv: string[]): DoctorArgs {
 function printDoctorHelp(): void {
 	const lines = [
 		"",
-		"GN DOCTOR — System & Service Health Diagnostic (Tree)",
+		"NEXUS DOCTOR — System & Service Health Diagnostic (Tree)",
 		"════════════════════════════════════════════════════════════",
 		"",
 		"DESKRIPSI:",
-		"  Diagnostic menyeluruh untuk seluruh infrastruktur Goblin Nexus & OpenCode:",
+		"  Diagnostic menyeluruh untuk seluruh infrastruktur NexusRoute & OpenCode:",
 		"  1. Daemons & Runtimes (omp, bun, systemd services, gateway & broker ports)",
 		"  2. Databases & Telemetry (agent.db, opencode.db, stats.db, auth token)",
 		"  3. Auth & Provider Matrix (Zero-Secret live reachability & account check)",
 		"  4. Storage & Configuration (cache permissions & opencode.jsonc)",
 		"",
 		"PENGGUNAAN:",
-		"  gn doctor [flags]",
-		"  gn doc    [flags]",
+		"  nexus doctor [flags]",
+		"  nexus doc    [flags]",
 		"",
 		"FLAGS:",
 		"      --short   Hanya tampilkan kategori/check yang warn/error",
@@ -93,12 +93,12 @@ function printDoctorHelp(): void {
 		"  -h, --help    Tampilkan panduan ini",
 		"",
 		"CONTOH:",
-		"  gn doctor                # Full diagnostic tree",
-		"  gn doc --short           # Hanya issue bermasalah",
-		"  gn doctor --json         # JSON payload",
+		"  nexus doctor                # Full diagnostic tree",
+		"  nexus doc --short           # Hanya issue bermasalah",
+		"  nexus doctor --json         # JSON payload",
 		"",
 		"RELATED:",
-		"  gn restart               # Restart omp-broker & omp-gateway",
+		"  nexus restart               # Restart omp-broker, omp-gateway & nexus-gateway",
 		"",
 	];
 	console.log(lines.join("\n"));
@@ -145,7 +145,7 @@ function checkBunRuntime(): DoctorCheckResult {
 		name: "bun runtime",
 		status: "error",
 		detail: "NOT FOUND",
-		hint: "Bun runtime diperlukan untuk menjalankan tools Goblin Nexus.",
+		hint: "Bun runtime diperlukan untuk menjalankan tools NexusRoute.",
 	};
 }
 
@@ -155,6 +155,52 @@ function checkBrokerService(): DoctorCheckResult {
 
 function checkGatewayService(): DoctorCheckResult {
 	return runSystemctlCheck(PATHS.gatewayService, "omp-gateway.service");
+}
+
+/**
+ * Unit gateway interceptor NexusRoute. Canonical = `nexus-gateway.service`,
+ * dengan fallback backward-compatible ke `gn-gateway.service`.
+ */
+const INTERCEPTOR_SERVICE_CANDIDATES = [
+	"nexus-gateway.service",
+	"gn-gateway.service",
+];
+
+/** Cek apakah unit systemd user terdaftar (bisa di-cat). */
+function serviceExists(service: string): boolean {
+	try {
+		const proc = Bun.spawnSync(["systemctl", "--user", "cat", service]);
+		return proc.exitCode === 0;
+	} catch {
+		return false;
+	}
+}
+
+/**
+ * Cek service gateway interceptor: pakai unit aktif pertama dari kandidat
+ * (nexus dulu, lalu gn). Bila tak ada yang aktif, laporkan unit yang
+ * benar-benar terdaftar agar hint restart mengarah ke unit yang tepat.
+ */
+function checkInterceptorService(): DoctorCheckResult {
+	for (const service of INTERCEPTOR_SERVICE_CANDIDATES) {
+		try {
+			const proc = Bun.spawnSync(["systemctl", "--user", "is-active", service]);
+			if (proc.stdout.toString().trim() === "active") {
+				return {
+					name: "gateway interceptor",
+					status: "ok",
+					detail: `${service} active (running)`,
+				};
+			}
+		} catch {
+			// systemd tidak tersedia — lanjut ke fallback di bawah.
+		}
+	}
+
+	const target =
+		INTERCEPTOR_SERVICE_CANDIDATES.find(serviceExists) ??
+		INTERCEPTOR_SERVICE_CANDIDATES[0];
+	return runSystemctlCheck(target, "gateway interceptor");
 }
 
 async function checkGatewayPort(): Promise<DoctorCheckResult> {
@@ -184,7 +230,7 @@ async function checkGatewayPort(): Promise<DoctorCheckResult> {
 			name: "Port 4000 (Gateway)",
 			status: "error",
 			detail: "Unreachable (Connection refused/timeout)",
-			hint: "Service gateway mati atau tidak listening di port 4000. Jalankan 'gn restart'.",
+			hint: "Service gateway mati atau tidak listening di port 4000. Jalankan 'nexus restart'.",
 		};
 	}
 }
@@ -221,7 +267,7 @@ function checkBrokerPort(): Promise<DoctorCheckResult> {
 				name: "Port 4001 (Broker)",
 				status: "error",
 				detail: "Connection Refused",
-				hint: "Broker tidak aktif di port 4001. Jalankan 'gn restart'.",
+				hint: "Broker tidak aktif di port 4001. Jalankan 'nexus restart'.",
 			});
 		});
 
@@ -500,7 +546,7 @@ function runSystemctlCheck(service: string, label: string): DoctorCheckResult {
 				name: label,
 				status: "error",
 				detail: `${out} (service down)`,
-				hint: `Restart service dengan: systemctl --user restart ${service} atau 'gn restart'`,
+				hint: `Restart service dengan: systemctl --user restart ${service} atau 'nexus restart'`,
 			};
 		}
 		return {
@@ -586,6 +632,7 @@ export async function handleDoctorCommand(argv: string[]): Promise<number> {
 				checkBunRuntime(),
 				checkBrokerService(),
 				checkGatewayService(),
+				checkInterceptorService(),
 				await checkGatewayPort(),
 				await checkBrokerPort(),
 			],
@@ -638,7 +685,7 @@ export async function handleDoctorCommand(argv: string[]): Promise<number> {
 	}
 
 	// Render Tree mode
-	printGnHeader("SYSTEM DOCTOR — HEALTH DIAGNOSTIC (TREE)");
+	printNexusHeader("SYSTEM DOCTOR — HEALTH DIAGNOSTIC (TREE)");
 	console.log();
 
 	const displayCategories = args.short
@@ -692,7 +739,7 @@ export async function handleRestartCommand(argv: string[]): Promise<number> {
 		console.log(
 			[
 				"",
-				"GN RESTART — Restart OMP Proxy Services",
+				"NEXUS RESTART — Restart OMP Proxy Services",
 				"════════════════════════════════════════════════════════════",
 				"",
 				"DESKRIPSI:",
@@ -700,8 +747,8 @@ export async function handleRestartCommand(argv: string[]): Promise<number> {
 				"  omp-gateway.service. Aman dipanggil kapan saja.",
 				"",
 				"PENGGUNAAN:",
-				"  gn restart",
-				"  gn r",
+				"  nexus restart",
+				"  nexus r",
 				"",
 			].join("\n"),
 		);
@@ -739,7 +786,7 @@ export async function handleRestartCommand(argv: string[]): Promise<number> {
 		return 0;
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
-		stderr.write(`󰅚 gn restart crash: ${msg}\n`);
+		stderr.write(`󰅚 nexus restart crash: ${msg}\n`);
 		return 1;
 	}
 }

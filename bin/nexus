@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────
-# Wrapper executable untuk NexusRoute CLI (gn)
-# Backward-compatible alias — mendelegasikan ke router kanonik
-# `src/index.ts` (sama seperti `bin/nexus`).
+# Wrapper executable untuk NexusRoute CLI (nexus)
+# Autonomous Edge Proxy & Multi-Agent Telemetry Command Center
 # ─────────────────────────────────────────────────────────────
 set -euo pipefail
 

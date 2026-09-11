@@ -114,27 +114,51 @@ export const DEFAULT_HEADERS: GatewayHeadersConfig = Object.freeze({
 });
 
 /**
- * Resolve the writable user config path (~/.config/gn/config.json).
+ * Resolve the writable user config path.
  *
- * `GN_CONFIG_PATH` overrides the location. Resolution is intentionally lazy
- * (per call, not a module-level const) so tests can sandbox persistence without
+ * Prioritas: `NEXUS_CONFIG_PATH` lalu `GN_CONFIG_PATH` (legacy) sebagai
+ * override. Bila tak ada override, default kanonik baru adalah
+ * `~/.config/nexus/config.json`. Resolution intentionally lazy (per call,
+ * not a module-level const) so tests can sandbox persistence without
  * depending on import order or mutating the real user config.
  */
 function getUserConfigPath(): string {
-	const override = process.env.GN_CONFIG_PATH;
+	const override = process.env.NEXUS_CONFIG_PATH ?? process.env.GN_CONFIG_PATH;
 	if (override && override.trim()) return override;
+	return join(homedir(), ".config", "nexus", "config.json");
+}
+
+/** Config kanonik baru NexusRoute. */
+function getNewUserConfigPath(): string {
+	return join(homedir(), ".config", "nexus", "config.json");
+}
+
+/** Config legacy Goblin Nexus. */
+function getLegacyUserConfigPath(): string {
 	return join(homedir(), ".config", "gn", "config.json");
 }
 
 /**
  * Resolve path to unified config.json across standard locations.
+ *
+ * Urutan: override env → `~/.config/nexus/config.json` (kanonik) →
+ * `~/.config/gn/config.json` (legacy) → template vault.
  */
 export function getUnifiedConfigPath(): string | null {
-	// 1. User config override
-	const userConfig = getUserConfigPath();
-	if (existsSync(userConfig)) return userConfig;
+	const override = process.env.NEXUS_CONFIG_PATH ?? process.env.GN_CONFIG_PATH;
+	if (override && override.trim()) {
+		if (existsSync(override)) return override;
+	} else {
+		// 1. Canonical new user config
+		const newConfig = getNewUserConfigPath();
+		if (existsSync(newConfig)) return newConfig;
 
-	// 2. Vault master config template
+		// 2. Legacy gn user config
+		const legacyConfig = getLegacyUserConfigPath();
+		if (existsSync(legacyConfig)) return legacyConfig;
+	}
+
+	// 3. Vault master config template
 	const vaultRoot =
 		process.env.GOBLIN_VAULT_ROOT || join(homedir(), "civil", "goblin-vault");
 	const vaultConfig = join(vaultRoot, "configs", "gn", "config.json");
@@ -217,8 +241,12 @@ export function loadPrivacyHeaders(): Record<string, string> {
 }
 
 /**
- * Persist gateway rules into the unified user config (~/.config/gn/config.json).
+ * Persist gateway rules into the unified user config (~/.config/nexus/config.json).
  * Preserves non-gateway fields and writes atomically via temp file + rename.
+ *
+ * Saat target kanonik belum ada (migrasi awal dari legacy `~/.config/gn/config.json`),
+ * isi awal dibaca dari `getUnifiedConfigPath()` agar field non-gateway pada config
+ * lama tidak hilang (mencegah config split-brain).
  */
 export function saveGatewayConfig(rules: GatewayRules): void {
 	const userConfigPath = getUserConfigPath();
@@ -227,10 +255,16 @@ export function saveGatewayConfig(rules: GatewayRules): void {
 		mkdirSync(userConfigDir, { recursive: true });
 	}
 
+	// Baca dari target kanonik jika ada; jika belum ada, seed dari config
+	// terunifikasi (legacy gn / vault) supaya field non-gateway ikut tersalin.
+	const readSource = existsSync(userConfigPath)
+		? userConfigPath
+		: getUnifiedConfigPath();
+
 	let existing: Record<string, unknown> = {};
-	if (existsSync(userConfigPath)) {
+	if (readSource) {
 		try {
-			existing = JSON.parse(readFileSync(userConfigPath, "utf-8"));
+			existing = JSON.parse(readFileSync(readSource, "utf-8"));
 		} catch {
 			// Corrupted config, start fresh
 		}

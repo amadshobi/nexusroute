@@ -1,8 +1,12 @@
 {
-  "name": "gn",
-  "version": "2.1.4",
+  "name": "nexusroute",
+  "version": "1.0.0",
   "private": true,
-  "description": "Goblin Nexus CLI - Control Center core",
+  "description": "NexusRoute CLI — Autonomous Edge Proxy & Multi-Agent Telemetry Command Center",
+  "bin": {
+    "nexus": "./bin/nexus",
+    "gn": "./bin/nexus"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit"
   },

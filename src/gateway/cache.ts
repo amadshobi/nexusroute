@@ -18,8 +18,20 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import type { CacheEntryMetadata } from "./types";
 
-const DEFAULT_CACHE_DIR = join(homedir(), ".cache", "gn", "gateway", "cache");
+const NEW_CACHE_DIR = join(homedir(), ".cache", "nexus", "gateway", "cache");
+const LEGACY_CACHE_DIR = join(homedir(), ".cache", "gn", "gateway", "cache");
 const DEFAULT_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+/**
+ * Resolve default cache dir: pakai `~/.cache/nexus/gateway/cache` bila ada,
+ * fallback ke legacy `~/.cache/gn/gateway/cache` bila ada, jika tidak
+ * default kanonik baru = `~/.cache/nexus/gateway/cache`.
+ */
+export function resolveDefaultCacheDir(): string {
+	if (existsSync(NEW_CACHE_DIR)) return NEW_CACHE_DIR;
+	if (existsSync(LEGACY_CACHE_DIR)) return LEGACY_CACHE_DIR;
+	return NEW_CACHE_DIR;
+}
 
 // Single-flight in-flight map
 const inFlightRequests = new Map<string, Promise<void>>();
@@ -73,7 +85,7 @@ export class PromptCacheManager {
 	private defaultTtlMs: number;
 
 	constructor(
-		cacheDir: string = DEFAULT_CACHE_DIR,
+		cacheDir: string = resolveDefaultCacheDir(),
 		defaultTtlMs: number = DEFAULT_TTL_MS,
 	) {
 		this.cacheDir = cacheDir;

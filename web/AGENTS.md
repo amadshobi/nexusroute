@@ -1,13 +1,13 @@
-# AGENTS.md — Goblin Nexus Web Dashboard Architecture & Design Standard
+# AGENTS.md — NexusRoute Web Dashboard Architecture & Design Standard
 
-> Pedoman, wawasan teknis, dan panduan baku pengembangan frontend SPA **Goblin Nexus (`gn`) Console**.
+> Pedoman, wawasan teknis, dan panduan baku pengembangan frontend SPA **NexusRoute (`nexus`) Console**.
 > Dokumen ini wajib dibaca dan dipatuhi oleh semua AI agent, subagent, dan pengembang yang memodifikasi, menambah adapter, atau merombak UI/UX pada proyek web ini.
 
 ---
 
 ## 1. Filosofi & Visi Proyek
 
-Goblin Nexus Web Console adalah command center visual untuk memantau aktivitas gateway proxy LLM lokal, kuota multi-provider (Google Cloud Code / Antigravity, Claude, DeepSeek), telemetri agen otonom (OpenCode & Hermes), dan manajemen rute model AI.
+NexusRoute Web Console adalah command center visual untuk memantau aktivitas gateway proxy LLM lokal, kuota multi-provider (Google Cloud Code / Antigravity, Claude, DeepSeek), telemetri agen otonom (OpenCode & Hermes), dan manajemen rute model AI.
 
 ### Prinsip Desain Utama
 
@@ -33,7 +33,7 @@ Goblin Nexus Web Console adalah command center visual untuk memantau aktivitas g
 ## 2. Struktur Direktori & Peta Komponen
 
 ```
-tools-cli/src/gn/web/
+web/
 ├── src/
 │   ├── assets/              # SVG brand icons (antigravity, google, anthropic, hero)
 │   ├── components/
@@ -391,7 +391,6 @@ Sebelum melakukan commit, merge, atau menandai pekerjaan selesai:
 - [ ] Font angka dan jam menggunakan `font-mono` dengan tabular numbers.
 - [ ] Format mata uang Rupiah mengikuti singkatan baku Indonesia (`rb`, `jt`, `M`, `T`) tanpa spasi setelah `Rp`.
 - [ ] Unit test frontend (`bun test` di direktori `web/`) lulus 100%.
-- [ ] Unit test gateway backend (`bun test` di root `tools-cli/src/gn/`) lulus 100%.
+- [ ] Unit test gateway backend (`bun test` di root repository) lulus 100%.
 - [ ] Build bundle produksi (`bun run build` -> `tsc -b && vite build`) bebas error tipe dan kompilasi.
-- [ ] Script security & linter repo (`./scripts/check_syntax.js --working`) hijau.
-- [ ] Catat riwayat fitur di `docs/CHANGELOG/gn.md`.
+- [ ] Catat riwayat fitur di CHANGELOG.

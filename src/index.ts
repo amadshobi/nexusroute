@@ -1,15 +1,18 @@
 /**
  * ─────────────────────────────────────────────────────────────
- * Goblin Nexus — Master CLI Entry Point (gn v2)
+ * NexusRoute — Master CLI Entry Point (nexus v2)
  * ─────────────────────────────────────────────────────────────
  *
- * Router TypeScript untuk seluruh subcommand `gn`.
- * Shell launcher `gn.sh` meneruskan semua argv ke file ini;
- * kita dispatch ke handler sesuai subcommand pertama.
+ * Router TypeScript untuk seluruh subcommand `nexus`.
+ * Shell launcher `nexus.sh` / `bin/nexus` meneruskan semua argv
+ * ke file ini; kita dispatch ke handler sesuai subcommand pertama.
  *
  * Aturan desain:
  *   - Setiap handler menerima argv SETELAH subcommand (bukan termasuk).
- *     Mis. `gn usage --json` → handleUsageCommand(["--json"]).
+ *     Mis. `nexus quota --json` → handleQuotaCommand(["--json"]).
+ *   - Aksi gateway (start/stop/status/stats/logs/cache/record/mock)
+ *     di-flatten ke top-level, namun alias namespaced lama
+ *     (`gateway`, `gw`, `g`, `shield`) tetap didukung.
  *   - Help level-1 (banner + daftar command) ada di sini.
  *   - Help level-2 (panduan mendalam) ada di masing-masing handler.
  *   - Exit code: 0 sukses, 1 kesalahan umum, 2 deprecation.
@@ -17,31 +20,47 @@
 
 import { printGnHeader } from "./utils/formatter";
 import { handleUnknownCommand } from "./utils/error";
-import { GN_VERSION } from "./version";
+import { GN_VERSION, NEXUS_VERSION } from "./version";
 import { handleQuotaCommand } from "./commands/quota";
 import { handleDoctorCommand, handleRestartCommand } from "./commands/doctor";
 import { handleGatewayCommand } from "./commands/gateway";
 
-/** Versi gn standalone (Control Plane & Telemetry Core). */
+/** Versi kanonik NexusRoute CLI. */
+export { NEXUS_VERSION };
+/** Alias versi lama untuk backward compatibility. */
 export { GN_VERSION };
 
 /**
  * Peta subcommand → handler.
+ *
+ * Aksi gateway di-flatten ke top-level agar `nexus start` setara
+ * dengan `nexus gateway start`. Alias namespaced tetap dipertahankan.
  */
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
-	// Gateway Interceptor Core
+	// ── Core gateway lifecycle (flattened) ────────────────────
+	start: (argv) => handleGatewayCommand(["start", ...argv]),
+	stop: (argv) => handleGatewayCommand(["stop", ...argv]),
+	status: (argv) => handleGatewayCommand(["status", ...argv]),
+	stats: (argv) => handleGatewayCommand(["stats", ...argv]),
+	logs: (argv) => handleGatewayCommand(["logs", ...argv]),
+	log: (argv) => handleGatewayCommand(["logs", ...argv]),
+	cache: (argv) => handleGatewayCommand(["cache", ...argv]),
+	record: (argv) => handleGatewayCommand(["record", ...argv]),
+	mock: (argv) => handleGatewayCommand(["mock", ...argv]),
+
+	// ── Backward-compatible namespaced aliases ────────────────
 	gateway: handleGatewayCommand,
 	gw: handleGatewayCommand,
 	g: handleGatewayCommand,
 	shield: handleGatewayCommand,
 
-	// Quota & Multi-provider Engine (Single Source of Truth)
+	// ── Quota & Multi-provider Engine (Single Source of Truth) ─
 	quota: handleQuotaCommand,
 	q: handleQuotaCommand,
 	usage: handleQuotaCommand,
 	u: handleQuotaCommand,
 
-	// Service control
+	// ── Service control ───────────────────────────────────────
 	doctor: handleDoctorCommand,
 	doc: handleDoctorCommand,
 	restart: handleRestartCommand,
@@ -51,8 +70,8 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
 /**
  * Subcommand lama yang sudah didepresiasi.
  * Pesan akan ditampilkan + exit code 2 (conventional untuk deprecated command).
- * Logika ini ada di sini (bukan di gn.sh) supaya `bin/gn` (yang langsung
- * exec ke router ini) tetap bisa menampilkan deprecation warning yang benar.
+ * Logika ini ada di sini (bukan di nexus.sh) supaya `bin/nexus` (yang
+ * langsung exec ke router ini) tetap bisa menampilkan warning yang benar.
  */
 const DEPRECATED_COMMANDS: Record<string, string> = {
 	sessions: "OpenCode CLI langsung (`oc session`)",
@@ -89,15 +108,32 @@ function reportDeprecated(cmd: string, replacement: string): void {
 function showHelp(): void {
 	printBanner();
 	console.log("USAGE");
-	console.log("  $ gn <command> [flags]");
+	console.log("  $ nexus <command> [flags]");
 	console.log(
-		"  $ gn <command> --help                  \x1b[1;33m󰋽 Panduan mendalam Level-2 per-command!\x1b[0m",
+		"  $ nexus <command> --help               \x1b[1;33m󰋽 Panduan mendalam Level-2 per-command!\x1b[0m",
 	);
 	console.log("");
-	console.log("COMMANDS");
+	console.log("CORE COMMANDS");
 	console.log(
-		"  gateway, gw   \x1b[1;36m󰐌\x1b[0m Gateway Interceptor Core (prompt cache, replay, fallback, log)",
+		"  start         \x1b[1;36m󰐌\x1b[0m Jalankan hybrid gateway interceptor (4010 -> OMP + VansRouter)",
 	);
+	console.log(
+		"  stop          \x1b[1;31m󰓛\x1b[0m Hentikan gateway aktif (systemd service / instruksi kill PID)",
+	);
+	console.log(
+		"  status        \x1b[1;36m󰋼\x1b[0m Cek status gateway instance aktif & latency",
+	);
+	console.log(
+		"  stats         \x1b[1;36m󰓅\x1b[0m Statistik performa, hit-rate cache, dan error count",
+	);
+	console.log(
+		"  logs, log     \x1b[1;36m󰌱\x1b[0m Audit traffic real-time, status cache, & riwayat fallback",
+	);
+	console.log(
+		"  cache <action>\x1b[1;36m󰃨\x1b[0m Manajemen cache (prune: hapus expired, clear: kosongkan)",
+	);
+	console.log("");
+	console.log("MANAGEMENT & TOOLS");
 	console.log(
 		"  quota, q      \x1b[1;36m󰓅\x1b[0m Real-time Multi-Provider Quota Engine (alias: usage, u)",
 	);
@@ -108,20 +144,28 @@ function showHelp(): void {
 		"  restart, r    \x1b[1;36m󰑐\x1b[0m Restart systemd user services",
 	);
 	console.log("");
+	console.log("REPLAY & TESTING");
+	console.log(
+		"  record <name> \x1b[1;36m󰑈\x1b[0m Jalankan gateway dalam mode record JSONL fixture",
+	);
+	console.log(
+		"  mock <name>   \x1b[1;36m󰘦\x1b[0m Jalankan gateway dalam mode mock replay tanpa upstream",
+	);
+	console.log("");
 	console.log("META");
 	console.log("  help, h       \x1b[1;36m󰈙\x1b[0m Tampilkan panduan ini");
 	console.log("  version, v    \x1b[1;36m󰓹\x1b[0m Tampilkan versi");
 	console.log("");
 	console.log("HINT");
 	console.log(
-		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mgn gw -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mgn q -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
+		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mnexus start -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mnexus quota -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
 	);
 	console.log("");
 }
 
 /** Cetak versi singkat. */
 function showVersion(): void {
-	console.log(`gn v${GN_VERSION}`);
+	console.log(`nexus v${NEXUS_VERSION}`);
 }
 
 /**
@@ -165,7 +209,7 @@ export async function main(argv: string[]): Promise<number> {
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
 		console.error("");
-		console.error(`\x1b[1;31m🔥 [Goblin Roast Error] ${cmd} crash:\x1b[0m`);
+		console.error(`\x1b[1;31m🔥 [Nexus Error] ${cmd} crash:\x1b[0m`);
 		console.error(`\x1b[0m   ${msg}\x1b[0m`);
 		console.error("");
 		return 1;
@@ -174,7 +218,7 @@ export async function main(argv: string[]): Promise<number> {
 
 /**
  * Direct-invocation guard.
- *   $ bun src/index.ts usage --json
+ *   $ bun src/index.ts quota --json
  * Dipasang di akhir file agar test/kode lain bisa import `main()` tanpa
  * langsung mengeksekusi side-effect.
  */

@@ -9,12 +9,22 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { computePromptHash, formatCachedStreamChunks } from "./cache";
 
-export const DEFAULT_FIXTURES_DIR = join(
-	homedir(),
-	".config",
-	"gn",
-	"fixtures",
-);
+const NEW_FIXTURES_DIR = join(homedir(), ".config", "nexus", "fixtures");
+const LEGACY_FIXTURES_DIR = join(homedir(), ".config", "gn", "fixtures");
+
+/**
+ * Resolve default fixtures dir: pakai `~/.config/nexus/fixtures` bila ada,
+ * fallback ke legacy `~/.config/gn/fixtures` bila ada, jika tidak default
+ * kanonik baru = `~/.config/nexus/fixtures`.
+ */
+export function resolveDefaultFixturesDir(): string {
+	if (existsSync(NEW_FIXTURES_DIR)) return NEW_FIXTURES_DIR;
+	if (existsSync(LEGACY_FIXTURES_DIR)) return LEGACY_FIXTURES_DIR;
+	return NEW_FIXTURES_DIR;
+}
+
+/** Backward-compatible snapshot default (dievaluasi saat import). */
+export const DEFAULT_FIXTURES_DIR = resolveDefaultFixturesDir();
 
 export interface FixtureRecord {
 	id: string;
@@ -38,7 +48,7 @@ export interface FixtureRecord {
 export class FixtureManager {
 	private fixturesDir: string;
 
-	constructor(fixturesDir: string = DEFAULT_FIXTURES_DIR) {
+	constructor(fixturesDir: string = resolveDefaultFixturesDir()) {
 		this.fixturesDir = fixturesDir;
 		this.ensureDir();
 	}

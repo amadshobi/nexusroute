@@ -63,7 +63,7 @@ function fireTelemetry(
 		logTelemetry({
 			provider,
 			model,
-			clientApp: "gn-gateway",
+			clientApp: "nexus-gateway",
 			promptTokens,
 			completionTokens,
 			cacheReadTokens,
@@ -90,6 +90,9 @@ function buildOutboundHeaders(
 	outbound.delete("x-force-fallback");
 	outbound.delete("X-Mock-Status");
 	outbound.delete("X-Force-Fallback");
+	// Internal no-cache header (dual: NexusRoute baru + legacy GN)
+	outbound.delete("x-nexus-no-cache");
+	outbound.delete("X-Nexus-No-Cache");
 	outbound.delete("x-gn-no-cache");
 	outbound.delete("X-GN-No-Cache");
 	outbound.delete("x-gn-fixture");
@@ -136,7 +139,10 @@ export async function handleProxyRequest(
 	}
 
 	const noCacheHeader =
-		req.headers.get("x-gn-no-cache") || req.headers.get("X-GN-No-Cache");
+		req.headers.get("x-nexus-no-cache") ||
+		req.headers.get("X-Nexus-No-Cache") ||
+		req.headers.get("x-gn-no-cache") ||
+		req.headers.get("X-GN-No-Cache");
 	const forceNoCache = noCacheHeader === "true" || noCacheHeader === "1";
 
 	let reqBodyStr = "";
@@ -203,6 +209,7 @@ export async function handleProxyRequest(
 			ctx.stats.cacheHits++;
 			const respHeaders = new Headers(cached.meta.headers || {});
 			respHeaders.set("X-GN-Cache", "HIT");
+			respHeaders.set("X-Nexus-Cache", "HIT");
 			respHeaders.set("X-GN-Cache-Hash", promptHash);
 
 			const approxReqPromptTokens = Math.max(
@@ -260,7 +267,8 @@ export async function handleProxyRequest(
 		isLlmEndpoint &&
 		primaryModel &&
 		defaultCommandCodeAdapter.isAvailable() &&
-		(primaryModel.startsWith("cmc/") || primaryModel.startsWith("commandcode/")) &&
+		(primaryModel.startsWith("cmc/") ||
+			primaryModel.startsWith("commandcode/")) &&
 		parsedBodyInfo
 	) {
 		const abortController = new AbortController();
@@ -272,12 +280,14 @@ export async function handleProxyRequest(
 
 		try {
 			const directResp = await defaultCommandCodeAdapter.execute(
-				parsedBodyInfo,
+				parsedBodyInfo.parsed,
 				abortController.signal,
 			);
 			// Pass through to caching & logging pipeline
 			let effectiveStatus = directResp.status;
-			const stream = directResp.headers.get("content-type")?.includes("event-stream") || false;
+			const stream =
+				directResp.headers.get("content-type")?.includes("event-stream") ||
+				false;
 
 			if (stream && directResp.body) {
 				ctx.stats.activeStreams++;
@@ -491,6 +501,7 @@ export async function handleProxyRequest(
 		}
 		if (promptHash) {
 			respHeaders.set("X-GN-Cache", "MISS");
+			respHeaders.set("X-Nexus-Cache", "MISS");
 			respHeaders.set("X-GN-Cache-Hash", promptHash);
 		}
 

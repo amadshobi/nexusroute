@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // ─────────────────────────────────────────────────────────────
-// Goblin Nexus — Shared Types & Interfaces
+// NexusRoute — Shared Types & Interfaces
 // Single source of truth untuk semua interface yang dipakai
 // oleh commands/, adapters/, dan utils/.
 //
@@ -23,7 +23,7 @@
 export type QuotaStatus = "ok" | "warn" | "error" | "critical";
 
 /**
- * Identifier provider AI yang dikenali gn.
+ * Identifier provider AI yang dikenali nexus.
  * Pakai string union dengan escape hatch `(string & {})` agar:
  *   - IDE autocomplete menampilkan provider yang dikenal
  *   - Provider baru TIDAK menyebabkan TS error (extensible)
@@ -86,7 +86,7 @@ export interface OpenCodeSession {
 
 /**
  * Detail lengkap satu sesi (extension dari OpenCodeSession).
- * Dipakai oleh `gn sessions` saat user ingin breakdown
+ * Dipakai oleh `nexus sessions` saat user ingin breakdown
  * per-sesi termasuk metadata tambahan.
  */
 export interface SessionDetail extends OpenCodeSession {
@@ -108,7 +108,7 @@ export interface SessionDetail extends OpenCodeSession {
 
 /**
  * Ringkasan agregat penggunaan per model untuk window waktu tertentu.
- * Dipakai oleh `gn stats --models`.
+ * Dipakai oleh `nexus stats --models`.
  */
 export interface ModelUsageSummary {
 	/** Combined identifier, misal "google-antigravity/claude-sonnet-4-6" */
@@ -157,7 +157,7 @@ export interface StatsSummary {
 // ─── Health Check (Doctor) ───────────────────────────────────
 
 /**
- * Satu hasil health check untuk `gn doctor`.
+ * Satu hasil health check untuk `nexus doctor`.
  * Urutan check di doctor.ts menentukan urutan tampil.
  */
 export interface DoctorCheckResult {
@@ -167,7 +167,7 @@ export interface DoctorCheckResult {
 	status: "ok" | "warn" | "error";
 	/** Pesan deskriptif hasil check */
 	detail: string;
-	/** Goblin Roast Hint jika status error/warn */
+	/** Nexus hint jika status error/warn */
 	hint?: string;
 }
 

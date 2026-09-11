@@ -46,47 +46,89 @@ function detectWebDistDir(): string | undefined {
 	return undefined;
 }
 
+/**
+ * Baca env var berlapis: var `NEXUS_*` diutamakan, lalu fallback ke
+ * `GN_*` legacy. Mengembalikan nilai pertama yang terdefinisi.
+ */
+function envLayered(nexusVar: string, gnVar: string, fallback: string): string {
+	return process.env[nexusVar] ?? process.env[gnVar] ?? fallback;
+}
+
+/** Varian `envLayered` yang mengembalikan `undefined` bila tak ada var. */
+function envLayeredOpt(nexusVar: string, gnVar: string): string | undefined {
+	return process.env[nexusVar] ?? process.env[gnVar];
+}
+
 export function createGatewayServer(
 	customConfig: Partial<GatewayServerConfig> = {},
 ) {
+	const portRaw = envLayered("NEXUS_GATEWAY_PORT", "GN_GATEWAY_PORT", "4010");
+	const targetHostRaw = envLayered(
+		"NEXUS_GATEWAY_TARGET_HOST",
+		"GN_GATEWAY_TARGET_HOST",
+		"127.0.0.1",
+	);
+	const targetPortRaw = envLayered(
+		"NEXUS_GATEWAY_TARGET_PORT",
+		"GN_GATEWAY_TARGET_PORT",
+		"4000",
+	);
+	const cacheEnabledRaw = envLayeredOpt(
+		"NEXUS_GATEWAY_CACHE_ENABLED",
+		"GN_GATEWAY_CACHE_ENABLED",
+	);
+	const shieldEnabledRaw = envLayeredOpt(
+		"NEXUS_GATEWAY_SHIELD_ENABLED",
+		"GN_GATEWAY_SHIELD_ENABLED",
+	);
+	const modeRaw = envLayered("NEXUS_GATEWAY_MODE", "GN_GATEWAY_MODE", "live");
+	const webDistRaw =
+		envLayeredOpt("NEXUS_GATEWAY_WEB_DIST_DIR", "GN_GATEWAY_WEB_DIST_DIR") ??
+		envLayeredOpt("NEXUS_GATEWAY_WEB_DIST", "GN_GATEWAY_WEB_DIST") ??
+		detectWebDistDir();
+
 	const config: GatewayServerConfig = {
-		port:
-			customConfig.port ?? parseInt(process.env.GN_GATEWAY_PORT || "4010", 10),
-		targetHost:
-			customConfig.targetHost ??
-			(process.env.GN_GATEWAY_TARGET_HOST || "127.0.0.1"),
-		targetPort:
-			customConfig.targetPort ??
-			parseInt(process.env.GN_GATEWAY_TARGET_PORT || "4000", 10),
+		port: customConfig.port ?? parseInt(portRaw, 10),
+		targetHost: customConfig.targetHost ?? targetHostRaw,
+		targetPort: customConfig.targetPort ?? parseInt(targetPortRaw, 10),
 		cacheEnabled:
 			customConfig.cacheEnabled ??
-			(process.env.GN_GATEWAY_CACHE_ENABLED
-				? process.env.GN_GATEWAY_CACHE_ENABLED === "true"
-				: true),
+			(cacheEnabledRaw ? cacheEnabledRaw === "true" : true),
 		cacheTtlMs:
 			customConfig.cacheTtlMs ??
-			parseInt(process.env.GN_GATEWAY_CACHE_TTL_MS || "7200000", 10),
-		cacheDir: customConfig.cacheDir ?? (process.env.GN_GATEWAY_CACHE_DIR || ""),
+			parseInt(
+				envLayered(
+					"NEXUS_GATEWAY_CACHE_TTL_MS",
+					"GN_GATEWAY_CACHE_TTL_MS",
+					"7200000",
+				),
+				10,
+			),
+		cacheDir:
+			customConfig.cacheDir ??
+			envLayered("NEXUS_GATEWAY_CACHE_DIR", "GN_GATEWAY_CACHE_DIR", ""),
 		fixturesDir:
-			customConfig.fixturesDir ?? (process.env.GN_GATEWAY_FIXTURES_DIR || ""),
+			customConfig.fixturesDir ??
+			envLayered("NEXUS_GATEWAY_FIXTURES_DIR", "GN_GATEWAY_FIXTURES_DIR", ""),
 		mode:
 			customConfig.mode ??
-			(["live", "mock", "record"].includes(process.env.GN_GATEWAY_MODE as any)
-				? (process.env.GN_GATEWAY_MODE as GatewayServerConfig["mode"])
+			(["live", "mock", "record"].includes(modeRaw)
+				? (modeRaw as GatewayServerConfig["mode"])
 				: "live"),
 		mockFixtureFile:
-			customConfig.mockFixtureFile ?? process.env.GN_GATEWAY_MOCK_FIXTURE,
+			customConfig.mockFixtureFile ??
+			envLayeredOpt("NEXUS_GATEWAY_MOCK_FIXTURE", "GN_GATEWAY_MOCK_FIXTURE"),
 		shieldEnabled:
 			customConfig.shieldEnabled ??
-			process.env.GN_GATEWAY_SHIELD_ENABLED !== "false",
+			(shieldEnabledRaw !== undefined ? shieldEnabledRaw !== "false" : true),
 		sanitizeLogsOnly:
 			customConfig.sanitizeLogsOnly ??
-			process.env.GN_GATEWAY_SHIELD_LOGS_ONLY === "true",
-		webDistDir:
-			customConfig.webDistDir ??
-			process.env.GN_GATEWAY_WEB_DIST_DIR ??
-			process.env.GN_GATEWAY_WEB_DIST ??
-			detectWebDistDir(),
+			envLayered(
+				"NEXUS_GATEWAY_SHIELD_LOGS_ONLY",
+				"GN_GATEWAY_SHIELD_LOGS_ONLY",
+				"false",
+			) === "true",
+		webDistDir: customConfig.webDistDir ?? webDistRaw,
 		accessLogPath: customConfig.accessLogPath,
 	};
 
@@ -269,7 +311,11 @@ export function createGatewayServer(
 
 			serverInstance = Bun.serve({
 				port: config.port,
-				hostname: process.env.GN_GATEWAY_HOST || "0.0.0.0",
+				hostname: envLayered(
+					"NEXUS_GATEWAY_HOST",
+					"GN_GATEWAY_HOST",
+					"0.0.0.0",
+				),
 				idleTimeout: 255,
 				async fetch(req) {
 					const reqStartTime = Date.now();
@@ -284,8 +330,12 @@ export function createGatewayServer(
 						stats.totalRequests++;
 					}
 
-					// Health / Status Endpoints
-					if (url.pathname === "/health" || url.pathname === "/gn/health") {
+					// Health / Status Endpoints (dual: /nexus/health + legacy /gn/health)
+					if (
+						url.pathname === "/health" ||
+						url.pathname === "/nexus/health" ||
+						url.pathname === "/gn/health"
+					) {
 						return new Response(
 							JSON.stringify({
 								status: "ok",
@@ -308,7 +358,7 @@ export function createGatewayServer(
 						);
 					}
 
-					if (url.pathname === "/gn/stats") {
+					if (url.pathname === "/nexus/stats" || url.pathname === "/gn/stats") {
 						return new Response(JSON.stringify(server.getStats(), null, 2), {
 							status: 200,
 							headers: { "content-type": "application/json" },

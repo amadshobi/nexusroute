@@ -1,6 +1,6 @@
 /**
  * ─────────────────────────────────────────────────────────────
- * Goblin Nexus — Gateway CLI Command Handler
+ * NexusRoute — Gateway CLI Command Handler
  * ─────────────────────────────────────────────────────────────
  */
 
@@ -28,7 +28,74 @@ import {
 	loadUpstreamsFromConfig,
 } from "../gateway/upstream-router";
 import { getUnifiedConfigPath } from "../gateway/rules";
+import { NEXUS_VERSION } from "../version";
 import { readFileSync } from "node:fs";
+
+/**
+ * Kandidat unit systemd user untuk gateway interceptor, berurutan
+ * dari yang paling baru. Dipakai oleh subcommand `stop`.
+ */
+const GATEWAY_SERVICE_CANDIDATES = [
+	"nexus-gateway.service",
+	"gn-gateway.service",
+	"omp-gateway.service",
+];
+
+/** Kembalikan unit service gateway pertama yang berstatus aktif, atau null. */
+function findActiveGatewayService(): string | null {
+	for (const service of GATEWAY_SERVICE_CANDIDATES) {
+		try {
+			const proc = Bun.spawnSync(["systemctl", "--user", "is-active", service]);
+			if (proc.stdout.toString().trim() === "active") return service;
+		} catch {
+			// systemd tidak tersedia — lewati deteksi service.
+		}
+	}
+	return null;
+}
+
+/** Cari PID yang sedang listen di port tertentu (lsof → fuser), atau null. */
+function findListeningPid(port: number): number | null {
+	const parse = (out: string): number | null => {
+		const pid = parseInt(out.trim().split(/\s+/)[0] ?? "", 10);
+		return Number.isFinite(pid) && pid > 0 ? pid : null;
+	};
+	try {
+		const lsof = Bun.spawnSync(["lsof", "-t", `-iTCP:${port}`, "-sTCP:LISTEN"]);
+		const pid = parse(lsof.stdout.toString());
+		if (pid) return pid;
+	} catch {
+		// lsof tidak tersedia — coba fuser.
+	}
+	try {
+		const fuser = Bun.spawnSync(["fuser", "-n", "tcp", String(port)]);
+		const pid = parseFuserOutput(fuser.stdout.toString());
+		if (pid) return pid;
+	} catch {
+		// Tidak ada tool deteksi PID yang tersedia.
+	}
+	return null;
+}
+
+/**
+ * Parse output `fuser` untuk mengambil PID proses yang listen.
+ *
+ * Format umum: `4010/tcp: 12345`, `4010/tcp:  12345  67890`, atau `12345`.
+ * Angka port (sebelum colon) TIDAK boleh dianggap PID — ambil angka setelah
+ * colon; bila tidak ada colon, pakai token numerik terakhir.
+ */
+export function parseFuserOutput(out: string): number | null {
+	if (!out) return null;
+	const afterColon = out.match(/:\s*(\d+(?:\s+\d+)*)/);
+	const token = afterColon
+		? afterColon[1].trim().split(/\s+/).pop()
+		: out.trim().split(/\s+/).pop();
+	// Wajib token numerik murni — jangan biarkan parseInt menyerap prefix
+	// seperti "4010/tcp:" yang akan salah dibaca sebagai port 4010.
+	if (!token || !/^\d+$/.test(token)) return null;
+	const pid = parseInt(token, 10);
+	return Number.isFinite(pid) && pid > 0 ? pid : null;
+}
 
 /** Bentuk respons /gn/health dari gateway server. */
 interface GatewayHealthResponse {
@@ -75,14 +142,19 @@ function loadDisplayUpstreams(): { name: string; url: string }[] {
 }
 
 function showGatewayHelp(): void {
-	printGnHeader("GATEWAY INTERCEPTOR MANUAL");
+	printGnHeader("NEXUSROUTE GATEWAY CONTROL MANUAL");
 	console.log("USAGE");
-	console.log("  $ gn gateway <subcommand> [flags]");
-	console.log("  $ gn gw <subcommand> [flags]");
+	console.log("  $ nexus <subcommand> [flags]");
+	console.log(
+		"  $ nexus gateway <subcommand> [flags]   # alias backward-compatible",
+	);
 	console.log("");
 	console.log("SUBCOMMANDS");
 	console.log(
 		"  start         \x1b[1;36m󰐌\x1b[0m Jalankan hybrid gateway (4010 -> OMP 4000 + VansRouter 20128)",
+	);
+	console.log(
+		"  stop          \x1b[1;31m󰓛\x1b[0m Hentikan gateway aktif (systemd service atau instruksi kill PID)",
 	);
 	console.log(
 		"  status        \x1b[1;36m󰋼\x1b[0m Cek status gateway instance aktif & latency",
@@ -128,30 +200,33 @@ function showGatewayHelp(): void {
 	console.log("");
 	console.log("EXAMPLES");
 	console.log(
-		"  $ gn gw start              # Start interceptor default (4010 -> 4000)",
-	);
-	console.log("  $ gn gw status             # Cek status kesehatan gateway");
-	console.log("  $ gn gw stats --json       # Export telemetry & cache stats");
-	console.log(
-		"  $ gn gw log                # Tampilkan tabel riwayat request & fallback",
+		"  $ nexus start              # Start interceptor default (4010 -> 4000)",
 	);
 	console.log(
-		"  $ gn gw log -s             # Stream live traffic interceptor real-time",
+		"  $ nexus stop               # Hentikan gateway yang sedang berjalan",
+	);
+	console.log("  $ nexus status             # Cek status kesehatan gateway");
+	console.log("  $ nexus stats --json       # Export telemetry & cache stats");
+	console.log(
+		"  $ nexus log                # Tampilkan tabel riwayat request & fallback",
 	);
 	console.log(
-		"  $ gn gw log -e             # Tampilkan hanya request yang kena error",
+		"  $ nexus log -s             # Stream live traffic interceptor real-time",
 	);
 	console.log(
-		"  $ gn gw log -l 50 --json   # Export 50 log terakhir ke format JSON",
+		"  $ nexus log -e             # Tampilkan hanya request yang kena error",
 	);
 	console.log(
-		"  $ gn gw record test-fix    # Record interaksi ke ~/.config/gn/fixtures/test-fix.jsonl",
+		"  $ nexus log -l 50 --json   # Export 50 log terakhir ke format JSON",
 	);
 	console.log(
-		"  $ gn gw mock test-fix      # Replay fixture test-fix.jsonl secara deterministik",
+		"  $ nexus record test-fix    # Record interaksi ke ~/.config/gn/fixtures/test-fix.jsonl",
 	);
 	console.log(
-		"  $ gn gw cache prune        # Bersihkan cache prompt yang kadaluarsa",
+		"  $ nexus mock test-fix      # Replay fixture test-fix.jsonl secara deterministik",
+	);
+	console.log(
+		"  $ nexus cache prune        # Bersihkan cache prompt yang kadaluarsa",
 	);
 	console.log("");
 }
@@ -159,8 +234,11 @@ function showGatewayHelp(): void {
 export async function handleGatewayCommand(argv: string[]): Promise<number> {
 	const sub = argv[0];
 	const hasJsonFlag = argv.includes("--json");
+	const wantsHelp = argv.includes("--help") || argv.includes("-h");
 
-	if (!sub || sub === "help" || sub === "--help" || sub === "-h") {
+	// `nexus start -h` / `nexus gateway status --help` harus menampilkan
+	// panduan — bukan menjalankan subcommand. Cek help SEBELUM dispatch.
+	if (!sub || sub === "help" || wantsHelp) {
 		showGatewayHelp();
 		return 0;
 	}
@@ -183,7 +261,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 
 	switch (sub) {
 		case "start": {
-			printGnHeader(`GN GATEWAY HYBRID ROUTER v2.1.4`);
+			printGnHeader(`NEXUSROUTE GATEWAY HYBRID ROUTER v${NEXUS_VERSION}`);
 			console.log(`  ${ANSI_BOLD}Configuration:${ANSI_RESET}`);
 			console.log(
 				`  • Listen Port    : ${ANSI_CYAN}http://127.0.0.1:${port}${ANSI_RESET}`,
@@ -220,7 +298,9 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 
 			// Graceful shutdown
 			process.on("SIGINT", () => {
-				console.log(`\n  ${ANSI_YELLOW}Stopping GN Gateway...${ANSI_RESET}`);
+				console.log(
+					`\n  ${ANSI_YELLOW}Stopping NexusRoute Gateway...${ANSI_RESET}`,
+				);
 				server.stop();
 				process.exit(0);
 			});
@@ -230,9 +310,76 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 			return 0;
 		}
 
+		case "stop": {
+			printGnHeader("NEXUSROUTE GATEWAY STOP");
+			const service = findActiveGatewayService();
+
+			if (service) {
+				console.log(
+					`  • Detected Service : ${ANSI_CYAN}${service}${ANSI_RESET}`,
+				);
+				try {
+					const proc = Bun.spawnSync(["systemctl", "--user", "stop", service]);
+					if (proc.exitCode === 0) {
+						console.log(
+							`  • Status           : ${ANSI_GREEN}󰄬 STOPPED${ANSI_RESET}\n`,
+						);
+						return 0;
+					}
+					console.log(
+						`  • Status           : ${ANSI_RED}󰅚 FAILED (exit ${proc.exitCode})${ANSI_RESET}`,
+					);
+					const errOut = proc.stderr.toString().trim();
+					if (errOut) console.log(`  ${ANSI_GRAY}${errOut}${ANSI_RESET}`);
+					console.log("");
+					return 1;
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					console.log(
+						`  ${ANSI_RED}󰅚 systemctl stop gagal: ${msg}${ANSI_RESET}\n`,
+					);
+					return 1;
+				}
+			}
+
+			// Tidak ada systemd service aktif — cek apakah port merespons.
+			let isRunning = false;
+			try {
+				const res = await fetch(`http://127.0.0.1:${port}/gn/health`, {
+					signal: AbortSignal.timeout(1500),
+				});
+				isRunning = res.ok;
+			} catch {
+				isRunning = false;
+			}
+
+			if (!isRunning) {
+				console.log(
+					`  ${ANSI_GRAY}No active gateway detected on port ${port} (nothing to stop).${ANSI_RESET}\n`,
+				);
+				return 0;
+			}
+
+			const pid = findListeningPid(port);
+			console.log(
+				`  ${ANSI_YELLOW}Gateway berjalan tanpa systemd service terkelola.${ANSI_RESET}`,
+			);
+			if (pid) {
+				console.log(`  • Listening PID    : ${ANSI_CYAN}${pid}${ANSI_RESET}`);
+				console.log(
+					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Hentikan manual dengan ${ANSI_CYAN}kill ${pid}${ANSI_RESET} (paksa: ${ANSI_CYAN}kill -9 ${pid}${ANSI_RESET}).\n`,
+				);
+			} else {
+				console.log(
+					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Cari PID dengan ${ANSI_CYAN}ss -ltnp 'sport = :${port}'${ANSI_RESET}, lalu ${ANSI_CYAN}kill <PID>${ANSI_RESET}.\n`,
+				);
+			}
+			return 1;
+		}
+
 		case "record": {
 			const fixtureName = argv[1] || "default-session";
-			printGnHeader(`GN GATEWAY RECORDER`);
+			printGnHeader(`NEXUSROUTE GATEWAY RECORDER`);
 			console.log(
 				`  • Recording To   : ${ANSI_CYAN}~/.config/gn/fixtures/${fixtureName}.jsonl${ANSI_RESET}`,
 			);
@@ -269,7 +416,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 
 		case "mock": {
 			const fixtureName = argv[1] || "default-session";
-			printGnHeader(`GN GATEWAY MOCK SERVER`);
+			printGnHeader(`NEXUSROUTE GATEWAY MOCK SERVER`);
 			console.log(
 				`  • Replaying From : ${ANSI_CYAN}~/.config/gn/fixtures/${fixtureName}.jsonl${ANSI_RESET}`,
 			);
@@ -372,7 +519,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 				);
 				console.log(`  ${ANSI_GRAY}Reason: ${err.message}${ANSI_RESET}`);
 				console.log(
-					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Jalankan ${ANSI_CYAN}gn gateway start${ANSI_RESET} untuk mengaktifkan interceptor.\n`,
+					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Jalankan ${ANSI_CYAN}nexus start${ANSI_RESET} untuk mengaktifkan interceptor.\n`,
 				);
 				return 1;
 			}
@@ -523,7 +670,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 				`  ${ANSI_RED}Unknown gateway subcommand: '${sub}'${ANSI_RESET}`,
 			);
 			console.log(
-				`  ${ANSI_GRAY}Type 'gn gateway --help' for available subcommands.${ANSI_RESET}\n`,
+				`  ${ANSI_GRAY}Type 'nexus <subcommand> --help' for available subcommands.${ANSI_RESET}\n`,
 			);
 			return 1;
 		}

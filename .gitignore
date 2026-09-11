@@ -1,0 +1,8 @@
+# NexusRoute Dependencies
+node_modules/
+web/node_modules/
+.tmp-test-gateway/
+dist/
+web/dist/
+.DS_Store
+*.log

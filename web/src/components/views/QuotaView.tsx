@@ -1,0 +1,236 @@
+import { useState } from "react";
+import { Copy, Check, Clock, User } from "lucide-react";
+import {
+	AntigravityIcon,
+	GoogleIcon,
+	AnthropicIcon,
+} from "@/components/icons/ProviderIcons";
+import type {
+	QuotaResponse,
+	ProviderQuotaResult,
+	AccountQuota,
+	QuotaGroup,
+	QuotaBucket,
+} from "@/types/dashboard";
+
+interface QuotaViewProps {
+	quota: QuotaResponse;
+}
+
+function formatRelativeTime(isoString?: string): string {
+	if (!isoString) return "";
+	const target = new Date(isoString).getTime();
+	const diffMs = target - Date.now();
+	if (diffMs <= 0) return "ready";
+
+	const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+	const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+	if (diffHours >= 24) {
+		const days = Math.floor(diffHours / 24);
+		const remHours = diffHours % 24;
+		return `${days}d ${remHours}h`;
+	}
+	return `${diffHours}h ${diffMins}m`;
+}
+
+export function QuotaView({ quota }: QuotaViewProps) {
+	const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+	const copyEmail = async (email: string) => {
+		try {
+			await navigator.clipboard.writeText(email);
+			setCopiedKey(email);
+			setTimeout(() => setCopiedKey(null), 2000);
+		} catch {
+			// Fallback
+		}
+	};
+
+	const providers = quota?.providers || [];
+	const hasProviders =
+		providers.length > 0 && providers.some((p) => p.accounts.length > 0);
+
+	if (
+		!quota?.available ||
+		(!hasProviders && (!quota.entries || quota.entries.length === 0))
+	) {
+		return (
+			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-6 text-center shadow-sm">
+				<p className="text-sm text-[#8A94A6]">Tidak ada metrik quota aktif.</p>
+			</div>
+		);
+	}
+
+	return (
+		<div className="space-y-4">
+			{providers.map((provider: ProviderQuotaResult) => (
+				<div
+					key={provider.provider}
+					className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 shadow-sm space-y-3"
+				>
+					{/* Provider Card Header */}
+					<div className="flex items-center justify-between pb-2.5 border-b border-[#1E2433]">
+						<div className="flex items-center gap-2">
+							{provider.provider.includes("antigravity") ? (
+								<AntigravityIcon className="h-5 w-5" />
+							) : (
+								<div className="h-5 w-5 rounded bg-[#7AA2F7]/20 flex items-center justify-center font-bold text-xs text-[#7AA2F7]">
+									{provider.displayName[0]}
+								</div>
+							)}
+							<h3 className="text-sm font-bold text-white tracking-tight">
+								{provider.displayName}
+							</h3>
+						</div>
+
+						<span className="text-xs font-mono text-[#64748B]">
+							{provider.accounts.length} Accounts
+						</span>
+					</div>
+
+					{/* 2-Column Accounts Grid */}
+					<div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+						{provider.accounts.map((account: AccountQuota, accIdx: number) => {
+							const isCopied = copiedKey === account.email;
+
+							return (
+								<div
+									key={`${account.email}-${accIdx}`}
+									className="rounded-lg border border-[#1E2433] bg-[#161B26]/60 p-3 space-y-2.5"
+								>
+									{/* Account Header */}
+									<div className="flex items-center justify-between gap-2 pb-2 border-b border-[#1E2433]/60">
+										<div className="flex items-center gap-1.5 min-w-0">
+											<User className="h-3 w-3 text-[#7AA2F7] shrink-0" />
+											<span className="text-xs font-semibold text-white font-mono truncate">
+												{account.email}
+											</span>
+											<button
+												type="button"
+												onClick={() => copyEmail(account.email)}
+												className="p-0.5 rounded text-[#64748B] hover:text-white hover:bg-[#1E2433] transition-colors cursor-pointer shrink-0"
+												title="Copy email"
+											>
+												{isCopied ? (
+													<Check className="h-3 w-3 text-[#00EA88]" />
+												) : (
+													<Copy className="h-3 w-3" />
+												)}
+											</button>
+										</div>
+
+										<span
+											className={`text-[9px] font-mono px-1.5 py-0.5 rounded uppercase font-semibold shrink-0 ${
+												account.status === "critical"
+													? "bg-rose-500/15 text-rose-400 border border-rose-500/20"
+													: account.status === "warning"
+														? "bg-amber-500/15 text-amber-400 border border-amber-500/20"
+														: "bg-emerald-500/15 text-[#00EA88] border border-emerald-500/20"
+											}`}
+										>
+											{account.status}
+										</span>
+									</div>
+
+									{/* Model Groups */}
+									<div className="space-y-2">
+										{account.groups.map((group: QuotaGroup, grpIdx: number) => {
+											const isClaude =
+												group.displayName.toLowerCase().includes("claude") ||
+												group.displayName.toLowerCase().includes("gpt");
+
+											return (
+												<div
+													key={`${group.displayName}-${grpIdx}`}
+													className="rounded-md border border-[#1E2433]/70 bg-[#11151F] p-2 space-y-1.5"
+												>
+													{/* Group Title */}
+													<div className="flex items-center gap-1.5">
+														{isClaude ? (
+															<AnthropicIcon className="h-3 w-3" />
+														) : (
+															<GoogleIcon className="h-3 w-3" />
+														)}
+														<span className="text-[10px] font-bold text-white tracking-wide uppercase font-mono">
+															{group.displayName}
+														</span>
+													</div>
+
+													{/* Buckets */}
+													<div className="space-y-1.5">
+														{group.buckets.map((bucket: QuotaBucket) => {
+															const fraction = Math.max(
+																0,
+																Math.min(1, bucket.remainingFraction),
+															);
+															const percent = (fraction * 100).toFixed(1);
+															const isLow = fraction <= 0.2;
+															const isMid = fraction <= 0.5;
+
+															const barColor = isLow
+																? "bg-rose-500"
+																: isMid
+																	? "bg-amber-400"
+																	: "bg-[#00EA88]";
+															const textColor = isLow
+																? "text-rose-400"
+																: isMid
+																	? "text-amber-400"
+																	: "text-[#00EA88]";
+
+															const relativeReset = formatRelativeTime(
+																bucket.resetTime,
+															);
+
+															return (
+																<div
+																	key={bucket.bucketId}
+																	className="space-y-0.5 text-xs"
+																>
+																	<div className="flex items-center justify-between text-[10px]">
+																		<span className="text-[#8A94A6] truncate max-w-[130px]">
+																			{bucket.displayName.replace(
+																				" Limit Remaining",
+																				"",
+																			)}
+																		</span>
+																		<div className="flex items-center gap-1.5 font-mono shrink-0">
+																			<span
+																				className={`font-bold ${textColor}`}
+																			>
+																				{percent}%
+																			</span>
+																			{relativeReset && (
+																				<span className="text-[9px] text-[#64748B] flex items-center gap-0.5">
+																					<Clock className="h-2.5 w-2.5" />
+																					{relativeReset}
+																				</span>
+																			)}
+																		</div>
+																	</div>
+
+																	{/* Progress Bar (Compact 1.5) */}
+																	<div className="h-1 w-full bg-[#1A202C] rounded-full overflow-hidden">
+																		<div
+																			className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+																			style={{ width: `${percent}%` }}
+																		/>
+																	</div>
+																</div>
+															);
+														})}
+													</div>
+												</div>
+											);
+										})}
+									</div>
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			))}
+		</div>
+	);
+}

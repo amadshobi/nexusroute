@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# ─────────────────────────────────────────────────────────────
+# Wrapper executable untuk NexusRoute CLI (gn)
+# Autonomous Edge Proxy & Multi-Agent Telemetry Command Center
+# ─────────────────────────────────────────────────────────────
+set -euo pipefail
+
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do
+  DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+BIN_DIR="$(cd -P "$(dirname "$SOURCE")" >/dev/null 2>&1 && pwd)"
+export NEXUSROUTE_ROOT="$(cd -P "$BIN_DIR/.." >/dev/null 2>&1 && pwd)"
+export GOBLIN_VAULT_ROOT="$NEXUSROUTE_ROOT"
+TARGET_FILE="$NEXUSROUTE_ROOT/src/index.ts"
+
+if command -v bun &>/dev/null; then
+  exec bun "$TARGET_FILE" "$@"
+elif command -v node &>/dev/null; then
+  exec node --import tsx/esm "$TARGET_FILE" "$@" 2>/dev/null || exec npx tsx "$TARGET_FILE" "$@"
+elif command -v deno &>/dev/null; then
+  exec deno run -A "$TARGET_FILE" "$@"
+else
+  echo "Error: JavaScript/TypeScript runtime (bun, node/tsx, or deno) not found!" >&2
+  exit 1
+fi

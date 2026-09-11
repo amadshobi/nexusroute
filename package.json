@@ -1,0 +1,17 @@
+{
+	"name": "gn",
+	"version": "2.1.4",
+	"private": true,
+	"description": "Goblin Nexus CLI - Control Center core",
+	"scripts": {
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@clack/prompts": "^0.7.0"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.0",
+		"@types/node": "^26.1.2",
+		"typescript": "^5.4.0"
+	}
+}

@@ -1,0 +1,61 @@
+# ─────────────────────────────────────────────────────────────
+# Goblin Nexus Gateway — Interceptor, Caching & Fallback Daemon
+# Systemd User Service
+# ─────────────────────────────────────────────────────────────
+# Install:
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now gn-gateway.service
+#
+# Verify:
+#   systemctl --user status gn-gateway.service
+#   journalctl --user -u gn-gateway.service -f
+# ─────────────────────────────────────────────────────────────
+
+[Unit]
+Description=👹 Goblin Nexus Gateway — LLM Interceptor, Deterministic Cache & Fallback Daemon
+Documentation=https://github.com/shobix/goblin-vault
+After=network.target network-online.target omp.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+# ── Environment ──
+# Listen 4010 (tidak mengganggu OMP ecosystem di 4000-4001):
+#   opencode -> gn-gateway:4010 -> omp auth-gateway:4000
+Environment=GOBLIN_VAULT_ROOT=%h/civil/goblin-vault
+Environment=GN_GATEWAY_PORT=4010
+Environment=GN_GATEWAY_TARGET_PORT=4000
+Environment=GN_GATEWAY_TARGET_HOST=127.0.0.1
+Environment=NODE_ENV=production
+
+# ── Runtime ──
+# Path absolut bun: systemd user service tidak mewarisi PATH shell (~/.npm-global/bin)
+ExecStart=%h/.npm-global/bin/bun run %h/civil/goblin-vault/tools-cli/src/gn/src/index.ts gateway start --port 4010 --target-port 4000
+WorkingDirectory=%h/civil/goblin-vault
+
+# ── Resilience ──
+Restart=always
+RestartSec=3
+
+# ── Security & Sandboxing ──
+ProtectSystem=strict
+PrivateTmp=true
+NoNewPrivileges=true
+
+# Auto-create cache dirs on service start (survives cache cleanup)
+CacheDirectory=gn goblin-nexus
+
+# Config dirs — manual ReadWritePaths (not auto-created by systemd)
+ReadWritePaths=%h/.config/gn
+ReadWritePaths=%h/.config/goblin-nexus
+
+# Allow network loopback access (needed for proxy)
+PrivateNetwork=no
+
+# ── Logging ──
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

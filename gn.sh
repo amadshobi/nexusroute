@@ -47,11 +47,11 @@ case "${1:-}" in
         exec journalctl --user -u omp-gateway.service -f "$@"
         ;;
     ping|p)
-        _gn_warn "Command 'gn ping' telah didepresiasi. Gunakan REST API OMP (GET /healthz) atau 'omp ping' untuk health-check."
+        _gn_warn "Command 'gn ping' telah didepresiasi. Gunakan Web Console (http://localhost:4010/dashboard#ping) atau REST API probe."
         exit 2
         ;;
     bench|b)
-        _gn_warn "Command 'gn bench' telah didepresiasi. Gunakan REST API OMP (POST /v1/chat/completions) atau 'ocm bench' untuk benchmark model."
+        _gn_warn "Command 'gn bench' telah didepresiasi. Gunakan Web Console probe latency atau benchmark REST API."
         exit 2
         ;;
     sessions|s|ses)

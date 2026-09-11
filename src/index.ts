@@ -18,9 +18,7 @@
 import { printGnHeader } from "./utils/formatter";
 import { handleUnknownCommand } from "./utils/error";
 import { GN_VERSION } from "./version";
-import { handleUsageCommand } from "./commands/usage";
-import { handlePingCommand } from "./commands/ping";
-import { handleBenchCommand } from "./commands/bench";
+import { handleQuotaCommand } from "./commands/quota";
 import { handleDoctorCommand, handleRestartCommand } from "./commands/doctor";
 import { handleGatewayCommand } from "./commands/gateway";
 
@@ -31,21 +29,17 @@ export { GN_VERSION };
  * Peta subcommand → handler.
  */
 const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
-	// Gateway Interceptor Core (Plan Issue #29)
+	// Gateway Interceptor Core
 	gateway: handleGatewayCommand,
 	gw: handleGatewayCommand,
 	g: handleGatewayCommand,
 	shield: handleGatewayCommand,
 
-	// Quota & telemetry cost
-	usage: handleUsageCommand,
-	u: handleUsageCommand,
-
-	// Connectivity & benchmarking
-	ping: handlePingCommand,
-	p: handlePingCommand,
-	bench: handleBenchCommand,
-	b: handleBenchCommand,
+	// Quota & Multi-provider Engine (Single Source of Truth)
+	quota: handleQuotaCommand,
+	q: handleQuotaCommand,
+	usage: handleQuotaCommand,
+	u: handleQuotaCommand,
 
 	// Service control
 	doctor: handleDoctorCommand,
@@ -66,6 +60,10 @@ const DEPRECATED_COMMANDS: Record<string, string> = {
 	ses: "OpenCode CLI langsung (`oc session`)",
 	config: "Edit opencode.jsonc langsung via OpenCode config",
 	c: "Edit opencode.jsonc langsung via OpenCode config",
+	ping: "Web Console (http://localhost:4010/dashboard#ping) atau REST API probe",
+	p: "Web Console (http://localhost:4010/dashboard#ping) atau REST API probe",
+	bench: "Web Console probe latency / benchmark REST API",
+	b: "Web Console probe latency / benchmark REST API",
 };
 
 /** Cetak banner ringkas untuk header bantuan/error. */
@@ -101,19 +99,13 @@ function showHelp(): void {
 		"  gateway, gw   \x1b[1;36m󰐌\x1b[0m Gateway Interceptor Core (prompt cache, replay, fallback, log)",
 	);
 	console.log(
-		"  usage, u      \x1b[1;36m󰓅\x1b[0m Telemetry & Quota Engine (quota live, token activity, file audit)",
-	);
-	console.log(
-		"  ping, p       \x1b[1;36m󱈸\x1b[0m Connectivity check OMP Gateway & model cache (--force)",
-	);
-	console.log(
-		"  bench, b      \x1b[1;36m󱎫\x1b[0m Benchmark engine latensi & tok/s OMP Gateway (--force)",
+		"  quota, q      \x1b[1;36m󰓅\x1b[0m Real-time Multi-Provider Quota Engine (alias: usage, u)",
 	);
 	console.log(
 		"  doctor, doc   \x1b[1;36m󰋼\x1b[0m Full health diagnostic & config syntax check (--check)",
 	);
 	console.log(
-		"  restart, r    \x1b[1;36m󰑐\x1b[0m Restart systemd user services (omp-broker, omp-gateway)",
+		"  restart, r    \x1b[1;36m󰑐\x1b[0m Restart systemd user services",
 	);
 	console.log("");
 	console.log("META");
@@ -122,7 +114,7 @@ function showHelp(): void {
 	console.log("");
 	console.log("HINT");
 	console.log(
-		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mgn gw -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mgn u -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
+		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mgn gw -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mgn q -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
 	);
 	console.log("");
 }

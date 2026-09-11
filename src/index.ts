@@ -19,8 +19,6 @@ import { printGnHeader } from "./utils/formatter";
 import { handleUnknownCommand } from "./utils/error";
 import { GN_VERSION } from "./version";
 import { handleUsageCommand } from "./commands/usage";
-import { handleSessionsCommand } from "./commands/sessions";
-import { handleConfigCommand } from "./commands/config";
 import { handlePingCommand } from "./commands/ping";
 import { handleBenchCommand } from "./commands/bench";
 import { handleDoctorCommand, handleRestartCommand } from "./commands/doctor";
@@ -43,15 +41,6 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
 	usage: handleUsageCommand,
 	u: handleUsageCommand,
 
-	// Session search & explorer (Plan 2)
-	sessions: handleSessionsCommand,
-	s: handleSessionsCommand,
-	ses: handleSessionsCommand,
-
-	// Configuration management (Leburan OCM)
-	config: handleConfigCommand,
-	c: handleConfigCommand,
-
 	// Connectivity & benchmarking
 	ping: handlePingCommand,
 	p: handlePingCommand,
@@ -71,7 +60,13 @@ const COMMANDS: Record<string, (argv: string[]) => Promise<number>> = {
  * Logika ini ada di sini (bukan di gn.sh) supaya `bin/gn` (yang langsung
  * exec ke router ini) tetap bisa menampilkan deprecation warning yang benar.
  */
-const DEPRECATED_COMMANDS: Record<string, string> = {};
+const DEPRECATED_COMMANDS: Record<string, string> = {
+	sessions: "OpenCode CLI langsung (`oc session`)",
+	s: "OpenCode CLI langsung (`oc session`)",
+	ses: "OpenCode CLI langsung (`oc session`)",
+	config: "Edit opencode.jsonc langsung via OpenCode config",
+	c: "Edit opencode.jsonc langsung via OpenCode config",
+};
 
 /** Cetak banner ringkas untuk header bantuan/error. */
 function printBanner(): void {
@@ -109,12 +104,6 @@ function showHelp(): void {
 		"  usage, u      \x1b[1;36m󰓅\x1b[0m Telemetry & Quota Engine (quota live, token activity, file audit)",
 	);
 	console.log(
-		"  sessions, s   \x1b[1;36m󰈙\x1b[0m OpenCode Session Search & Explorer (list/find session history)",
-	);
-	console.log(
-		"  config, c     \x1b[1;36m󰒓\x1b[0m OpenCode & Agent Config Manager (fast get/set opencode.jsonc)",
-	);
-	console.log(
 		"  ping, p       \x1b[1;36m󱈸\x1b[0m Connectivity check OMP Gateway & model cache (--force)",
 	);
 	console.log(
@@ -133,7 +122,7 @@ function showHelp(): void {
 	console.log("");
 	console.log("HINT");
 	console.log(
-		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mgn u -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mgn c -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
+		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mgn gw -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mgn u -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
 	);
 	console.log("");
 }

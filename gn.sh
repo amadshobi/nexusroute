@@ -54,6 +54,14 @@ case "${1:-}" in
         _gn_warn "Command 'gn bench' telah didepresiasi. Gunakan REST API OMP (POST /v1/chat/completions) atau 'ocm bench' untuk benchmark model."
         exit 2
         ;;
+    sessions|s|ses)
+        _gn_warn "Command 'gn sessions' telah didepresiasi. Gunakan OpenCode CLI langsung ('oc session')."
+        exit 2
+        ;;
+    config|c)
+        _gn_warn "Command 'gn config' telah didepresiasi. Kelola opencode.jsonc langsung melalui OpenCode."
+        exit 2
+        ;;
     quarantine|q)
         _gn_warn "Command 'gn quarantine' telah didepresiasi. Gunakan REST API OMP Auth-Broker (POST /v1/credential/:id/disable)."
         exit 2

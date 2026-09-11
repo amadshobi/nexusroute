@@ -15,8 +15,8 @@ import {
 	resolveAuthHeaders,
 	resolveUpstreamForModel,
 	DEFAULT_UPSTREAMS,
-} from "./upstream-router";
-import type { UpstreamTarget } from "./types";
+} from "../../src/gateway/upstream-router";
+import type { UpstreamTarget } from "../../src/gateway/types";
 
 const OMP: UpstreamTarget = {
 	name: "omp",

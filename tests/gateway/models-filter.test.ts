@@ -27,7 +27,7 @@ const CONFIG_PATH = join(TEST_HOME, ".config", "gn", "config.json");
 process.env.GN_CONFIG_PATH = CONFIG_PATH;
 process.env.GOBLIN_VAULT_ROOT = join(TEST_HOME, "vault");
 
-const { createGatewayServer } = await import("./server");
+const { createGatewayServer } = await import("../../src/gateway/server");
 
 const GW_PORT = 4630;
 const OMP_PORT = 4632;

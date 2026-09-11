@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { OpenRouterPricingEngine } from "./openrouter-pricing";
+import { OpenRouterPricingEngine } from "../../src/gateway/openrouter-pricing";
 
 describe("OpenRouterPricingEngine (Zero Hardcode)", () => {
 	it("initializes without errors and checks stale status", () => {

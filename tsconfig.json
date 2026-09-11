@@ -12,5 +12,5 @@
     "noEmit": true,
     "noEmitOnError": true
   },
-  "include": ["src/**/*", "telemetry/**/*"]
+  "include": ["src/**/*", "telemetry/**/*", "tests/**/*"]
 }

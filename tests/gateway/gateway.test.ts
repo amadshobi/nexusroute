@@ -11,7 +11,7 @@ import {
 	computePromptHash,
 	formatCachedStreamChunks,
 	PromptCacheManager,
-} from "./cache";
+} from "../../src/gateway/cache";
 import {
 	buildFallbackBody,
 	extractModelFromBody,
@@ -20,17 +20,21 @@ import {
 	recordModelSuccess,
 	resolveFallbackCandidates,
 	shouldTriggerFallback,
-} from "./circuit-breaker";
-import { DEFAULT_FALLBACK, DEFAULT_RULES, loadGatewayRules } from "./rules";
-import { sanitizeText } from "./sanitizer";
-import { FixtureManager } from "./replay";
+} from "../../src/gateway/circuit-breaker";
+import {
+	DEFAULT_FALLBACK,
+	DEFAULT_RULES,
+	loadGatewayRules,
+} from "../../src/gateway/rules";
+import { sanitizeText } from "../../src/gateway/sanitizer";
+import { FixtureManager } from "../../src/gateway/replay";
 import {
 	AccessLogManager,
 	formatModelChain,
 	renderAccessLogsTable,
 	type AccessLogEntry,
-} from "./access-log";
-import { createGatewayServer } from "./server";
+} from "../../src/gateway/access-log";
+import { createGatewayServer } from "../../src/gateway/server";
 
 const TEST_DIR = join(process.cwd(), ".tmp-test-gateway");
 
@@ -333,6 +337,14 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 			port: gwPort,
 			targetHost: "127.0.0.1",
 			targetPort: mockPort,
+			upstreams: [
+				{
+					name: "mock-target",
+					host: "127.0.0.1",
+					port: mockPort,
+					basePath: "/v1",
+				},
+			],
 			cacheEnabled: true,
 			cacheDir,
 			accessLogPath: testAccessLog,

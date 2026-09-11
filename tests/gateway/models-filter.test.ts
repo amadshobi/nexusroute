@@ -24,6 +24,7 @@ import { tmpdir } from "node:os";
 const TEST_HOME = mkdtempSync(join(tmpdir(), "gn-models-filter-"));
 const CONFIG_PATH = join(TEST_HOME, ".config", "gn", "config.json");
 // Sandbox persistence; also pin vault root so rule loading stays isolated.
+process.env.NEXUS_CONFIG_PATH = CONFIG_PATH;
 process.env.GN_CONFIG_PATH = CONFIG_PATH;
 process.env.GOBLIN_VAULT_ROOT = join(TEST_HOME, "vault");
 

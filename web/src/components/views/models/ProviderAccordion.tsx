@@ -13,6 +13,7 @@ interface ProviderAccordionProps {
 	activeCount: number;
 	allActive?: boolean;
 	open: boolean;
+	pingSnapshots?: Record<string, { statusCode: number; latencyMs: number }>;
 	onToggle: () => void;
 	onActivateAll: () => void;
 	onDeactivateAll: () => void;
@@ -28,6 +29,7 @@ export function ProviderAccordion({
 	poolModels,
 	activeCount,
 	open,
+	pingSnapshots,
 	onToggle,
 	onActivateAll,
 	onDeactivateAll,
@@ -96,26 +98,47 @@ export function ProviderAccordion({
 							</span>
 						) : (
 							<div className="grid grid-cols-2 gap-1.5 sm:gap-2">
-								{activeModels.map((model) => (
-									<div
-										key={model}
-										className="flex items-center justify-between gap-1.5 rounded-lg bg-[#161B26] border border-[#1E2433] px-2.5 py-1.5 hover:border-[#1E2538] transition-colors min-w-0"
-									>
-										<span className="flex items-center gap-1.5 min-w-0 flex-1">
-											<Cpu className="h-3 w-3 text-[#00EA88] shrink-0" />
-											<span className="text-[11px] sm:text-xs text-white font-mono truncate" title={model}>
-												{shortModelName(model)}
-											</span>
-										</span>
-										<button
-											onClick={() => onRemove(model)}
-											title={`Nonaktifkan ${model}`}
-											className="text-[#64748B] hover:text-rose-400 cursor-pointer shrink-0 p-0.5"
+								{activeModels.map((model) => {
+									const snap = pingSnapshots?.[model];
+									return (
+										<div
+											key={model}
+											className="flex items-center justify-between gap-1.5 rounded-lg bg-[#161B26] border border-[#1E2433] px-2.5 py-1.5 hover:border-[#1E2538] transition-colors min-w-0"
 										>
-											<X className="h-3 w-3" />
-										</button>
-									</div>
-								))}
+											<span className="flex items-center gap-1.5 min-w-0 flex-1">
+												<Cpu className="h-3 w-3 text-[#00EA88] shrink-0" />
+												<span
+													className="text-[11px] sm:text-xs text-white font-mono truncate"
+													title={model}
+												>
+													{shortModelName(model)}
+												</span>
+												{snap && (
+													<span
+														className={`text-[9px] font-mono px-1 py-0.2 rounded border shrink-0 ${
+															snap.statusCode === 200
+																? "bg-[#00EA88]/10 text-[#00EA88] border-[#00EA88]/30"
+																: "bg-rose-500/10 text-rose-400 border-rose-500/30"
+														}`}
+													>
+														{snap.statusCode === 200
+															? snap.latencyMs >= 0
+																? `${snap.latencyMs}ms`
+																: "200"
+															: "FAIL"}
+													</span>
+												)}
+											</span>
+											<button
+												onClick={() => onRemove(model)}
+												title={`Nonaktifkan ${model}`}
+												className="text-[#64748B] hover:text-rose-400 cursor-pointer shrink-0 p-0.5"
+											>
+												<X className="h-3 w-3" />
+											</button>
+										</div>
+									);
+								})}
 							</div>
 						)}
 					</div>
@@ -130,15 +153,33 @@ export function ProviderAccordion({
 							</span>
 						) : (
 							<div className="flex flex-wrap gap-2">
-								{poolModels.map((model) => (
-									<button
-										key={model}
-										onClick={() => onAdd(model)}
-										className="inline-flex items-center gap-1 rounded-full border border-dashed border-[#1E2433] bg-[#161B26] px-3 py-1 text-[11px] font-mono text-[#8A94A6] hover:border-[#1D68FE] hover:text-[#7AA2F7] transition-colors cursor-pointer"
-									>
-										<Plus className="h-3 w-3" /> {shortModelName(model)}
-									</button>
-								))}
+								{poolModels.map((model) => {
+									const snap = pingSnapshots?.[model];
+									return (
+										<button
+											key={model}
+											onClick={() => onAdd(model)}
+											className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#1E2433] bg-[#161B26] px-3 py-1 text-[11px] font-mono text-[#8A94A6] hover:border-[#1D68FE] hover:text-[#7AA2F7] transition-colors cursor-pointer"
+										>
+											<Plus className="h-3 w-3" /> {shortModelName(model)}
+											{snap && (
+												<span
+													className={`text-[9px] font-mono px-1 py-0.2 rounded border shrink-0 ${
+														snap.statusCode === 200
+															? "bg-[#00EA88]/10 text-[#00EA88] border-[#00EA88]/30"
+															: "bg-rose-500/10 text-rose-400 border-rose-500/30"
+													}`}
+												>
+													{snap.statusCode === 200
+														? snap.latencyMs >= 0
+															? `${snap.latencyMs}ms`
+															: "200"
+														: "FAIL"}
+												</span>
+											)}
+										</button>
+									);
+								})}
 							</div>
 						)}
 					</div>

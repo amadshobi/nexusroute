@@ -38,6 +38,25 @@ import {
 import { createGatewayServer } from "../../src/gateway/server";
 
 const TEST_DIR = join(process.cwd(), ".tmp-test-gateway");
+const ISOLATED_CONFIG_PATH = join(TEST_DIR, "isolated-config.json");
+process.env.NEXUS_CONFIG_PATH = ISOLATED_CONFIG_PATH;
+process.env.GN_CONFIG_PATH = ISOLATED_CONFIG_PATH;
+if (!existsSync(TEST_DIR)) {
+	mkdirSync(TEST_DIR, { recursive: true });
+}
+const { writeFileSync } = require("node:fs");
+writeFileSync(
+	ISOLATED_CONFIG_PATH,
+	JSON.stringify({
+		gateway: {
+			enabled: true,
+			modelFilter: {
+				whitelist: { omp: [], vansrouter: [] },
+				blacklist: [],
+			},
+		},
+	}),
+);
 
 describe("1. Rules & Configuration", () => {
 	test("loads default rules fallback safely", () => {
@@ -622,6 +641,7 @@ describe("7. Access Log & Fallback Chain Analytics", () => {
 		if (!existsSync(TEST_DIR)) {
 			mkdirSync(TEST_DIR, { recursive: true });
 		}
+		if (existsSync(logFile)) rmSync(logFile, { force: true });
 		logManager = new AccessLogManager(logFile);
 	});
 

@@ -44,7 +44,9 @@ export function PingView() {
 	>(() => {
 		if (typeof window !== "undefined") {
 			try {
-				const saved = localStorage.getItem("gn_model_ping_snapshots");
+				const saved =
+					localStorage.getItem("nexus_model_ping_snapshots") ??
+					localStorage.getItem("gn_model_ping_snapshots");
 				if (saved) return JSON.parse(saved);
 			} catch {
 				// storage fallback
@@ -77,7 +79,24 @@ export function PingView() {
 	};
 
 	useEffect(() => {
-		void fetchTree();
+		let isMounted = true;
+		const timer = setTimeout(async () => {
+			try {
+				const res = await fetch("/api/dashboard/ping/tree");
+				if (res.ok && isMounted) {
+					const data = (await res.json()) as PingTreeResponse;
+					setTree(data);
+				}
+			} catch {
+				// fallback
+			} finally {
+				if (isMounted) setLoadingTree(false);
+			}
+		}, 0);
+		return () => {
+			isMounted = false;
+			clearTimeout(timer);
+		};
 	}, []);
 
 	const toggleGateway = (gwName: string) => {
@@ -94,18 +113,147 @@ export function PingView() {
 		}));
 	};
 
-	const runProbe = async (
-		type: "gateway" | "provider" | "model",
+	const updateModelSnapshot = (
+		modelId: string,
+		statusCode: number,
+		latencyMs: number,
+	) => {
+		setModelSnapshots((prev) => {
+			const updated = {
+				...prev,
+				[modelId]: { statusCode, latencyMs },
+			};
+			try {
+				localStorage.setItem(
+					"nexus_model_ping_snapshots",
+					JSON.stringify(updated),
+				);
+				localStorage.setItem(
+					"gn_model_ping_snapshots",
+					JSON.stringify(updated),
+				);
+			} catch {}
+			return updated;
+		});
+	};
+
+	const runProviderProbe = async (
 		gateway: string,
-		provider?: string,
+		prov: { name: string; models: Array<{ id: string; displayName: string }> },
+	) => {
+		const provKey = `${gateway}:${prov.name}`;
+		const targetKey = `pr:${gateway}:${prov.name}`;
+		if (probingTargets[targetKey]) return;
+
+		// 1. Auto-expand accordion so user sees all model spinners
+		setExpandedProviders((prev) => ({ ...prev, [provKey]: true }));
+
+		// 2. Mark provider and ALL its models as actively probing
+		setProbingTargets((prev) => {
+			const next = { ...prev, [targetKey]: true };
+			for (const m of prov.models) {
+				next[`md:${gateway}:${m.id}`] = true;
+			}
+			return next;
+		});
+
+		const results: Array<{
+			modelId: string;
+			statusCode: number;
+			latencyMs: number;
+		}> = [];
+		const queue = [...prov.models];
+		const concurrency = Math.min(3, Math.max(1, queue.length));
+
+		const worker = async () => {
+			while (queue.length > 0) {
+				const m = queue.shift();
+				if (!m) break;
+				const modelTargetKey = `md:${gateway}:${m.id}`;
+
+				try {
+					const res = await fetch("/api/dashboard/ping/probe", {
+						method: "POST",
+						headers: { "content-type": "application/json" },
+						body: JSON.stringify({
+							type: "model",
+							gateway,
+							modelId: m.id,
+						}),
+					});
+
+					if (res.ok) {
+						const data = (await res.json()) as PingProbeResponse;
+						updateModelSnapshot(m.id, data.statusCode, data.latencyMs);
+						results.push({
+							modelId: m.id,
+							statusCode: data.statusCode,
+							latencyMs: data.latencyMs,
+						});
+					} else {
+						updateModelSnapshot(m.id, res.status, -1);
+						results.push({
+							modelId: m.id,
+							statusCode: res.status,
+							latencyMs: -1,
+						});
+					}
+				} catch {
+					updateModelSnapshot(m.id, 500, -1);
+					results.push({
+						modelId: m.id,
+						statusCode: 500,
+						latencyMs: -1,
+					});
+				} finally {
+					setProbingTargets((prev) => {
+						const next = { ...prev };
+						delete next[modelTargetKey];
+						return next;
+					});
+				}
+			}
+		};
+
+		try {
+			await Promise.all(Array.from({ length: concurrency }, () => worker()));
+		} finally {
+			setProbingTargets((prev) => {
+				const next = { ...prev };
+				delete next[targetKey];
+				return next;
+			});
+		}
+
+		const successCount = results.filter((r) => r.statusCode === 200).length;
+		const validLatencies = results
+			.filter((r) => r.latencyMs > 0)
+			.map((r) => r.latencyMs);
+		const avgLatency =
+			validLatencies.length > 0
+				? Math.round(
+						validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length,
+					)
+				: -1;
+
+		setCurrentResult({
+			statusCode:
+				successCount === results.length ? 200 : successCount > 0 ? 207 : 500,
+			latencyMs: avgLatency,
+			target: `${prov.name} (${successCount}/${results.length} OK)`,
+			status: successCount === results.length ? "OK" : "FAIL",
+			detail: `${successCount} online, ${results.length - successCount} offline`,
+		});
+	};
+
+	const runProbe = async (
+		type: "gateway" | "model",
+		gateway: string,
+		_provider?: string,
 		modelId?: string,
 	) => {
 		const targetKey =
-			type === "gateway"
-				? `gw:${gateway}`
-				: type === "provider"
-					? `pr:${gateway}:${provider}`
-					: `md:${gateway}:${modelId}`;
+			type === "gateway" ? `gw:${gateway}` : `md:${gateway}:${modelId}`;
 
 		if (probingTargets[targetKey]) return;
 
@@ -115,7 +263,7 @@ export function PingView() {
 			const res = await fetch("/api/dashboard/ping/probe", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
-				body: JSON.stringify({ type, gateway, provider, modelId }),
+				body: JSON.stringify({ type, gateway, modelId }),
 			});
 
 			if (res.ok) {
@@ -128,26 +276,8 @@ export function PingView() {
 					detail: data.detail,
 				};
 
-				// Update model snapshot cache if probing a model
 				if (type === "model" && modelId) {
-					setModelSnapshots((prev) => {
-						const updated = {
-							...prev,
-							[modelId]: {
-								statusCode: data.statusCode,
-								latencyMs: data.latencyMs,
-							},
-						};
-						try {
-							localStorage.setItem(
-								"gn_model_ping_snapshots",
-								JSON.stringify(updated),
-							);
-						} catch {
-							// storage fallback
-						}
-						return updated;
-					});
+					updateModelSnapshot(modelId, data.statusCode, data.latencyMs);
 				}
 
 				setCurrentResult(resultItem);
@@ -155,25 +285,13 @@ export function PingView() {
 				const resultItem: LogEntryItem = {
 					statusCode: res.status,
 					latencyMs: -1,
-					target: modelId || provider || gateway,
+					target: modelId || gateway,
 					status: "FAIL",
 					detail: `HTTP ${res.status}`,
 				};
 
 				if (type === "model" && modelId) {
-					setModelSnapshots((prev) => {
-						const updated = {
-							...prev,
-							[modelId]: { statusCode: res.status, latencyMs: -1 },
-						};
-						try {
-							localStorage.setItem(
-								"gn_model_ping_snapshots",
-								JSON.stringify(updated),
-							);
-						} catch {}
-						return updated;
-					});
+					updateModelSnapshot(modelId, res.status, -1);
 				}
 
 				setCurrentResult(resultItem);
@@ -182,25 +300,13 @@ export function PingView() {
 			const resultItem: LogEntryItem = {
 				statusCode: 500,
 				latencyMs: -1,
-				target: modelId || provider || gateway,
+				target: modelId || gateway,
 				status: "FAIL",
 				detail: err.message || "Connection Error",
 			};
 
 			if (type === "model" && modelId) {
-				setModelSnapshots((prev) => {
-					const updated = {
-						...prev,
-						[modelId]: { statusCode: 500, latencyMs: -1 },
-					};
-					try {
-						localStorage.setItem(
-							"gn_model_ping_snapshots",
-							JSON.stringify(updated),
-						);
-					} catch {}
-					return updated;
-				});
+				updateModelSnapshot(modelId, 500, -1);
 			}
 
 			setCurrentResult(resultItem);
@@ -257,7 +363,7 @@ export function PingView() {
 			<div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#1E2433]">
 				<div>
 					<h3 className="text-sm font-semibold text-white tracking-tight">
-						Ping & Health Monitor
+						Ping
 					</h3>
 					<p className="text-xs text-[#8A94A6]">
 						Hierarchical latency & model availability probe across upstream
@@ -416,12 +522,10 @@ export function PingView() {
 															{/* Provider Ping Button: Pure Icon, Transparent */}
 															<button
 																type="button"
-																onClick={() =>
-																	runProbe("provider", gw.name, prov.name)
-																}
+																onClick={() => runProviderProbe(gw.name, prov)}
 																disabled={isProvProbing}
 																className="p-1 rounded border border-[#1E2433] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 disabled:opacity-50"
-																title={`Ping Provider ${prov.name}`}
+																title={`Ping all models in ${prov.name}`}
 															>
 																{isProvProbing ? (
 																	<Loader2 className="h-3 w-3 animate-spin text-[#00EA88]" />

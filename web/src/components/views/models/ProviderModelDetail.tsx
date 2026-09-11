@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
+	Activity,
 	ArrowLeft,
 	Check,
 	ChevronDown,
@@ -76,6 +77,19 @@ export function ProviderModelDetail({
 	const [saving, setSaving] = useState(false);
 	const [toast, setToast] = useState<ToastMessage | null>(null);
 
+	const [pingSnapshots] = useState<
+		Record<string, { statusCode: number; latencyMs: number }>
+	>(() => {
+		try {
+			const raw =
+				localStorage.getItem("nexus_model_ping_snapshots") ||
+				localStorage.getItem("gn_model_ping_snapshots");
+			return raw ? JSON.parse(raw) : {};
+		} catch {
+			return {};
+		}
+	});
+
 	const toastIdRef = useRef(0);
 	const pendingRef = useRef(0);
 	const persistQueue = useRef<Promise<void>>(Promise.resolve());
@@ -143,6 +157,43 @@ export function ProviderModelDetail({
 			active
 				? `Semua model ${label} diaktifkan`
 				: `Semua model ${label} dinonaktifkan`,
+		);
+	};
+
+	const syncWithPingResults = () => {
+		const tested = allModels.filter((m) => pingSnapshots[m] !== undefined);
+		if (tested.length === 0) {
+			showToast(
+				"Belum ada riwayat ping. Jalankan tes di menu Ping terlebih dahulu.",
+				"error",
+			);
+			return;
+		}
+
+		const next = new Set<string>();
+		let okCount = 0;
+		let failCount = 0;
+
+		for (const model of allModels) {
+			const snap = pingSnapshots[model];
+			if (snap) {
+				if (snap.statusCode === 200) {
+					next.add(model);
+					okCount += 1;
+				} else {
+					failCount += 1;
+				}
+			} else {
+				// Model belum pernah di-ping: pertahankan status aktif saat ini
+				if (activeSet.has(model)) {
+					next.add(model);
+				}
+			}
+		}
+
+		persist(
+			next,
+			`Sinkron Ping: ${okCount} model aktif (200 OK), ${failCount} dinonaktifkan`,
 		);
 	};
 
@@ -274,10 +325,18 @@ export function ProviderModelDetail({
 					</Button>
 					<Button
 						size="sm"
+						onClick={syncWithPingResults}
+						className="bg-[#00EA88]/15 hover:bg-[#00EA88]/25 text-[#00EA88] border border-[#00EA88]/30 text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
+						title="Otomatis aktifkan model 200 OK dan nonaktifkan model FAIL berdasarkan tes Ping"
+					>
+						<Activity className="h-3 w-3" /> Sync with Ping
+					</Button>
+					<Button
+						size="sm"
 						onClick={() =>
 							persist(new Set(allModels), "Semua model diaktifkan")
 						}
-						className="bg-[#00EA88]/10 hover:bg-[#00EA88]/20 text-[#00EA88] border border-[#00EA88]/30 text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
+						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
 						<SlidersHorizontal className="h-3 w-3" /> Active All
 					</Button>
@@ -296,8 +355,7 @@ export function ProviderModelDetail({
 					<TriangleAlert className="h-3.5 w-3.5 mt-0.5 shrink-0" />
 					<span>
 						Whitelist kosong diperlakukan backend sebagai Passthrough (semua
-						model tetap aktif). Untuk memblokir model, gunakan Global Blacklist
-						di halaman utama.
+						model tetap aktif).
 					</span>
 				</div>
 			)}
@@ -319,6 +377,7 @@ export function ProviderModelDetail({
 							activeCount={group.active.length}
 							allActive={group.pool.length === 0 && group.total > 0}
 							open={isOpen(group.provider)}
+							pingSnapshots={pingSnapshots}
 							onToggle={() => toggleProvider(group.provider)}
 							onActivateAll={() => setProviderActive(group, true)}
 							onDeactivateAll={() => setProviderActive(group, false)}

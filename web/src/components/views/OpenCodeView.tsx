@@ -239,9 +239,7 @@ export function OpenCodeView({
 
 				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
 					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">
-							Token volume
-						</span>
+						<span className="text-xs font-medium text-[#8A94A6]">Token</span>
 						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-purple-400 font-mono text-[10px]">
 							In: {formatCompact(stats.input)}
 						</span>

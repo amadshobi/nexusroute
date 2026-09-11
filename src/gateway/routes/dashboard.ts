@@ -88,23 +88,24 @@ export async function handleDashboardApi(
 				const inTok = l.tokensInput ?? 0;
 				const outTok = l.tokensOutput ?? 0;
 				const cacheTok = l.tokensCache ?? 0;
-				const reqTokens = l.tokensTotal ?? inTok + outTok + cacheTok;
+				const freshInTok = Math.max(0, inTok - cacheTok);
+				const reqTokens = l.tokensTotal ?? inTok + outTok;
 				dbTotalTokens += reqTokens;
-				dbInputFreshTokens += inTok;
+				dbInputFreshTokens += freshInTok;
 				dbCacheReadTokens += cacheTok;
 				dbOutputTokens += outTok;
 
 				let reqCost = 0;
-				if (inTok > 0 || outTok > 0 || cacheTok > 0) {
+				if (freshInTok > 0 || outTok > 0 || cacheTok > 0) {
 					const m = l.servedModel || l.initialModel || "";
 					const rates = defaultPricingEngine.resolveModelPricing(m);
 					if (rates) {
 						reqCost =
-							(inTok / 1_000_000) * rates.inputUsdPer1M +
+							(freshInTok / 1_000_000) * rates.inputUsdPer1M +
 							(outTok / 1_000_000) * rates.outputUsdPer1M +
 							(cacheTok / 1_000_000) * rates.cacheReadUsdPer1M;
 					} else {
-						reqCost = ((inTok + outTok) / 1_000_000) * 1.5;
+						reqCost = ((freshInTok + outTok) / 1_000_000) * 1.5;
 					}
 				}
 				dbMarketCostUsd += reqCost;
@@ -119,7 +120,7 @@ export async function handleDashboardApi(
 					tokenSparkline[idx] += reqTokens;
 					costSparkline[idx] += reqCost;
 					cacheReadSparkline[idx] += cacheTok;
-					inputFreshSparkline[idx] += inTok;
+					inputFreshSparkline[idx] += freshInTok;
 				}
 			}
 		} catch {

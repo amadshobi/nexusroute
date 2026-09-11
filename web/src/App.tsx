@@ -31,13 +31,34 @@ const VALID_NAVS = new Set([
 	"settings-combo",
 ]);
 
+function getStorageItem(key: string, legacyKey?: string): string | null {
+	if (typeof window === "undefined") return null;
+	try {
+		return (
+			localStorage.getItem(key) ??
+			(legacyKey ? localStorage.getItem(legacyKey) : null)
+		);
+	} catch {
+		return null;
+	}
+}
+
+function setStorageItem(key: string, value: string): void {
+	if (typeof window === "undefined") return;
+	try {
+		localStorage.setItem(key, value);
+	} catch {
+		// localStorage disabled or full
+	}
+}
+
 function getInitialNav(): string {
 	if (typeof window !== "undefined") {
 		const hash = window.location.hash.replace(/^#\/?/, "");
 		if (hash && VALID_NAVS.has(hash)) {
 			return hash;
 		}
-		const saved = localStorage.getItem("gn_active_nav");
+		const saved = getStorageItem("nexus_active_nav", "gn_active_nav");
 		if (saved && VALID_NAVS.has(saved)) {
 			return saved;
 		}
@@ -51,14 +72,56 @@ export default function App() {
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [sidebarOverviewOpen, setSidebarOverviewOpen] = useState(true);
 	const [sidebarSettingsOpen, setSidebarSettingsOpen] = useState(false);
+	const [sidebarCollapsed, setSidebarCollapsedState] = useState<boolean>(() => {
+		const saved = getStorageItem(
+			"nexus_sidebar_collapsed",
+			"gn_sidebar_collapsed",
+		);
+		return saved === "true";
+	});
+
+	const setSidebarCollapsed = useCallback(
+		(value: boolean | ((prev: boolean) => boolean)) => {
+			setSidebarCollapsedState((prev) => {
+				const next = typeof value === "function" ? value(prev) : value;
+				setStorageItem("nexus_sidebar_collapsed", next ? "true" : "false");
+				return next;
+			});
+		},
+		[],
+	);
+
+	// Global shortcut Ctrl+B / Cmd+B to toggle sidebar collapse
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+				// Don't intercept if user is typing in input or textarea
+				const target = e.target as HTMLElement;
+				if (
+					target?.tagName === "INPUT" ||
+					target?.tagName === "TEXTAREA" ||
+					target?.isContentEditable
+				) {
+					return;
+				}
+				e.preventDefault();
+				setSidebarCollapsed((prev) => !prev);
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [setSidebarCollapsed]);
 
 	// In-session view snapshots: each view preserves its chosen time range during navigation & reload
 	const [viewTimeRanges, setViewTimeRanges] = useState<Record<string, string>>(
 		() => {
-			if (typeof window !== "undefined") {
+			const saved = getStorageItem(
+				"nexus_view_time_ranges",
+				"gn_view_time_ranges",
+			);
+			if (saved) {
 				try {
-					const saved = localStorage.getItem("gn_view_time_ranges");
-					if (saved) return JSON.parse(saved);
+					return JSON.parse(saved);
 				} catch {
 					// fallback
 				}
@@ -75,15 +138,9 @@ export default function App() {
 
 	const setActiveNav = useCallback((nav: string) => {
 		setActiveNavState(nav);
-		if (typeof window !== "undefined") {
-			try {
-				localStorage.setItem("gn_active_nav", nav);
-				if (window.location.hash !== `#${nav}`) {
-					window.history.replaceState(null, "", `#${nav}`);
-				}
-			} catch {
-				// localstorage quota/disabled
-			}
+		setStorageItem("nexus_active_nav", nav);
+		if (typeof window !== "undefined" && window.location.hash !== `#${nav}`) {
+			window.history.replaceState(null, "", `#${nav}`);
 		}
 	}, []);
 
@@ -101,29 +158,17 @@ export default function App() {
 
 	// Remote Data State & Connectivity
 	const [usdIdrRate, setUsdIdrRateState] = useState<number>(() => {
-		if (typeof window !== "undefined") {
-			try {
-				const saved = localStorage.getItem("gn_usd_idr_rate");
-				if (saved) {
-					const parsed = Number(saved);
-					if (parsed > 0) return parsed;
-				}
-			} catch {
-				// fallback
-			}
+		const saved = getStorageItem("nexus_usd_idr_rate", "gn_usd_idr_rate");
+		if (saved) {
+			const parsed = Number(saved);
+			if (parsed > 0) return parsed;
 		}
 		return 17000;
 	});
 
 	const setUsdIdrRate = useCallback((rate: number) => {
 		setUsdIdrRateState(rate);
-		if (typeof window !== "undefined") {
-			try {
-				localStorage.setItem("gn_usd_idr_rate", rate.toString());
-			} catch {
-				// fallback
-			}
-		}
+		setStorageItem("nexus_usd_idr_rate", rate.toString());
 	}, []);
 
 	const [overview, setOverview] = useState<OverviewData | null>(null);
@@ -211,13 +256,7 @@ export default function App() {
 	const handleViewTimeRangeChange = (viewKey: string, newRange: string) => {
 		setViewTimeRanges((prev) => {
 			const next = { ...prev, [viewKey]: newRange };
-			if (typeof window !== "undefined") {
-				try {
-					localStorage.setItem("gn_view_time_ranges", JSON.stringify(next));
-				} catch {
-					// fallback
-				}
-			}
+			setStorageItem("nexus_view_time_ranges", JSON.stringify(next));
 			return next;
 		});
 		void fetchData(newRange);
@@ -240,7 +279,10 @@ export default function App() {
 	// Load model governance config lazily when the models view is opened
 	useEffect(() => {
 		if (activeNav === "settings-models") {
-			void fetchModelsConfig();
+			const timer = setTimeout(() => {
+				void fetchModelsConfig();
+			}, 0);
+			return () => clearTimeout(timer);
 		}
 	}, [activeNav, fetchModelsConfig]);
 
@@ -285,7 +327,8 @@ export default function App() {
 			const inTok =
 				l.tokensInput ??
 				(l.latencyMs > 0 ? Math.floor(l.latencyMs * 18 * 0.8) : 500);
-			return acc + inTok;
+			const cacheTok = l.tokensCache ?? 0;
+			return acc + Math.max(0, inTok - cacheTok);
 		}, 0);
 
 	const promptSum = totalInputFresh + totalCacheRead;
@@ -297,9 +340,16 @@ export default function App() {
 				: 0;
 
 	// Dynamic time-series sparklines (prefer backend precomputed buckets for true full-window accuracy)
+	const serverSparklines = overview?.sparklines;
+	const serverReqSparkline = serverSparklines?.req;
+	const serverTokenSparkline = serverSparklines?.tokens;
+	const serverCacheReadSparkline = serverSparklines?.cacheRead;
+	const serverInputFreshSparkline = serverSparklines?.inputFresh;
+	const serverCostSparkline = serverSparklines?.cost;
+
 	const reqSparkline = useMemo(() => {
-		if (overview?.sparklines?.req && overview.sparklines.req.length > 0) {
-			return overview.sparklines.req;
+		if (serverReqSparkline && serverReqSparkline.length > 0) {
+			return serverReqSparkline;
 		}
 		return computeTimeSeriesBuckets(
 			filteredLogs,
@@ -307,11 +357,11 @@ export default function App() {
 			() => 1,
 			10,
 		);
-	}, [filteredLogs, overview?.sparklines?.req]);
+	}, [filteredLogs, serverReqSparkline]);
 
 	const tokenSparkline = useMemo(() => {
-		if (overview?.sparklines?.tokens && overview.sparklines.tokens.length > 0) {
-			return overview.sparklines.tokens;
+		if (serverTokenSparkline && serverTokenSparkline.length > 0) {
+			return serverTokenSparkline;
 		}
 		return computeTimeSeriesBuckets(
 			llmLogs,
@@ -326,14 +376,11 @@ export default function App() {
 							: 850,
 			10,
 		);
-	}, [llmLogs, overview?.sparklines?.tokens]);
+	}, [llmLogs, serverTokenSparkline]);
 
 	const cacheReadSparkline = useMemo(() => {
-		if (
-			overview?.sparklines?.cacheRead &&
-			overview.sparklines.cacheRead.length > 0
-		) {
-			return overview.sparklines.cacheRead;
+		if (serverCacheReadSparkline && serverCacheReadSparkline.length > 0) {
+			return serverCacheReadSparkline;
 		}
 		return computeTimeSeriesBuckets(
 			llmLogs,
@@ -341,14 +388,11 @@ export default function App() {
 			(l) => l.tokensCache ?? 0,
 			10,
 		);
-	}, [llmLogs, overview?.sparklines?.cacheRead]);
+	}, [llmLogs, serverCacheReadSparkline]);
 
 	const inputFreshSparkline = useMemo(() => {
-		if (
-			overview?.sparklines?.inputFresh &&
-			overview.sparklines.inputFresh.length > 0
-		) {
-			return overview.sparklines.inputFresh;
+		if (serverInputFreshSparkline && serverInputFreshSparkline.length > 0) {
+			return serverInputFreshSparkline;
 		}
 		return computeTimeSeriesBuckets(
 			llmLogs,
@@ -358,11 +402,11 @@ export default function App() {
 				(l.latencyMs > 0 ? Math.floor(l.latencyMs * 18 * 0.8) : 500),
 			10,
 		);
-	}, [llmLogs, overview?.sparklines?.inputFresh]);
+	}, [llmLogs, serverInputFreshSparkline]);
 
 	const costSparkline = useMemo(() => {
-		if (overview?.sparklines?.cost && overview.sparklines.cost.length > 0) {
-			return overview.sparklines.cost;
+		if (serverCostSparkline && serverCostSparkline.length > 0) {
+			return serverCostSparkline;
 		}
 		return computeTimeSeriesBuckets(
 			llmLogs,
@@ -380,10 +424,10 @@ export default function App() {
 			},
 			10,
 		);
-	}, [llmLogs, overview?.sparklines?.cost]);
+	}, [llmLogs, serverCostSparkline]);
 
 	const restartGateway = async () => {
-		if (!confirm("Restart Goblin Nexus Gateway sekarang?")) return;
+		if (!confirm("Restart NexusRoute Gateway sekarang?")) return;
 		try {
 			await fetch("/api/dashboard/control/gateway", {
 				method: "POST",
@@ -398,7 +442,7 @@ export default function App() {
 	};
 
 	return (
-		<div className="min-h-screen bg-[#0E1117] text-[#E2E8F0] font-sans antialiased selection:bg-[#1D68FE] selection:text-white relative overflow-x-hidden">
+		<div className="h-screen w-screen overflow-hidden bg-[#0E1117] text-[#E2E8F0] font-sans antialiased selection:bg-[#1D68FE] selection:text-white flex relative">
 			{mobileMenuOpen && (
 				<div
 					onClick={() => setMobileMenuOpen(false)}
@@ -406,27 +450,34 @@ export default function App() {
 				/>
 			)}
 
-			<div className="flex min-h-screen">
-				<Sidebar
+			<Sidebar
+				activeNav={activeNav}
+				setActiveNav={setActiveNav}
+				mobileMenuOpen={mobileMenuOpen}
+				setMobileMenuOpen={setMobileMenuOpen}
+				sidebarOverviewOpen={sidebarOverviewOpen}
+				setSidebarOverviewOpen={setSidebarOverviewOpen}
+				sidebarSettingsOpen={sidebarSettingsOpen}
+				setSidebarSettingsOpen={setSidebarSettingsOpen}
+				collapsed={sidebarCollapsed}
+			/>
+
+			<div
+				className={`min-w-0 flex-1 h-full flex flex-col overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] box-border ${
+					sidebarCollapsed ? "md:pl-16" : "md:pl-64"
+				}`}
+			>
+				<TopHeader
 					activeNav={activeNav}
-					setActiveNav={setActiveNav}
-					mobileMenuOpen={mobileMenuOpen}
 					setMobileMenuOpen={setMobileMenuOpen}
-					sidebarOverviewOpen={sidebarOverviewOpen}
-					setSidebarOverviewOpen={setSidebarOverviewOpen}
-					sidebarSettingsOpen={sidebarSettingsOpen}
-					setSidebarSettingsOpen={setSidebarSettingsOpen}
+					sidebarCollapsed={sidebarCollapsed}
+					setSidebarCollapsed={setSidebarCollapsed}
+					fetchData={() => void fetchData(activeTimeRange)}
+					loading={loading}
+					isOnline={isOnline}
 				/>
 
-				<div className="flex-1 flex flex-col min-w-0 w-full">
-					<TopHeader
-						activeNav={activeNav}
-						setMobileMenuOpen={setMobileMenuOpen}
-						fetchData={() => void fetchData(activeTimeRange)}
-						loading={loading}
-						isOnline={isOnline}
-					/>
-
+				<div className="flex-1 h-full overflow-y-auto overflow-x-hidden">
 					<main className="p-4 sm:p-8 space-y-6 max-w-5xl w-full mx-auto">
 						<div
 							className={
@@ -522,6 +573,7 @@ export default function App() {
 								restartGateway={restartGateway}
 								usdIdrRate={usdIdrRate}
 								setUsdIdrRate={setUsdIdrRate}
+								isOnline={isOnline}
 							/>
 						</div>
 

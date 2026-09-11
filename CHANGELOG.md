@@ -5,6 +5,41 @@
 
 ---
 
+## [1.1.0] - 2026-09-11
+
+### Added
+
+- **Multi-Model Provider Ping Engine & Batching Concurrency (`web/src/components/views/PingView.tsx`)**:
+  - Tombol Ping pada level Provider kini memicu pengecekan live ke **seluruh model** di bawah provider tersebut secara paralel (concurrency queue limit = 3 untuk mencegah HTTP 429).
+  - Auto-expand accordion saat probe provider dimulai agar pengguna dapat memantau spinner aktif di tiap model secara real-time.
+  - Aggregasi summary status di banner atas: `Provider (X/Y OK • Avg latency ms)`.
+- **Health Ping Synchronization Wizard in Model Governance (`web/src/components/views/models/`)**:
+  - Tombol **"Sync with Ping"** pada `ProviderModelDetail`: secara cerdas mengaktifkan model sehat (HTTP 200 OK) ke whitelist dan menonaktifkan model yang gagal (HTTP non-200), sementara model yang belum pernah di-ping dipertahankan status aktifnya.
+  - Live latency badge per-model di `ProviderAccordion` menampilkan status HTTP dan latency terkini (`120ms` atau `FAIL`) yang dibaca langsung dari snapshot cache.
+- **Unified Nexus Cyber Emerald Favicon & Brand Icon**:
+  - Sinkronisasi 1:1 antara favicon browser tab (`web/public/favicon.svg`) dan icon brand Sidebar (`NexusIcon`), mengadopsi geometric cyber bolt dengan palette emerald neon (`#00FFA3` ➔ `#00EA88` ➔ `#059669`) dan specular sheen.
+
+### Changed
+
+- **Navigation & Page Label Simplification (`web/src/components/layout/`)**:
+  - Merampingkan nama navigasi menjadi 1 kata minimalis:
+    - `Live Logs` ➔ **`Logs`**
+    - `Ping Monitor` ➔ **`Ping`**
+    - `Quota Monitor` ➔ **`Quota`**
+- **Dark Mode Provider Icon Visibility & Color Calibration (`web/src/assets/`, `ProviderIcons.tsx`)**:
+  - Memperbaiki rendering icon yang sebelumnya gelap/hitam akibat isolasi `currentColor` pada tag `<img>`:
+    - **Google Gemini**: Gradasi resmi Gemini Blue-Purple-Rose (`#4285F4` ➔ `#9B72CB` ➔ `#D96570`).
+    - **Anthropic Claude**: Authentic terracotta coral `#CC785C`.
+    - **Xiaomi Mimo**: Vibrant brand orange `#FF6900`.
+    - **Ollama**: Kontras tinggi dengan siluet putih `#FFFFFF` dan detail `#131722`.
+
+### Removed
+
+- **Redundant Global Blacklist Card in Model Governance (`ModelsControlView.tsx`)**:
+  - Menghapus card input teks manual "Global Blacklist" di bawah kartu gateway; manajemen model kini bersih dan terpusat di halaman detail "Kelola Model" per-upstream.
+
+---
+
 ## [1.0.0] - 2026-09-11
 
 ### Added

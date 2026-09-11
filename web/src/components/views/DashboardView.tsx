@@ -118,12 +118,10 @@ export function DashboardView({
 					<MiniSparkline data={reqSparkline} color="#00EA88" />
 				</div>
 
-				{/* Card 3: Token volume */}
+				{/* Card 3: Token */}
 				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
 					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">
-							Token volume
-						</span>
+						<span className="text-xs font-medium text-[#8A94A6]">Token</span>
 						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#7AA2F7]">
 							<ArrowUpRight className="h-3 w-3" /> Total
 						</span>
@@ -155,7 +153,7 @@ export function DashboardView({
 				</div>
 			</div>
 
-			{/* Second Row: 2 Sparkline Cards for Cache Read & Input Asli */}
+			{/* Second Row: 2 Sparkline Cards for Cache Read & Input */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
 				{/* Card 1: Cache Read */}
 				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
@@ -175,12 +173,10 @@ export function DashboardView({
 					<MiniSparkline data={cacheReadSparkline} color="#A855F7" />
 				</div>
 
-				{/* Card 2: Input Asli */}
+				{/* Card 2: Input */}
 				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
 					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">
-							Input Asli
-						</span>
+						<span className="text-xs font-medium text-[#8A94A6]">Input</span>
 						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#7AA2F7]">
 							Fresh
 						</span>

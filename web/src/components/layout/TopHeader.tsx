@@ -1,10 +1,12 @@
 import { useState } from "react";
-import { Menu, RefreshCw } from "lucide-react";
+import { Menu, RefreshCw, PanelLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface TopHeaderProps {
 	activeNav: string;
 	setMobileMenuOpen: (open: boolean) => void;
+	sidebarCollapsed?: boolean;
+	setSidebarCollapsed?: (value: boolean | ((prev: boolean) => boolean)) => void;
 	fetchData?: () => Promise<void> | void;
 	loading: boolean;
 	isOnline: boolean;
@@ -13,6 +15,8 @@ interface TopHeaderProps {
 export function TopHeader({
 	activeNav,
 	setMobileMenuOpen,
+	sidebarCollapsed = false,
+	setSidebarCollapsed,
 	loading,
 	isOnline,
 }: TopHeaderProps) {
@@ -42,11 +46,11 @@ export function TopHeader({
 			case "settings-combo":
 				return "Model Combos";
 			case "logs":
-				return "Live Logs";
+				return "Logs";
 			case "ping":
-				return "Ping Monitor";
+				return "Ping";
 			case "quota":
-				return "Quota Monitor";
+				return "Quota";
 			default:
 				return nav
 					.replace("overview-", "")
@@ -63,9 +67,24 @@ export function TopHeader({
 				<button
 					onClick={() => setMobileMenuOpen(true)}
 					className="p-1.5 rounded-lg border border-[#1E2433] bg-[#161B26] text-[#94A3B8] hover:text-white md:hidden cursor-pointer"
+					title="Open mobile menu"
 				>
 					<Menu className="h-4 w-4" />
 				</button>
+
+				{setSidebarCollapsed && (
+					<button
+						onClick={() => setSidebarCollapsed((prev) => !prev)}
+						className="p-1.5 rounded-lg border border-[#1E2433] bg-[#161B26] text-[#94A3B8] hover:text-white hover:bg-[#1E2433] hidden md:flex items-center justify-center cursor-pointer transition-colors"
+						title={
+							sidebarCollapsed
+								? "Expand sidebar (Ctrl+B)"
+								: "Collapse sidebar (Ctrl+B)"
+						}
+					>
+						<PanelLeft className="h-4 w-4" />
+					</button>
+				)}
 
 				<h2 className="text-base font-semibold text-white">
 					{getHeaderTitle(activeNav)}

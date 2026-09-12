@@ -50,7 +50,14 @@ export function isModelWhitelisted(
 	if (!whitelist) return true;
 	const allowed = whitelist[upstreamName];
 	if (!allowed || allowed.length === 0) return true;
-	return allowed.includes(modelId);
+	if (allowed.includes(modelId)) return true;
+
+	// Normalize prefix for tolerant matching (e.g. cmc/deepseek vs deepseek)
+	const cleanModelId = modelId.replace(/^(commandcode|cmc)\//, "");
+	return allowed.some((entry) => {
+		const cleanEntry = entry.replace(/^(commandcode|cmc)\//, "");
+		return cleanEntry === cleanModelId;
+	});
 }
 
 /**
@@ -63,7 +70,13 @@ export function isModelBlacklisted(
 	if (!modelFilter) return false;
 	const blacklist = modelFilter.blacklist;
 	if (!blacklist || blacklist.length === 0) return false;
-	return blacklist.includes(modelId);
+	if (blacklist.includes(modelId)) return true;
+
+	const cleanModelId = modelId.replace(/^(commandcode|cmc)\//, "");
+	return blacklist.some((entry) => {
+		const cleanEntry = entry.replace(/^(commandcode|cmc)\//, "");
+		return cleanEntry === cleanModelId;
+	});
 }
 
 /**

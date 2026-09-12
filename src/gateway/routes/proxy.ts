@@ -261,14 +261,30 @@ export async function handleProxyRequest(
 	}
 
 	// Resolve upstream tujuan berdasarkan model (multi-upstream router).
+	const route = await ctx.resolveRouteForRequest(
+		url.pathname,
+		url.search,
+		primaryModel,
+	);
+	const targetUrl = route.url;
+	for (const [h, v] of Object.entries(route.authHeaders)) {
+		outboundHeaders.set(h, v);
+	}
+
 	// Special check: Direct CommandCode Adapter (bypasses VansRouter entirely!)
-	// Only bypass when model explicitly matches commandcode and upstream is commandcode
+	// Triggers when target upstream is commandcode or model explicitly uses cmc/ / commandcode/ prefix.
+	const isCommandCodeTarget =
+		route.upstream.name === "commandcode" ||
+		route.upstream.name === "cmc" ||
+		(primaryModel &&
+			(primaryModel.startsWith("cmc/") ||
+				primaryModel.startsWith("commandcode/")));
+
 	if (
 		isLlmEndpoint &&
 		primaryModel &&
 		defaultCommandCodeAdapter.isAvailable() &&
-		(primaryModel.startsWith("cmc/") ||
-			primaryModel.startsWith("commandcode/")) &&
+		isCommandCodeTarget &&
 		parsedBodyInfo
 	) {
 		const abortController = new AbortController();
@@ -328,16 +344,6 @@ export async function handleProxyRequest(
 		} catch (directErr: any) {
 			// fallback to standard routing if direct adapter fails
 		}
-	}
-
-	const route = await ctx.resolveRouteForRequest(
-		url.pathname,
-		url.search,
-		primaryModel,
-	);
-	const targetUrl = route.url;
-	for (const [h, v] of Object.entries(route.authHeaders)) {
-		outboundHeaders.set(h, v);
 	}
 
 	// Upstream tool schema normalization (e.g. CommandCode Anthropic tools)

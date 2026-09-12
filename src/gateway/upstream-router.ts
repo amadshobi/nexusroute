@@ -18,6 +18,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Database } from "bun:sqlite";
+import { defaultCommandCodeAdapter } from "../adapters/commandcode";
 import type { UpstreamTarget, ResolvedRoute } from "./types";
 
 /** Default registry bila user tidak mendefinisikan upstream sendiri. */
@@ -146,7 +147,13 @@ export function buildUpstreamUrl(
 
 	const base = upstream.basePath.replace(/\/+$/, "");
 	const normalizedBase = base || "";
-	return `http://${upstream.host}:${upstream.port}${normalizedBase}${rest}${search}`;
+	const protocol = upstream.port === 443 ? "https" : "http";
+	const portPart =
+		(upstream.port === 80 && protocol === "http") ||
+		(upstream.port === 443 && protocol === "https")
+			? ""
+			: `:${upstream.port}`;
+	return `${protocol}://${upstream.host}${portPart}${normalizedBase}${rest}${search}`;
 }
 
 /**
@@ -162,6 +169,13 @@ export function resolveUpstreamForModel(
 ): UpstreamTarget {
 	if (!modelId) {
 		return pickDefault(upstreams, defaultName);
+	}
+	// Model explicitly prefixed with cmc/ or commandcode/
+	if (modelId.startsWith("cmc/") || modelId.startsWith("commandcode/")) {
+		const cmcUpstream = upstreams.find(
+			(u) => u.name === "commandcode" || u.name === "cmc",
+		);
+		if (cmcUpstream) return cmcUpstream;
 	}
 	// Preferensi eksplisit: cari upstream yang catalog-nya memuat model.
 	for (const upstream of upstreams) {
@@ -256,6 +270,18 @@ export async function collectCatalogs(
 	const catalogMap = new Map<string, Set<string>>();
 	await Promise.all(
 		upstreams.map(async (upstream) => {
+			if (upstream.name === "commandcode" || upstream.name === "cmc") {
+				if (defaultCommandCodeAdapter.isAvailable()) {
+					const ids = defaultCommandCodeAdapter.getModels().flatMap((m) => {
+						const clean = m.id.replace(/^(commandcode|cmc)\//, "");
+						return [`cmc/${clean}`, clean];
+					});
+					catalogMap.set(upstream.name, new Set(ids));
+				} else {
+					catalogMap.set(upstream.name, new Set());
+				}
+				return;
+			}
 			const authHeaders = await resolveAuthHeaders(upstream);
 			const ids = await fetchUpstreamCatalog(upstream, authHeaders, fetchFn);
 			catalogMap.set(upstream.name, new Set(ids));

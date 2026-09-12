@@ -5,6 +5,22 @@
 
 ---
 
+## [1.2.0] - 2026-09-12
+
+### Added
+
+- **CommandCode Direct Adapter Integration (`src/adapters/commandcode/`, `src/gateway/`)**:
+  - Auto-register `commandcode` sebagai upstream resmi (`https://api.commandcode.ai/alpha`) pada Gateway saat API key tersedia di environment atau auth store (`~/.config/nexus/`, `~/.omp/agent/auth.json`, dll).
+  - Injeksi langsung 69 model CommandCode dengan prefix canonical `cmc/` (mis. `cmc/deepseek/deepseek-v4-flash`, `cmc/claude-opus-5`) ke `/v1/models` catalog aggregator agar mudah dibedakan di OpenCode TUI dan mencegah tabrakan namespace.
+  - Smart model resolution & prefix stripping di `proxy.ts`: merutekan model dengan prefix `cmc/`, `commandcode/`, maupun nama model asli langsung ke direct cloud adapter.
+  - Normalisasi toleran whitelist/blacklist di `context.ts` sehingga entri whitelist lama tetap cocok secara otomatis baik dengan atau tanpa prefix `cmc/`.
+  - Dedicated ping tree dan active probe support untuk `commandcode` di `/api/dashboard/ping/tree` dan `/api/dashboard/ping/probe`.
+- **CommandCode Brand Assets & Web Console Synchronization (`web/src/`)**:
+  - Penambahan asset SVG resmi `commandcode.svg` di `web/src/assets/` dan `web/src/assets/providers/`.
+  - Registrasi `CommandCodeIcon` di `ProviderIcons.tsx` dengan auto-detection pada `GatewayIcon` dan `ProviderIcon`.
+  - Integrasi label upstream `CommandCode Direct` pada `ModelsControlView.tsx` dan auto-expansion di `PingView.tsx`.
+  - Peningkatan ekstraksi provider di `model-utils.ts` untuk memetakan keluarga model CommandCode ke brand masing-masing.
+
 ## [1.1.1] - 2026-09-12
 
 ### Fixed

@@ -33,6 +33,7 @@ import { handleStaticSpa } from "./routes/static";
 import { handleAgentsTelemetry } from "./routes/agents";
 import { handlePingTree, handlePingProbe } from "./routes/ping-probe";
 import { handleDashboardApi } from "./routes/dashboard";
+import { defaultCommandCodeAdapter } from "../adapters/commandcode";
 import { handleModelsCatalog } from "./routes/models";
 import { handleProxyRequest } from "./routes/proxy";
 
@@ -184,6 +185,22 @@ export function createGatewayServer(
 				host: "127.0.0.1",
 				port: config.targetPort,
 				basePath: "/v1",
+			},
+		];
+	}
+
+	if (
+		!customConfig.upstreams &&
+		defaultCommandCodeAdapter.isAvailable() &&
+		!upstreams.some((u) => u.name === "commandcode" || u.name === "cmc")
+	) {
+		upstreams = [
+			...upstreams,
+			{
+				name: "commandcode",
+				host: "api.commandcode.ai",
+				port: 443,
+				basePath: "/alpha",
 			},
 		];
 	}

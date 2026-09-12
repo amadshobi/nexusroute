@@ -44,17 +44,20 @@ export async function handleModelsCatalog(
 		}),
 	);
 
-	// Inject CommandCode models from adapter if registered as an upstream or standalone
-	if (
-		defaultCommandCodeAdapter.isAvailable() &&
-		ctx.upstreams.some((u) => u.name === "commandcode" || u.name === "cmc")
-	) {
-		const cmcModels = defaultCommandCodeAdapter.getModels().map((m) => ({
-			id: m.id,
-			object: "model",
-			created: Math.floor(Date.now() / 1000),
-			owned_by: "commandcode",
-		}));
+	// Inject CommandCode models from adapter if registered as an upstream
+	const hasCmcUpstream = ctx.upstreams.some(
+		(u) => u.name === "commandcode" || u.name === "cmc",
+	);
+	if (defaultCommandCodeAdapter.isAvailable() && hasCmcUpstream) {
+		const cmcModels = defaultCommandCodeAdapter.getModels().map((m) => {
+			const clean = m.id.replace(/^(commandcode|cmc)\//, "");
+			return {
+				id: `cmc/${clean}`,
+				object: "model",
+				created: Math.floor(Date.now() / 1000),
+				owned_by: "commandcode",
+			};
+		});
 		responses.push({
 			upstreamName: "commandcode",
 			bodyText: JSON.stringify({ object: "list", data: cmcModels }),

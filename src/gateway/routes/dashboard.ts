@@ -46,6 +46,7 @@ export async function handleDashboardApi(
 		let dbOutputTokens = 0;
 		let dbCacheHits = svc.cacheHits;
 		let dbMarketCostUsd = 0;
+		let dbGrossCostUsd = 0;
 
 		const bucketCount = 10;
 		const now = Date.now();
@@ -96,6 +97,7 @@ export async function handleDashboardApi(
 				dbOutputTokens += outTok;
 
 				let reqCost = 0;
+				let grossCost = 0;
 				if (freshInTok > 0 || outTok > 0 || cacheTok > 0) {
 					const m = l.servedModel || l.initialModel || "";
 					const rates = defaultPricingEngine.resolveModelPricing(m);
@@ -104,11 +106,16 @@ export async function handleDashboardApi(
 							(freshInTok / 1_000_000) * rates.inputUsdPer1M +
 							(outTok / 1_000_000) * rates.outputUsdPer1M +
 							(cacheTok / 1_000_000) * rates.cacheReadUsdPer1M;
+						grossCost =
+							(inTok / 1_000_000) * rates.inputUsdPer1M +
+							(outTok / 1_000_000) * rates.outputUsdPer1M;
 					} else {
 						reqCost = ((freshInTok + outTok) / 1_000_000) * 1.5;
+						grossCost = ((inTok + outTok) / 1_000_000) * 1.5;
 					}
 				}
 				dbMarketCostUsd += reqCost;
+				dbGrossCostUsd += grossCost;
 
 				const ts = l.ts;
 				if (ts >= windowStart && ts <= windowEnd) {
@@ -137,8 +144,9 @@ export async function handleDashboardApi(
 					totalRequests: dbTotalRequests,
 					totalTokens: dbTotalTokens,
 					totalSpendUsd: dbMarketCostUsd,
+					grossCostUsd: dbGrossCostUsd,
 					localSpendUsd: 0,
-					savingsUsd: 0,
+					savingsUsd: Math.max(0, dbGrossCostUsd - dbMarketCostUsd),
 					tokens: {
 						total: dbTotalTokens,
 						inputFresh: dbInputFreshTokens,

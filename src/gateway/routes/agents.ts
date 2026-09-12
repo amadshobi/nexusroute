@@ -32,6 +32,7 @@ export async function handleAgentsTelemetry(
 					let recentQ = `
 						SELECT 
 							s.id, 
+							s.parent_id,
 							s.title, 
 							s.time_created, 
 							s.time_updated, 

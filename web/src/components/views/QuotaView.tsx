@@ -4,6 +4,7 @@ import {
 	AntigravityIcon,
 	GoogleIcon,
 	AnthropicIcon,
+	CommandCodeIcon,
 } from "@/components/icons/ProviderIcons";
 import type {
 	QuotaResponse,
@@ -74,6 +75,8 @@ export function QuotaView({ quota }: QuotaViewProps) {
 						<div className="flex items-center gap-2">
 							{provider.provider.includes("antigravity") ? (
 								<AntigravityIcon className="h-5 w-5" />
+							) : provider.provider.includes("commandcode") ? (
+								<CommandCodeIcon className="h-5 w-5" />
 							) : (
 								<div className="h-5 w-5 rounded bg-[#7AA2F7]/20 flex items-center justify-center font-bold text-xs text-[#7AA2F7]">
 									{provider.displayName[0]}
@@ -139,6 +142,11 @@ export function QuotaView({ quota }: QuotaViewProps) {
 											const isClaude =
 												group.displayName.toLowerCase().includes("claude") ||
 												group.displayName.toLowerCase().includes("gpt");
+											const isCmc =
+												provider.provider.includes("commandcode") ||
+												group.displayName.toLowerCase().includes("window") ||
+												group.displayName.toLowerCase().includes("balance") ||
+												group.displayName.toLowerCase().includes("credit");
 
 											return (
 												<div
@@ -149,6 +157,8 @@ export function QuotaView({ quota }: QuotaViewProps) {
 													<div className="flex items-center gap-1.5">
 														{isClaude ? (
 															<AnthropicIcon className="h-3 w-3" />
+														) : isCmc ? (
+															<CommandCodeIcon className="h-3 w-3" />
 														) : (
 															<GoogleIcon className="h-3 w-3" />
 														)}
@@ -189,12 +199,19 @@ export function QuotaView({ quota }: QuotaViewProps) {
 																	className="space-y-0.5 text-xs"
 																>
 																	<div className="flex items-center justify-between text-[10px]">
-																		<span className="text-[#8A94A6] truncate max-w-[130px]">
-																			{bucket.displayName.replace(
-																				" Limit Remaining",
-																				"",
+																		<div className="flex flex-col min-w-0">
+																			<span className="text-[#8A94A6] truncate max-w-[130px]">
+																				{bucket.displayName.replace(
+																					" Limit Remaining",
+																					"",
+																				)}
+																			</span>
+																			{bucket.description && (
+																				<span className="text-[9px] font-mono text-[#64748B]">
+																					{bucket.description}
+																				</span>
 																			)}
-																		</span>
+																		</div>
 																		<div className="flex items-center gap-1.5 font-mono shrink-0">
 																			<span
 																				className={`font-bold ${textColor}`}

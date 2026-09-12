@@ -32,6 +32,7 @@ export function PingView() {
 	>({
 		omp: true,
 		vansrouter: true,
+		commandcode: true,
 	});
 	const [expandedProviders, setExpandedProviders] = useState<
 		Record<string, boolean>

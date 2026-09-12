@@ -17,6 +17,8 @@ interface ModelsControlViewProps {
 const PROVIDER_LABELS: Record<string, string> = {
 	omp: "OMP Gateway",
 	vansrouter: "Vans Gateway",
+	commandcode: "CommandCode Direct",
+	cmc: "CommandCode Direct",
 };
 
 function providerDisplayName(name: string): string {

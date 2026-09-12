@@ -11,6 +11,7 @@ import ollamaUrl from "@/assets/ollama.svg";
 import nvidiaUrl from "@/assets/nvidia.svg";
 import opencodeUrl from "@/assets/opencode.svg";
 import moarkUrl from "@/assets/moark.svg";
+import commandcodeUrl from "@/assets/commandcode.svg";
 import { Server, Boxes } from "lucide-react";
 
 export function AntigravityIcon({
@@ -195,6 +196,20 @@ export function BpmIcon({ className = "h-4 w-4" }: { className?: string }) {
 	);
 }
 
+export function CommandCodeIcon({
+	className = "h-4 w-4",
+}: {
+	className?: string;
+}) {
+	return (
+		<img
+			src={commandcodeUrl}
+			alt="Command Code"
+			className={`${className} object-contain inline-block select-none shrink-0`}
+		/>
+	);
+}
+
 export function GatewayIcon({
 	name,
 	className = "h-4 w-4",
@@ -208,6 +223,9 @@ export function GatewayIcon({
 	}
 	if (lower.includes("vans") || lower.includes("9router")) {
 		return <VansIcon className={className} />;
+	}
+	if (lower.includes("commandcode") || lower.includes("cmc")) {
+		return <CommandCodeIcon className={className} />;
 	}
 	return <Server className={`${className} text-[#00EA88] shrink-0`} />;
 }
@@ -228,6 +246,9 @@ export function ProviderIcon({
 	}
 	if (lower.includes("anthropic") || lower.includes("claude")) {
 		return <AnthropicIcon className={className} />;
+	}
+	if (lower.includes("commandcode") || lower.includes("cmc")) {
+		return <CommandCodeIcon className={className} />;
 	}
 	if (lower.includes("openrouter")) {
 		return <OpenRouterIcon className={className} />;

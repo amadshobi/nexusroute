@@ -54,6 +54,7 @@ export function resolveProviderIcon(modelOrProvider?: string): string | null {
 		[/nvidia|nemotron/, "nvidia"],
 		[/openrouter/, "openrouter"],
 		[/github|copilot/, "github-copilot"],
+		[/commandcode|cmc/, "commandcode"],
 	];
 
 	for (const [pattern, targetSlug] of keywords) {
@@ -80,6 +81,7 @@ export function resolveModelFamilyName(modelId?: string): string {
 	if (lower.includes("kimi") || lower.includes("moonshot")) return "Kimi";
 	if (lower.includes("qwen")) return "Qwen";
 	if (lower.includes("glm")) return "GLM";
+	if (lower.includes("commandcode") || lower.includes("cmc")) return "CommandCode";
 
 	// Fallback to first segment or short model name
 	const parts = modelId.split("/");

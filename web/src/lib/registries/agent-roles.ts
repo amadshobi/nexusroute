@@ -1,6 +1,6 @@
 import {
 	Hammer,
-	Microscope,
+	SearchCheck,
 	Eye,
 	Palette,
 	Wrench,
@@ -37,7 +37,7 @@ export const ROLE_TAXONOMY: AgentRoleMeta[] = [
 	{
 		id: "reviewer",
 		label: "Reviewer",
-		icon: Microscope,
+		icon: SearchCheck, // 🔎 Kaca pembesar audit/check
 		color: "#C084FC", // purple-400
 		patterns: [
 			"review",

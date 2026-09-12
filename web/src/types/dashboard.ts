@@ -5,6 +5,7 @@ export interface OverviewData {
 	totalRequests: number;
 	totalTokens?: number;
 	totalSpendUsd?: number;
+	grossCostUsd?: number;
 	localSpendUsd?: number;
 	savingsUsd?: number;
 	timeRange?: string;
@@ -115,6 +116,7 @@ export interface LogEntry {
 
 export interface OpenCodeSession {
 	id: string;
+	parent_id?: string | null;
 	title: string;
 	time_created: number;
 	time_updated: number;

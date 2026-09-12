@@ -98,6 +98,13 @@ export function DashboardView({
 								? formatIdr(rawCost, usdIdrRate)
 								: `$${estCloudCost}`}
 						</span>
+						{overview?.grossCostUsd && overview.grossCostUsd > rawCost ? (
+							<div className="text-[11px] text-[#64748B] font-mono line-through mt-0.5">
+								{currency === "IDR"
+									? formatIdr(overview.grossCostUsd, usdIdrRate)
+									: `$${overview.grossCostUsd.toFixed(2)}`}
+							</div>
+						) : null}
 					</div>
 					<MiniSparkline data={costSparkline} color="#10B981" />
 				</div>

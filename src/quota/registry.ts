@@ -1,5 +1,6 @@
 import type { IQuotaProvider, ProviderQuotaResult } from "./types";
 import { AntigravityQuotaProvider } from "./providers/antigravity";
+import { CommandCodeQuotaProvider } from "./providers/commandcode";
 
 export class QuotaRegistry {
 	private providers: Map<string, IQuotaProvider> = new Map();
@@ -42,3 +43,4 @@ export class QuotaRegistry {
 // Global registry instance
 export const defaultQuotaRegistry = new QuotaRegistry();
 defaultQuotaRegistry.register(new AntigravityQuotaProvider());
+defaultQuotaRegistry.register(new CommandCodeQuotaProvider());

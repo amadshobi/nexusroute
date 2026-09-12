@@ -20,6 +20,13 @@
   - Registrasi `CommandCodeIcon` di `ProviderIcons.tsx` dengan auto-detection pada `GatewayIcon` dan `ProviderIcon`.
   - Integrasi label upstream `CommandCode Direct` pada `ModelsControlView.tsx` dan auto-expansion di `PingView.tsx`.
   - Peningkatan ekstraksi provider di `model-utils.ts` untuk memetakan keluarga model CommandCode ke brand masing-masing.
+- **CommandCode Live Quota & Usage Monitor (`src/quota/providers/commandcode.ts`, CLI & Web Console)**:
+  - Implementasi `CommandCodeQuotaProvider` yang terhubung langsung ke internal endpoint `https://api.commandcode.ai/alpha`:
+    - `/alpha/whoami`: Autentikasi dan identifikasi akun pengguna (email, username).
+    - `/alpha/billing/credits`: Window limits rolling 5-jam & mingguan, waktu reset ISO-8601, status exceeded, dan monthly credits.
+    - `/alpha/usage/summary`: Akumulasi spend USD, token in/out, dan total requests.
+  - Tampilan visual di CLI (`nexus quota`) lengkap dengan progress bar persentase sisa kuota dan countdown waktu reset.
+  - Kartu quota Command Code resmi di Web Console (`QuotaView.tsx`) dengan brand icon dan rincian dollar spend/cap.
 
 ## [1.1.1] - 2026-09-12
 

@@ -25,6 +25,7 @@ export interface GatewayContext {
 		upstream: UpstreamTarget,
 	) => Promise<Record<string, string>>;
 	getCatalog: () => Promise<Map<string, Set<string>>>;
+	updateCatalogCache?: (map: Map<string, Set<string>>) => void;
 	resolveRouteForRequest: (
 		reqPath: string,
 		search: string,

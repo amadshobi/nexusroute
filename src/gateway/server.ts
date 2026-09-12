@@ -229,6 +229,11 @@ export function createGatewayServer(
 		return catalogFetchPromise;
 	}
 
+	function updateCatalogCache(map: Map<string, Set<string>>) {
+		catalogCache = map;
+		lastCatalogFetch = Date.now();
+	}
+
 	async function resolveRouteForRequest(
 		reqPath: string,
 		search: string,
@@ -296,6 +301,7 @@ export function createGatewayServer(
 				fixtureManager,
 				getAuthHeadersFor,
 				getCatalog,
+				updateCatalogCache,
 				resolveRouteForRequest,
 				getRequestIP(req: Request) {
 					return serverInstance?.requestIP(req)?.address ?? null;

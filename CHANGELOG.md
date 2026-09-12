@@ -5,6 +5,15 @@
 
 ---
 
+## [1.1.1] - 2026-09-12
+
+### Fixed
+
+- **Fast-fail Catalog Aggregation & Double-Fetch Elimination (`src/gateway/routes/models.ts`, `upstream-router.ts`)**:
+  - Menghapus pemanggilan `ctx.getCatalog()` berulang di `handleModelsCatalog`: `catalogMap` kini langsung dibangun dari `responses` in-memory dan disinkronkan ke cache runtime via `updateCatalogCache()`.
+  - Memangkas timeout fetch per-upstream dari `5000ms` menjadi `2000ms` (`UPSTREAM_TIMEOUT_MS`). Mengurangi durasi degradasi ketika salah satu upstream mati dari ~10 detik menjadi ~2 detik dan mencegah downstream client/plugin mengalami timeout abort.
+  - Memastikan model dari upstream aktif (seperti VansRouter) tetap lolos filter dan langsung disajikan ke client meskipun upstream lain (seperti OMP) sedang offline.
+
 ## [1.1.0] - 2026-09-11
 
 ### Added

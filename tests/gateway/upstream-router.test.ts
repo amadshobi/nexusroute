@@ -220,4 +220,15 @@ describe("upstream-router: auth resolution", () => {
 		expect(DEFAULT_UPSTREAMS[0].name).toBe("omp");
 		expect(DEFAULT_UPSTREAMS[1].port).toBe(20128);
 	});
+
+	test("collectCatalogs handles unreachable upstream gracefully without throwing", async () => {
+		const unreachableUpstream: UpstreamTarget = {
+			name: "dead",
+			host: "127.0.0.1",
+			port: 39991,
+			basePath: "/v1",
+		};
+		const map = await collectCatalogs([unreachableUpstream]);
+		expect(map.get("dead")?.size).toBe(0);
+	});
 });

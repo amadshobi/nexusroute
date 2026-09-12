@@ -1,4 +1,9 @@
-import { buildUpstreamUrl, mergeModelResponses } from "../upstream-router";
+import {
+	buildUpstreamUrl,
+	mergeModelResponses,
+	parseModelIds,
+	UPSTREAM_TIMEOUT_MS,
+} from "../upstream-router";
 import { defaultPricingEngine } from "../openrouter-pricing";
 import { defaultCommandCodeAdapter } from "../../adapters/commandcode";
 import {
@@ -29,7 +34,7 @@ export async function handleModelsCatalog(
 			try {
 				const res = await fetch(r.target, {
 					headers: { ...r.authHeaders, accept: "application/json" },
-					signal: AbortSignal.timeout(5000),
+					signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 				});
 				if (!res.ok) return { upstreamName: r.u.name, bodyText: null };
 				return { upstreamName: r.u.name, bodyText: await res.text() };
@@ -58,9 +63,16 @@ export async function handleModelsCatalog(
 
 	const merged = mergeModelResponses(responses);
 
+	// Build catalog map directly from fetched responses (single source of truth, eliminates redundant HTTP roundtrip)
+	const catalogMap = new Map<string, Set<string>>();
+	for (const r of responses) {
+		const ids = r.bodyText ? parseModelIds(r.bodyText) : [];
+		catalogMap.set(r.upstreamName, new Set(ids));
+	}
+	ctx.updateCatalogCache?.(catalogMap);
+
 	// Filter merged.data by whitelist per-upstream and global blacklist
 	if (ctx.rules.modelFilter) {
-		const catalogMap = await ctx.getCatalog();
 		const filteredData: any[] = [];
 		for (const entry of merged.data) {
 			const modelId = entry.id as string;

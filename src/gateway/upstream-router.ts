@@ -36,6 +36,9 @@ export const DEFAULT_UPSTREAMS: readonly UpstreamTarget[] = Object.freeze([
 	}),
 ]);
 
+/** Default timeout per upstream fetch (fail fast saat salah satu upstream mati). */
+export const UPSTREAM_TIMEOUT_MS = 2000;
+
 const VANS_DB_PATH_DEFAULT = join(homedir(), ".9router", "db", "data.sqlite");
 
 /**
@@ -197,7 +200,7 @@ export async function fetchUpstreamCatalog(
 		const url = buildUpstreamUrl(upstream, "/v1/models");
 		const res = await fetchFn(url, {
 			headers: { ...authHeaders, accept: "application/json" },
-			signal: AbortSignal.timeout(5000),
+			signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
 		});
 		if (!res.ok) return [];
 		const text = await res.text();

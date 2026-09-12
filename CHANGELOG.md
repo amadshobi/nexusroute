@@ -27,6 +27,9 @@
     - `/alpha/usage/summary`: Akumulasi spend USD, token in/out, dan total requests.
   - Tampilan visual di CLI (`nexus quota`) lengkap dengan progress bar persentase sisa kuota dan countdown waktu reset.
   - Kartu quota Command Code resmi di Web Console (`QuotaView.tsx`) dengan brand icon dan rincian dollar spend/cap.
+  - Provider accordion di `QuotaView.tsx`: transisi buka-tutup super smooth berbasis CSS grid, state persistence di `localStorage` (`nexus_quota_expanded_providers`), dan default collapsed saat pertama dibuka.
+  - Penyaringan otomatis teks narasi redundan Google Cloud Code ("You have used/hit...") pada kartu kuota tanpa menghilangkan angka limit nominal dollar CommandCode.
+  - Kalibrasi stroke SVG CommandCode menjadi `#FFFFFF` agar kontras tinggi dan tajam di browser dark mode.
 
 ## [1.1.1] - 2026-09-12
 

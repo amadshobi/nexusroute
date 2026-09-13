@@ -5,6 +5,16 @@
 
 ---
 
+## [1.4.0] - 2026-09-13
+
+### Added
+
+- **feat(gateway)**: Zero-dependency in-process `GatewayEventBus` (`src/gateway/context.ts`, `src/gateway/server.ts`) with subscribe/emit/subscriber-count and per-handler error isolation.
+- **feat(gateway)**: Bun-native SSE stream endpoint `GET /api/gateway/events` (alias `GET /api/dashboard/events`) in `src/gateway/routes/dashboard.ts`, emitting `connected`, `request_complete`, and 15-second `heartbeat` events with idempotent cleanup.
+- **feat(web)**: Real-time `useGatewayEvents` hook (`web/src/lib/useGatewayEvents.ts`) replacing aggressive 3-second HTTP polling with event-driven `request_complete` updates, reconnect backoff, and a relaxed fallback poll.
+- **feat(web)**: Unified Agents Telemetry Hub (`web/src/components/views/AgentsView.tsx`) merging OpenCode and Hermes telemetry with segmented `All | OpenCode | Hermes` filters.
+- **refactor(web)**: Master-Detail Provider Hub for model governance (Issue #1) in `ModelsControlView` / `ProviderModelDetail` with compact provider cards, search, bulk controls, and a full English-only string sweep.
+
 ## [1.3.0] - 2026-09-13
 
 ### Added

@@ -73,6 +73,27 @@ export function formatShortPath(fullPath?: string): string {
 	return fullPath.replace(/^\/home\/[^/]+/, "~");
 }
 
+/**
+ * Format a USD amount into a compact IDR string using the given exchange rate.
+ * Scales the suffix (K/M/B/T) so large rupiah figures stay readable.
+ */
+export function formatIdr(usd: number, rate: number = 17000): string {
+	const idr = usd * rate;
+	if (idr >= 1_000_000_000_000) {
+		return `Rp${(idr / 1_000_000_000_000).toFixed(2)}T`;
+	}
+	if (idr >= 1_000_000_000) {
+		return `Rp${(idr / 1_000_000_000).toFixed(2)}B`;
+	}
+	if (idr >= 1_000_000) {
+		return `Rp${(idr / 1_000_000).toFixed(2)}M`;
+	}
+	if (idr >= 1_000) {
+		return `Rp${(idr / 1_000).toFixed(1)}K`;
+	}
+	return `Rp${Math.round(idr).toLocaleString("en-US")}`;
+}
+
 export function extractModelId(rawModel?: string): string {
 	if (!rawModel) return "unknown";
 	try {

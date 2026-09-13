@@ -108,6 +108,10 @@ export function ModelsControlView({
 										<span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#7AA2F7]/10 border border-[#7AA2F7]/20 text-[#7AA2F7] whitespace-nowrap">
 											All Active (Passthrough)
 										</span>
+									) : activeCount === 0 ? (
+										<span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#161B26] border border-[#1E2433] text-[#64748B] whitespace-nowrap">
+											0 Active
+										</span>
 									) : (
 										<span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#00EA88]/10 border border-[#00EA88]/20 text-[#00EA88] whitespace-nowrap">
 											{activeCount} / {total} Active
@@ -126,7 +130,7 @@ export function ModelsControlView({
 										<span>{total} models</span>
 										<span>
 											{passthrough
-												? "tanpa whitelist"
+												? "Passthrough (all allowed)"
 												: `${configured.length} whitelisted`}
 										</span>
 									</div>
@@ -137,7 +141,7 @@ export function ModelsControlView({
 									onClick={() => setSelectedUpstream(name)}
 									className="w-full bg-[#1D68FE]/20 hover:bg-[#1D68FE]/30 text-[#7AA2F7] border border-[#1D68FE]/30 text-xs h-8 gap-1.5 cursor-pointer"
 								>
-									Kelola Model <ArrowRight className="h-3 w-3" />
+									Manage Models <ArrowRight className="h-3 w-3" />
 								</Button>
 							</div>
 						);

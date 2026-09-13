@@ -63,7 +63,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 				type="button"
 				onClick={onDismiss}
 				className="ml-1 p-0.5 text-[#8A94A6] hover:text-white rounded-full hover:bg-[#1E2433] transition-colors cursor-pointer"
-				title="Tutup"
+				title="Close"
 			>
 				<X className="h-3 w-3" />
 			</button>

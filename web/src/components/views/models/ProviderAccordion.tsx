@@ -59,7 +59,7 @@ export function ProviderAccordion({
 					</span>
 				</button>
 				<div className="flex items-center gap-2 shrink-0">
-					{/* Badge status: Aktif jika >= 1 model aktif, Nonaktif abu-abu jika 0 */}
+					{/* Status badge: green when at least one model is active, gray at zero */}
 					<span
 						className={`text-[10px] font-mono px-2 py-0.5 rounded-md border whitespace-nowrap ${
 							activeCount > 0
@@ -67,18 +67,18 @@ export function ProviderAccordion({
 								: "bg-[#161B26] border-[#1E2433] text-[#64748B]"
 						}`}
 					>
-						{activeCount > 0 ? "Aktif" : "Nonaktif"}
+						{activeCount > 0 ? "Active" : "Inactive"}
 					</span>
 					<button
 						onClick={onActivateAll}
-						title={`Aktifkan semua model ${label}`}
+						title={`Activate all ${label} models`}
 						className="inline-flex items-center justify-center h-6 w-6 rounded bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-[#00EA88] hover:text-[#00EA88]/80 cursor-pointer transition-colors"
 					>
 						<Plus className="h-3 w-3" />
 					</button>
 					<button
 						onClick={onDeactivateAll}
-						title={`Nonaktifkan semua model ${label}`}
+						title={`Deactivate all ${label} models`}
 						className="inline-flex items-center justify-center h-6 w-6 rounded bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-[#8A94A6] hover:text-rose-400 cursor-pointer transition-colors"
 					>
 						<Minus className="h-3 w-3" />
@@ -94,7 +94,7 @@ export function ProviderAccordion({
 						</span>
 						{activeModels.length === 0 ? (
 							<span className="block text-[11px] text-[#64748B]">
-								Tidak ada model aktif.
+								No active models.
 							</span>
 						) : (
 							<div className="grid grid-cols-2 gap-1.5 sm:gap-2">
@@ -131,7 +131,7 @@ export function ProviderAccordion({
 											</span>
 											<button
 												onClick={() => onRemove(model)}
-												title={`Nonaktifkan ${model}`}
+												title={`Deactivate ${model}`}
 												className="text-[#64748B] hover:text-rose-400 cursor-pointer shrink-0 p-0.5"
 											>
 												<X className="h-3 w-3" />
@@ -149,7 +149,7 @@ export function ProviderAccordion({
 						</span>
 						{poolModels.length === 0 ? (
 							<span className="block text-[11px] text-[#64748B]">
-								Semua model provider ini sudah aktif.
+								All models for this provider are already active.
 							</span>
 						) : (
 							<div className="flex flex-wrap gap-2">

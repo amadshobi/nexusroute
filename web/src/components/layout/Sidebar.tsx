@@ -8,7 +8,6 @@ import {
 	ChevronRight,
 	Layers,
 	Server,
-	Code2,
 	Bot,
 	Trophy,
 	FlaskConical,
@@ -110,27 +109,15 @@ export function Sidebar({
 					</button>
 
 					<button
-						onClick={() => handleNavClick("overview-opencode")}
+						onClick={() => handleNavClick("overview-agents")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
-							activeNav === "overview-opencode"
+							activeNav === "overview-agents"
 								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
 								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
 						}`}
-						title="OpenCode Telemetry"
+						title="Agents Telemetry"
 					>
-						<Code2 className="h-4 w-4 text-sky-400" />
-					</button>
-
-					<button
-						onClick={() => handleNavClick("overview-hermes")}
-						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
-							activeNav === "overview-hermes"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
-						}`}
-						title="Hermes Agent State"
-					>
-						<Bot className="h-4 w-4 text-purple-400" />
+						<Bot className="h-4 w-4 text-sky-400" />
 					</button>
 
 					<button
@@ -264,27 +251,15 @@ export function Sidebar({
 								</button>
 
 								<button
-									onClick={() => handleNavClick("overview-opencode")}
+									onClick={() => handleNavClick("overview-agents")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
-										activeNav === "overview-opencode"
+										activeNav === "overview-agents"
 											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
 											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
 									}`}
 								>
-									<Code2 className="h-3.5 w-3.5 text-sky-400 shrink-0" />
-									<span>OpenCode</span>
-								</button>
-
-								<button
-									onClick={() => handleNavClick("overview-hermes")}
-									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
-										activeNav === "overview-hermes"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
-									}`}
-								>
-									<Bot className="h-3.5 w-3.5 text-purple-400 shrink-0" />
-									<span>Hermes</span>
+									<Bot className="h-3.5 w-3.5 text-sky-400 shrink-0" />
+									<span>Agents</span>
 								</button>
 
 								<button

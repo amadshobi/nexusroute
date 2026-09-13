@@ -3,8 +3,7 @@ import { Sidebar } from "./components/layout/Sidebar";
 import { TopHeader } from "./components/layout/TopHeader";
 import { DashboardView } from "./components/views/DashboardView";
 import { LeaderboardView } from "./components/views/LeaderboardView";
-import { OpenCodeView } from "./components/views/OpenCodeView";
-import { HermesView } from "./components/views/HermesView";
+import { AgentsView } from "./components/views/AgentsView";
 import { QuotaView } from "./components/views/QuotaView";
 import { LiveLogsView } from "./components/views/LiveLogsView";
 import { PingView } from "./components/views/PingView";
@@ -19,11 +18,11 @@ import type {
 	ModelsCatalogsResponse,
 } from "./types/dashboard";
 import { computeTimeSeriesBuckets } from "./lib/formatters";
+import { useGatewayEvents } from "./lib/useGatewayEvents";
 
 const VALID_NAVS = new Set([
 	"overview-dashboard",
-	"overview-opencode",
-	"overview-hermes",
+	"overview-agents",
 	"overview-leaderboard",
 	"ping",
 	"quota",
@@ -32,6 +31,12 @@ const VALID_NAVS = new Set([
 	"settings-models",
 	"settings-combo",
 ]);
+
+// Legacy nav keys are transparently mapped onto the consolidated Agents view.
+const LEGACY_NAV_ALIASES: Record<string, string> = {
+	"overview-opencode": "overview-agents",
+	"overview-hermes": "overview-agents",
+};
 
 function getStorageItem(key: string, legacyKey?: string): string | null {
 	if (typeof window === "undefined") return null;
@@ -57,12 +62,14 @@ function setStorageItem(key: string, value: string): void {
 function getInitialNav(): string {
 	if (typeof window !== "undefined") {
 		const hash = window.location.hash.replace(/^#\/?/, "");
-		if (hash && VALID_NAVS.has(hash)) {
-			return hash;
+		const normalized = LEGACY_NAV_ALIASES[hash] ?? hash;
+		if (normalized && VALID_NAVS.has(normalized)) {
+			return normalized;
 		}
 		const saved = getStorageItem("nexus_active_nav", "gn_active_nav");
-		if (saved && VALID_NAVS.has(saved)) {
-			return saved;
+		const normalizedSaved = saved ? (LEGACY_NAV_ALIASES[saved] ?? saved) : null;
+		if (normalizedSaved && VALID_NAVS.has(normalizedSaved)) {
+			return normalizedSaved;
 		}
 	}
 	return "overview-dashboard";
@@ -130,8 +137,7 @@ export default function App() {
 			}
 			return {
 				"overview-dashboard": "all",
-				"overview-opencode": "all",
-				"overview-hermes": "all",
+				"overview-agents": "all",
 				"overview-leaderboard": "all",
 			};
 		},
@@ -151,8 +157,9 @@ export default function App() {
 	useEffect(() => {
 		const handleHashChange = () => {
 			const hash = window.location.hash.replace(/^#\/?/, "");
-			if (hash && VALID_NAVS.has(hash)) {
-				setActiveNavState(hash);
+			const normalized = LEGACY_NAV_ALIASES[hash] ?? hash;
+			if (normalized && VALID_NAVS.has(normalized)) {
+				setActiveNavState(normalized);
 			}
 		};
 		window.addEventListener("hashchange", handleHashChange);
@@ -265,6 +272,34 @@ export default function App() {
 		void fetchData(newRange);
 	};
 
+	const handleGatewayLogEntry = useCallback((entry: LogEntry) => {
+		setLogs((prev) => {
+			if (prev.some((p) => p.ts === entry.ts && p.path === entry.path)) {
+				return prev;
+			}
+			return [entry, ...prev.slice(0, 199)];
+		});
+		setLastRefreshed(Date.now());
+		setIsOnline(true);
+	}, []);
+
+	const handleGatewayStatsDelta = useCallback(() => {
+		setLastRefreshed(Date.now());
+		setIsOnline(true);
+	}, []);
+
+	// Live gateway events over SSE; the fallback poll only kicks in when the
+	// stream is down, replacing the previous aggressive 3s fetch interval.
+	useGatewayEvents({
+		onLogEntry: handleGatewayLogEntry,
+		onStatsDelta: handleGatewayStatsDelta,
+		fallbackPoll: () => void fetchData(activeTimeRange),
+		fallbackIntervalMs: 30_000,
+		// While connected, the relaxed background sync below covers overview/quota.
+		fallbackConnectedIntervalMs: 0,
+	});
+
+	// Hydrate on mount / navigation / range change, then a relaxed background sync.
 	useEffect(() => {
 		const targetRange = viewTimeRanges[activeNav] || "all";
 		const timer = setTimeout(() => {
@@ -272,7 +307,7 @@ export default function App() {
 		}, 0);
 		const interval = setInterval(() => {
 			void fetchData(targetRange);
-		}, 3000);
+		}, 40_000);
 		return () => {
 			clearTimeout(timer);
 			clearInterval(interval);
@@ -530,33 +565,16 @@ export default function App() {
 
 						<div
 							className={
-								activeNav === "overview-opencode"
+								activeNav === "overview-agents"
 									? "animate-page-enter"
 									: "hidden"
 							}
 						>
-							<OpenCodeView
+							<AgentsView
 								agents={agents}
-								timeRange={viewTimeRanges["overview-opencode"] || "all"}
+								timeRange={viewTimeRanges["overview-agents"] || "all"}
 								setTimeRange={(r) =>
-									handleViewTimeRangeChange("overview-opencode", r)
-								}
-								lastRefreshed={lastRefreshed}
-							/>
-						</div>
-
-						<div
-							className={
-								activeNav === "overview-hermes"
-									? "animate-page-enter"
-									: "hidden"
-							}
-						>
-							<HermesView
-								agents={agents}
-								timeRange={viewTimeRanges["overview-hermes"] || "all"}
-								setTimeRange={(r) =>
-									handleViewTimeRangeChange("overview-hermes", r)
+									handleViewTimeRangeChange("overview-agents", r)
 								}
 								lastRefreshed={lastRefreshed}
 							/>

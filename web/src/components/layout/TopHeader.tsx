@@ -25,7 +25,7 @@ export function TopHeader({
 	const handleRefresh = () => {
 		if (spinning) return;
 		setSpinning(true);
-		// Kasih feedback animasi muter sebentar lalu hard-reload halaman
+		// Brief spin feedback, then hard-reload the page
 		setTimeout(() => {
 			window.location.reload();
 		}, 180);
@@ -35,10 +35,8 @@ export function TopHeader({
 		switch (nav) {
 			case "overview-dashboard":
 				return "Dashboard";
-			case "overview-opencode":
-				return "OpenCode";
-			case "overview-hermes":
-				return "Hermes";
+			case "overview-agents":
+				return "Agents";
 			case "overview-leaderboard":
 				return "Leaderboard";
 			case "settings-gateway":

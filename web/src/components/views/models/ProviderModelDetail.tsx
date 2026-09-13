@@ -184,7 +184,7 @@ export function ProviderModelDetail({
 					failCount += 1;
 				}
 			} else {
-				// Model belum pernah di-ping: pertahankan status aktif saat ini
+				// Model was never pinged: keep its current active state
 				if (activeSet.has(model)) {
 					next.add(model);
 				}
@@ -244,10 +244,10 @@ export function ProviderModelDetail({
 
 	const toggleAllExpandCollapse = () => {
 		if (isAllCollapsed) {
-			// Sekarang semua ketutup -> expand all
+			// All currently collapsed -> expand all
 			setCollapsed({});
 		} else {
-			// Sekarang ada yang kebuka -> collapse all
+			// At least one open -> collapse all
 			const next: Record<string, boolean> = {};
 			for (const group of providerGroups) next[group.provider] = true;
 			setCollapsed(next);
@@ -273,11 +273,14 @@ export function ProviderModelDetail({
 						onClick={onBack}
 						className="text-[#8A94A6] hover:text-white hover:bg-[#161B26] h-8 px-2 gap-1.5 text-xs cursor-pointer"
 					>
-						<ArrowLeft className="h-3.5 w-3.5" /> Kembali
+						<ArrowLeft className="h-3.5 w-3.5" /> Back to Providers
 					</Button>
 					<h3 className="text-base font-semibold text-white font-mono">
 						{displayName}
 					</h3>
+					<span className="text-[10px] font-mono text-[#64748B] whitespace-nowrap">
+						<span className="text-[#00EA88]">{activeCount}</span> / {allModels.length} active
+					</span>
 				</div>
 				<div className="flex items-center gap-1.5 text-[10px] font-mono text-[#64748B]">
 					{saving ? (
@@ -338,14 +341,14 @@ export function ProviderModelDetail({
 						}
 						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
-						<SlidersHorizontal className="h-3 w-3" /> Active All
+						<SlidersHorizontal className="h-3 w-3" /> Activate All
 					</Button>
 					<Button
 						size="sm"
 						onClick={() => persist(new Set(), "All models disabled")}
 						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
-						<X className="h-3 w-3" /> Disable All
+						<X className="h-3 w-3" /> Deactivate All
 					</Button>
 				</div>
 			</div>

@@ -7,6 +7,7 @@ import {
 	formatDateWIB,
 	formatTimeHHmm,
 	formatShortPath,
+	formatIdr,
 	extractModelId,
 	computeTimeSeriesBuckets,
 } from "./formatters";
@@ -120,6 +121,33 @@ describe("formatters", () => {
 			);
 			expect(formatShortPath("/")).toBe("~");
 			expect(formatShortPath("")).toBe("~");
+		});
+	});
+
+	describe("formatIdr", () => {
+		it("formats sub-thousand rupiah without a suffix", () => {
+			expect(formatIdr(0, 17000)).toBe("Rp0");
+			expect(formatIdr(0.05, 17000)).toBe("Rp850");
+		});
+
+		it("formats thousands with K suffix", () => {
+			expect(formatIdr(0.1, 17000)).toBe("Rp1.7K");
+		});
+
+		it("formats millions with M suffix", () => {
+			expect(formatIdr(100, 17000)).toBe("Rp1.70M");
+		});
+
+		it("formats billions with B suffix", () => {
+			expect(formatIdr(100_000, 17000)).toBe("Rp1.70B");
+		});
+
+		it("formats trillions with T suffix", () => {
+			expect(formatIdr(100_000_000, 17000)).toBe("Rp1.70T");
+		});
+
+		it("uses the default rate when omitted", () => {
+			expect(formatIdr(100)).toBe(formatIdr(100, 17000));
 		});
 	});
 

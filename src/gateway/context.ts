@@ -10,6 +10,29 @@ import type {
 	ResolvedRoute,
 } from "./types";
 
+export type GatewayEventType =
+	| "request_start"
+	| "request_complete"
+	| "stats_delta"
+	| "heartbeat"
+	| "connected";
+
+export type GatewayEventPayload = {
+	type: GatewayEventType;
+	ts: number;
+	data?: unknown;
+};
+
+/**
+ * In-process publish/subscribe bus for gateway lifecycle events.
+ * Handlers run synchronously on emit; subscribe returns an unsubscribe fn.
+ */
+export interface GatewayEventBus {
+	subscribe(handler: (event: GatewayEventPayload) => void): () => void;
+	emit(event: GatewayEventPayload): void;
+	subscriberCount(): number;
+}
+
 export interface GatewayContext {
 	config: GatewayServerConfig;
 	rules: GatewayRules;
@@ -21,6 +44,7 @@ export interface GatewayContext {
 	cacheManager: PromptCacheManager;
 	accessLog: AccessLogManager;
 	fixtureManager: FixtureManager;
+	eventBus: GatewayEventBus;
 	getAuthHeadersFor: (
 		upstream: UpstreamTarget,
 	) => Promise<Record<string, string>>;

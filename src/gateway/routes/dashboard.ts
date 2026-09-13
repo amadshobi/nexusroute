@@ -613,5 +613,80 @@ export async function handleDashboardApi(
 		}
 	}
 
+	// 9. Gateway Event Stream (Server-Sent Events)
+	if (
+		(url.pathname === "/api/gateway/events" ||
+			url.pathname === "/api/dashboard/events") &&
+		method === "GET"
+	) {
+		const encoder = new TextEncoder();
+		const formatSse = (event: string, payload: unknown): Uint8Array =>
+			encoder.encode(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+
+		// Assigned inside start() so cancel() can tear the connection down too.
+		let cleanup: () => void = () => {};
+
+		const stream = new ReadableStream<Uint8Array>({
+			start(controller) {
+				let cleanedUp = false;
+				let unsubscribe: (() => void) | null = null;
+				let heartbeatInterval: ReturnType<typeof setInterval> | null = null;
+
+				const doCleanup = () => {
+					if (cleanedUp) return;
+					cleanedUp = true;
+					if (heartbeatInterval !== null) {
+						clearInterval(heartbeatInterval);
+						heartbeatInterval = null;
+					}
+					if (unsubscribe) {
+						unsubscribe();
+						unsubscribe = null;
+					}
+				};
+				cleanup = doCleanup;
+
+				const send = (event: string, payload: unknown) => {
+					if (cleanedUp) return;
+					try {
+						controller.enqueue(formatSse(event, payload));
+					} catch {
+						// Client already gone; stop the producers.
+						doCleanup();
+					}
+				};
+
+				// Greet the client with a stats snapshot.
+				send("connected", {
+					type: "connected",
+					ts: Date.now(),
+					stats: ctx.getStats(),
+				});
+
+				unsubscribe = ctx.eventBus.subscribe((event) => {
+					send(event.type, event);
+				});
+
+				heartbeatInterval = setInterval(() => {
+					send("heartbeat", { type: "heartbeat", ts: Date.now() });
+				}, 15_000);
+
+				req.signal.addEventListener("abort", doCleanup);
+			},
+			cancel() {
+				cleanup();
+			},
+		});
+
+		return new Response(stream, {
+			status: 200,
+			headers: {
+				"Content-Type": "text/event-stream",
+				"Cache-Control": "no-cache, no-transform",
+				"X-Accel-Buffering": "no",
+			},
+		});
+	}
+
 	return null;
 }

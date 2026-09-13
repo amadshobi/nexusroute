@@ -28,14 +28,19 @@ import {
 } from "./upstream-router";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
-import type { GatewayContext } from "./context";
-import { handleStaticSpa } from "./routes/static";
+import type {
+	GatewayContext,
+	GatewayEventBus,
+	GatewayEventPayload,
+} from "./context";
+import { handleStaticSpa, handleStaticAsset } from "./routes/static";
 import { handleAgentsTelemetry } from "./routes/agents";
 import { handlePingTree, handlePingProbe } from "./routes/ping-probe";
 import { handleDashboardApi } from "./routes/dashboard";
 import { defaultCommandCodeAdapter } from "../adapters/commandcode";
-import { handleModelsCatalog } from "./routes/models";
+import { handleModelsCatalog, handleModelDetail } from "./routes/models";
 import { handleProxyRequest } from "./routes/proxy";
+import { isStaticAssetPath, isProbePath } from "./access-log";
 
 function detectWebDistDir(): string | undefined {
 	try {
@@ -58,6 +63,34 @@ function envLayered(nexusVar: string, gnVar: string, fallback: string): string {
 /** Varian `envLayered` yang mengembalikan `undefined` bila tak ada var. */
 function envLayeredOpt(nexusVar: string, gnVar: string): string | undefined {
 	return process.env[nexusVar] ?? process.env[gnVar];
+}
+
+/**
+ * Zero-dependency in-process event bus. Handlers are stored in a Set so
+ * duplicate subscriptions are idempotent and no dependency is added.
+ */
+export function createEventBus(): GatewayEventBus {
+	const handlers = new Set<(event: GatewayEventPayload) => void>();
+	return {
+		subscribe(handler) {
+			handlers.add(handler);
+			return () => {
+				handlers.delete(handler);
+			};
+		},
+		emit(event) {
+			for (const handler of handlers) {
+				try {
+					handler(event);
+				} catch {
+					// A faulty subscriber must never break the request pipeline.
+				}
+			}
+		},
+		subscriberCount() {
+			return handlers.size;
+		},
+	};
 }
 
 export function createGatewayServer(
@@ -288,8 +321,21 @@ export function createGatewayServer(
 	};
 
 	let serverInstance: any = null;
+	let gatewayContext: GatewayContext | null = null;
 
 	const server = {
+		/**
+		 * The live GatewayContext, available only after start().
+		 * Exposes the event bus and shared managers to tests and future
+		 * in-process consumers.
+		 */
+		get context(): GatewayContext {
+			if (!gatewayContext) {
+				throw new Error("Gateway context is only available after start()");
+			}
+			return gatewayContext;
+		},
+
 		getStats(): GatewayStats {
 			return {
 				...stats,
@@ -302,6 +348,7 @@ export function createGatewayServer(
 				serverInstance.stop(true);
 				serverInstance = null;
 			}
+			gatewayContext = null;
 		},
 
 		start() {
@@ -316,6 +363,7 @@ export function createGatewayServer(
 				cacheManager,
 				accessLog,
 				fixtureManager,
+				eventBus: createEventBus(),
 				getAuthHeadersFor,
 				getCatalog,
 				updateCatalogCache,
@@ -331,6 +379,7 @@ export function createGatewayServer(
 					return server.getStats();
 				},
 			};
+			gatewayContext = ctx;
 
 			serverInstance = Bun.serve({
 				port: config.port,
@@ -345,10 +394,14 @@ export function createGatewayServer(
 					const url = new URL(req.url);
 					const method = req.method.toUpperCase();
 
-					// Only count external/API requests towards totalRequests metric
+					// Only count real LLM/API traffic towards totalRequests; skip
+					// dashboard, SSE, static assets, and discovery probes.
 					if (
+						url.pathname !== "/api/gateway/events" &&
 						!url.pathname.startsWith("/api/dashboard") &&
-						!url.pathname.startsWith("/dashboard")
+						!url.pathname.startsWith("/dashboard") &&
+						!isStaticAssetPath(url.pathname) &&
+						!isProbePath(url.pathname)
 					) {
 						stats.totalRequests++;
 					}
@@ -388,6 +441,35 @@ export function createGatewayServer(
 						});
 					}
 
+					// ── Lightweight discovery probes (Ollama/agent compatible) ──
+					// Answered directly so they never reach the proxy or access log.
+					if (method === "GET" && url.pathname === "/api/tags") {
+						return new Response(JSON.stringify({ models: [] }), {
+							status: 200,
+							headers: { "content-type": "application/json" },
+						});
+					}
+
+					if (method === "GET" && url.pathname === "/version") {
+						return new Response(JSON.stringify({ version: GN_VERSION }), {
+							status: 200,
+							headers: { "content-type": "application/json" },
+						});
+					}
+
+					if (
+						method === "GET" &&
+						(url.pathname === "/props" || url.pathname === "/v1/props")
+					) {
+						return new Response(
+							JSON.stringify({ status: "ok", version: GN_VERSION }),
+							{
+								status: 200,
+								headers: { "content-type": "application/json" },
+							},
+						);
+					}
+
 					// ── Dashboard REST APIs ──────────────────────────────
 					if (url.pathname === "/api/dashboard/agents") {
 						return handleAgentsTelemetry(req, url, ctx);
@@ -404,7 +486,10 @@ export function createGatewayServer(
 						return handlePingProbe(req, url, ctx);
 					}
 
-					if (url.pathname.startsWith("/api/dashboard")) {
+					if (
+						url.pathname === "/api/gateway/events" ||
+						url.pathname.startsWith("/api/dashboard")
+					) {
 						const dashResp = await handleDashboardApi(req, url, ctx);
 						if (dashResp) return dashResp;
 					}
@@ -420,12 +505,26 @@ export function createGatewayServer(
 						if (staticResp) return staticResp;
 					}
 
+					// ── Static bundle assets (JS/CSS/images/fonts, /assets/*) ──
+					// Served from web/dist and 404 when missing; never proxied.
+					if (isStaticAssetPath(url.pathname)) {
+						return handleStaticAsset(req, url, ctx);
+					}
+
 					// ── Unified /v1/models catalog aggregator ───────────
 					if (
 						method === "GET" &&
 						(url.pathname === "/v1/models" || url.pathname.endsWith("/models"))
 					) {
 						return handleModelsCatalog(req, url, ctx);
+					}
+
+					// ── Single model detail probe (/v1/models/:model) ───
+					if (
+						method === "GET" &&
+						url.pathname.startsWith("/v1/models/")
+					) {
+						return handleModelDetail(req, url, ctx);
 					}
 
 					// ── Core Reverse Proxy Hot Path (/v1/chat/completions & /v1/messages) ──

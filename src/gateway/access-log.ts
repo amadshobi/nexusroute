@@ -102,6 +102,49 @@ export const DEFAULT_ACCESS_LOG_PATH = resolveDefaultAccessLogPath();
 
 const MAX_LOG_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB per log segment
 
+/** Static web asset file extensions that must never enter the access log. */
+const STATIC_ASSET_EXTENSIONS = [
+	".svg",
+	".ico",
+	".png",
+	".jpg",
+	".js",
+	".css",
+	".woff",
+	".woff2",
+];
+
+/** Exact paths used by lightweight discovery probes (Ollama-style). */
+const PROBE_PATHS = new Set(["/api/tags", "/version", "/props", "/v1/props"]);
+
+/** True when the path points at a compiled static web asset. */
+export function isStaticAssetPath(pathname: string): boolean {
+	if (!pathname) return false;
+	const lower = pathname.toLowerCase();
+	if (lower.startsWith("/assets/")) return true;
+	for (const ext of STATIC_ASSET_EXTENSIONS) {
+		if (lower.endsWith(ext)) return true;
+	}
+	return false;
+}
+
+/** True when the path is a lightweight discovery probe. */
+export function isProbePath(pathname: string): boolean {
+	return PROBE_PATHS.has((pathname || "").toLowerCase());
+}
+
+/**
+ * Returns true when a request path is internal plumbing (static bundle assets,
+ * dashboard SPA routes, or discovery probes) and therefore must not be written
+ * to `access.jsonl`.
+ */
+export function isInternalRequestPath(pathname: string): boolean {
+	if (!pathname) return false;
+	const lower = pathname.toLowerCase();
+	if (lower === "/dashboard" || lower.startsWith("/dashboard/")) return true;
+	return isStaticAssetPath(lower) || isProbePath(lower);
+}
+
 export class AccessLogManager {
 	private logPath: string;
 
@@ -119,8 +162,13 @@ export class AccessLogManager {
 
 	/**
 	 * Append 1 entry log secara aman dengan rotasi otomatis jika > 10MB.
+	 * Internal static assets and probe requests are dropped before writing.
 	 */
 	public write(entry: AccessLogEntry): void {
+		if (isInternalRequestPath(entry.path)) {
+			return;
+		}
+
 		try {
 			this.ensureDir();
 

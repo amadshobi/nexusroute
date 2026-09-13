@@ -13,6 +13,7 @@ import {
 import { DEFAULT_FALLBACK } from "../rules";
 import { sanitizeText, normalizeUpstreamTools } from "../sanitizer";
 import type { FallbackHop } from "../access-log";
+import { isStaticAssetPath, isProbePath } from "../access-log";
 import { isModelBlacklisted, type GatewayContext } from "../context";
 import { detectClientApp, resolveRealProvider } from "../provider-resolver";
 
@@ -127,6 +128,12 @@ export async function handleProxyRequest(
 ): Promise<Response> {
 	const method = req.method.toUpperCase();
 
+	// Hard guard: static bundle assets and discovery probes must never enter
+	// the LLM proxy pipeline (they are handled upstream in server.ts).
+	if (isStaticAssetPath(url.pathname) || isProbePath(url.pathname)) {
+		return new Response("Not Found", { status: 404 });
+	}
+
 	// Mock mode handler
 	if (ctx.config.mode === "mock" && ctx.config.mockFixtureFile) {
 		let bodyObj: any = null;
@@ -224,7 +231,7 @@ export async function handleProxyRequest(
 				Math.max(1, Math.ceil((cached.body?.length || 500) / 3.5));
 			const cachedServedModel = cached.meta.model || primaryModel || "unknown";
 
-			ctx.accessLog.write({
+			const entry = {
 				ts: reqStartTime,
 				method,
 				path: url.pathname,
@@ -232,7 +239,7 @@ export async function handleProxyRequest(
 				servedModel: cachedServedModel,
 				status: cached.meta.status || 200,
 				latencyMs: Date.now() - reqStartTime,
-				cache: "HIT",
+				cache: "HIT" as const,
 				stream: cached.isStream,
 				tokensInput: hitPrompt,
 				tokensOutput: hitCompletion,
@@ -242,7 +249,11 @@ export async function handleProxyRequest(
 				upstream: "cache",
 				provider: resolveRealProvider(cachedServedModel),
 				client: clientApp,
-			});
+			};
+			ctx.accessLog.write(entry);
+			if (ctx.eventBus.subscriberCount() > 0) {
+				ctx.eventBus.emit({ type: "request_complete", ts: entry.ts, data: entry });
+			}
 
 			if (cached.isStream && cached.chunks.length > 0) {
 				respHeaders.set("content-type", "text/event-stream; charset=utf-8");
@@ -334,7 +345,7 @@ export async function handleProxyRequest(
 					const totTok = cmcUsage?.total_tokens ?? promptTok + compTok;
 					const cacheTok = cmcUsage?.cache_read_tokens ?? 0;
 
-					ctx.accessLog.write({
+					const entry = {
 						ts: reqStartTime,
 						method,
 						path: url.pathname,
@@ -342,7 +353,7 @@ export async function handleProxyRequest(
 						servedModel: cmcModel,
 						status: effectiveStatus,
 						latencyMs,
-						cache: "BYPASS",
+						cache: "BYPASS" as const,
 						stream: true,
 						tokensInput: promptTok > 0 ? promptTok : undefined,
 						tokensOutput: compTok > 0 ? compTok : undefined,
@@ -352,7 +363,15 @@ export async function handleProxyRequest(
 						upstream: "commandcode",
 						provider: "commandcode",
 						client: clientApp,
-					});
+					};
+					ctx.accessLog.write(entry);
+					if (ctx.eventBus.subscriberCount() > 0) {
+						ctx.eventBus.emit({
+							type: "request_complete",
+							ts: entry.ts,
+							data: entry,
+						});
+					}
 
 					if (promptTok > 0 || compTok > 0) {
 						try {
@@ -723,7 +742,7 @@ export async function handleProxyRequest(
 							}
 
 							const activeServedModel = primaryModel || initialModel || "unknown";
-							ctx.accessLog.write({
+							const entry = {
 								ts: reqStartTime,
 								method,
 								path: url.pathname,
@@ -731,7 +750,7 @@ export async function handleProxyRequest(
 								servedModel: activeServedModel,
 								status: upstreamResp.status,
 								latencyMs: Date.now() - reqStartTime,
-								cache: promptHash ? "MISS" : "BYPASS",
+								cache: promptHash ? ("MISS" as const) : ("BYPASS" as const),
 								stream: true,
 								tokensInput: streamTokens.promptTokens,
 								tokensOutput: streamTokens.completionTokens,
@@ -748,7 +767,15 @@ export async function handleProxyRequest(
 								upstream: route.upstream.name,
 								provider: resolveRealProvider(activeServedModel, route.upstream.name),
 								client: clientApp,
-							});
+							};
+							ctx.accessLog.write(entry);
+							if (ctx.eventBus.subscriberCount() > 0) {
+								ctx.eventBus.emit({
+									type: "request_complete",
+									ts: entry.ts,
+									data: entry,
+								});
+							}
 
 							if (ctx.config.mode === "record") {
 								const recordedReqBody = ctx.config.shieldEnabled
@@ -909,7 +936,7 @@ export async function handleProxyRequest(
 		}
 
 		const nonStreamServedModel = primaryModel || initialModel || "unknown";
-		ctx.accessLog.write({
+		const entry = {
 			ts: reqStartTime,
 			method,
 			path: url.pathname,
@@ -917,7 +944,7 @@ export async function handleProxyRequest(
 			servedModel: nonStreamServedModel,
 			status: upstreamResp.status,
 			latencyMs: latency,
-			cache: promptHash ? "MISS" : "BYPASS",
+			cache: promptHash ? ("MISS" as const) : ("BYPASS" as const),
 			stream: false,
 			tokensInput: nonStreamUsage.promptTokens,
 			tokensOutput: nonStreamUsage.completionTokens,
@@ -934,7 +961,11 @@ export async function handleProxyRequest(
 			upstream: route.upstream.name,
 			provider: resolveRealProvider(nonStreamServedModel, route.upstream.name),
 			client: clientApp,
-		});
+		};
+		ctx.accessLog.write(entry);
+		if (ctx.eventBus.subscriberCount() > 0) {
+			ctx.eventBus.emit({ type: "request_complete", ts: entry.ts, data: entry });
+		}
 
 		if (ctx.config.cacheEnabled && promptHash && upstreamResp.ok) {
 			const headerObj: Record<string, string> = {};
@@ -990,7 +1021,7 @@ export async function handleProxyRequest(
 	} catch (err: any) {
 		ctx.stats.errorsCount++;
 		const errServedModel = primaryModel || initialModel || "unknown";
-		ctx.accessLog.write({
+		const entry = {
 			ts: reqStartTime,
 			method,
 			path: url.pathname,
@@ -998,7 +1029,7 @@ export async function handleProxyRequest(
 			servedModel: errServedModel,
 			status: 502,
 			latencyMs: Date.now() - reqStartTime,
-			cache: "NONE",
+			cache: "NONE" as const,
 			stream: isStreamReq,
 			fallback:
 				fallbackChain.length > 1
@@ -1012,7 +1043,11 @@ export async function handleProxyRequest(
 			provider: resolveRealProvider(errServedModel),
 			client: clientApp,
 			error: err.message,
-		});
+		};
+		ctx.accessLog.write(entry);
+		if (ctx.eventBus.subscriberCount() > 0) {
+			ctx.eventBus.emit({ type: "request_complete", ts: entry.ts, data: entry });
+		}
 		return new Response(
 			JSON.stringify({
 				error: "GN Gateway Connection Error",

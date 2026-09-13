@@ -6,6 +6,7 @@ import {
 } from "../upstream-router";
 import { defaultPricingEngine } from "../openrouter-pricing";
 import { defaultCommandCodeAdapter } from "../../adapters/commandcode";
+import { resolveRealProvider } from "../provider-resolver";
 import {
 	isModelBlacklisted,
 	isModelWhitelisted,
@@ -130,4 +131,30 @@ export async function handleModelsCatalog(
 			"X-GN-Upstreams": merged.upstreamCount.toString(),
 		},
 	});
+}
+
+/**
+ * Handle single-model retrieval for agent discovery probes:
+ * `GET /v1/models/:model` (model IDs may contain slashes).
+ */
+export function handleModelDetail(
+	_req: Request,
+	url: URL,
+	_ctx: GatewayContext,
+): Response {
+	const modelId = decodeURIComponent(
+		url.pathname.replace(/^\/v1\/models\//, ""),
+	);
+	return new Response(
+		JSON.stringify({
+			id: modelId,
+			object: "model",
+			created: Math.floor(Date.now() / 1000),
+			owned_by: resolveRealProvider(modelId),
+		}),
+		{
+			status: 200,
+			headers: { "content-type": "application/json" },
+		},
+	);
 }

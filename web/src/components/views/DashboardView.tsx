@@ -2,6 +2,7 @@ import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { MiniSparkline } from "../charts/MiniSparkline";
 import { TimeFilterBar } from "../common/TimeFilterBar";
+import { TopModelsTeaser } from "./TopModelsTeaser";
 import { formatCompact } from "@/lib/formatters";
 import type { OverviewData } from "@/types/dashboard";
 
@@ -26,6 +27,7 @@ interface DashboardViewProps {
 	overview: OverviewData | null;
 	timeRange: string;
 	setTimeRange: (range: string) => void;
+	onNavigateLeaderboard?: () => void;
 	usdIdrRate?: number;
 	estCloudCost: string;
 	totalReqCount: number;
@@ -45,6 +47,7 @@ export function DashboardView({
 	overview,
 	timeRange,
 	setTimeRange,
+	onNavigateLeaderboard,
 	usdIdrRate = 17000,
 	estCloudCost,
 	totalReqCount,
@@ -196,6 +199,12 @@ export function DashboardView({
 					<MiniSparkline data={inputFreshSparkline} color="#7AA2F7" />
 				</div>
 			</div>
+
+			{/* Third Row: Top Models Teaser */}
+			<TopModelsTeaser
+				models={overview?.leaderboard?.models}
+				onViewAll={onNavigateLeaderboard}
+			/>
 		</div>
 	);
 }

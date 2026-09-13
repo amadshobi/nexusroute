@@ -17,8 +17,8 @@ interface ModelsControlViewProps {
 const PROVIDER_LABELS: Record<string, string> = {
 	omp: "OMP Gateway",
 	vansrouter: "Vans Gateway",
-	commandcode: "CommandCode Direct",
-	cmc: "CommandCode Direct",
+	commandcode: "CommandCode",
+	cmc: "CommandCode",
 };
 
 function providerDisplayName(name: string): string {
@@ -66,15 +66,6 @@ export function ModelsControlView({
 	return (
 		<div className="space-y-5">
 			<div className="flex items-start justify-between gap-3">
-				<div>
-					<h3 className="text-sm font-semibold text-white">
-						Model Governance & Routing
-					</h3>
-					<p className="text-xs text-[#8A94A6] mt-0.5">
-						Kontrol katalog model upstream dan whitelist aktif untuk coding
-						agent
-					</p>
-				</div>
 				<Button
 					size="sm"
 					onClick={handleRefresh}
@@ -87,7 +78,7 @@ export function ModelsControlView({
 			{/* Provider cards */}
 			{providerEntries.length === 0 ? (
 				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 text-xs text-[#64748B]">
-					Belum ada katalog upstream. Tekan Refresh atau pastikan gateway aktif.
+					No upstream catalogs yet. Click Refresh or verify the gateway is running.
 				</div>
 			) : (
 				<div className="grid grid-cols-1 md:grid-cols-2 gap-4">

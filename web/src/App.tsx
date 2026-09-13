@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Sidebar } from "./components/layout/Sidebar";
 import { TopHeader } from "./components/layout/TopHeader";
 import { DashboardView } from "./components/views/DashboardView";
+import { LeaderboardView } from "./components/views/LeaderboardView";
 import { OpenCodeView } from "./components/views/OpenCodeView";
 import { HermesView } from "./components/views/HermesView";
 import { QuotaView } from "./components/views/QuotaView";
@@ -23,6 +24,7 @@ const VALID_NAVS = new Set([
 	"overview-dashboard",
 	"overview-opencode",
 	"overview-hermes",
+	"overview-leaderboard",
 	"ping",
 	"quota",
 	"logs",
@@ -130,6 +132,7 @@ export default function App() {
 				"overview-dashboard": "all",
 				"overview-opencode": "all",
 				"overview-hermes": "all",
+				"overview-leaderboard": "all",
 			};
 		},
 	);
@@ -505,6 +508,23 @@ export default function App() {
 								cacheSparkline={cacheReadSparkline}
 								cacheReadSparkline={cacheReadSparkline}
 								inputFreshSparkline={inputFreshSparkline}
+								onNavigateLeaderboard={() => setActiveNav("overview-leaderboard")}
+							/>
+						</div>
+
+						<div
+							className={
+								activeNav === "overview-leaderboard"
+									? "animate-page-enter"
+									: "hidden"
+							}
+						>
+							<LeaderboardView
+								overview={overview}
+								timeRange={viewTimeRanges["overview-leaderboard"] || "all"}
+								setTimeRange={(r) =>
+									handleViewTimeRangeChange("overview-leaderboard", r)
+								}
 							/>
 						</div>
 
@@ -597,7 +617,7 @@ export default function App() {
 							}
 						>
 							<div className="p-4 rounded-xl border border-[#1E2433] bg-[#131722] text-sm text-[#8A94A6]">
-								Pindah ke Model Governance untuk mengatur rute combo model
+								Go to Model Governance to configure model combo routing
 								cascade.
 							</div>
 						</div>

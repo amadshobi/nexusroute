@@ -39,6 +39,8 @@ export function TopHeader({
 				return "OpenCode";
 			case "overview-hermes":
 				return "Hermes";
+			case "overview-leaderboard":
+				return "Leaderboard";
 			case "settings-gateway":
 				return "Gateway Settings";
 			case "settings-models":

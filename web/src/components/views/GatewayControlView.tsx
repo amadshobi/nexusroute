@@ -80,8 +80,7 @@ export function GatewayControlView({
 						Market Value Currency Exchange
 					</h3>
 					<p className="text-xs text-[#8A94A6] mt-0.5">
-						Kurs konversi USD ke IDR untuk perhitungan kartu Market Value di
-						Dashboard
+						USD to IDR exchange rate for Market Value calculation in Dashboard
 					</p>
 				</div>
 
@@ -107,19 +106,18 @@ export function GatewayControlView({
 							{saved ? (
 								<>
 									<Check className="h-3.5 w-3.5 text-[#00EA88]" />
-									<span className="text-[#00EA88]">Tersimpan</span>
+									<span className="text-[#00EA88]">Saved</span>
 								</>
 							) : (
 								<>
 									<DollarSign className="h-3.5 w-3.5 text-[#7AA2F7]" />
-									<span>Simpan Kurs</span>
+									<span>Save Rate</span>
 								</>
 							)}
 						</Button>
 					</div>
 					<p className="text-[11px] text-[#64748B] font-mono">
-						Default: Rp17.000 / USD. Angka disimpan permanen di browser local
-						storage.
+						Default: Rp17,000 / USD. Persisted locally in browser storage.
 					</p>
 				</form>
 			</div>

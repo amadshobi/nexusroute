@@ -362,15 +362,6 @@ export function PingView() {
 
 			{/* Header */}
 			<div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#1E2433]">
-				<div>
-					<h3 className="text-sm font-semibold text-white tracking-tight">
-						Ping
-					</h3>
-					<p className="text-xs text-[#8A94A6]">
-						Hierarchical latency & model availability probe across upstream
-						gateways
-					</p>
-				</div>
 
 				<div className="flex items-center gap-2">
 					<div className="relative">

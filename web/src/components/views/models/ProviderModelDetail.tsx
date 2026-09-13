@@ -164,7 +164,7 @@ export function ProviderModelDetail({
 		const tested = allModels.filter((m) => pingSnapshots[m] !== undefined);
 		if (tested.length === 0) {
 			showToast(
-				"Belum ada riwayat ping. Jalankan tes di menu Ping terlebih dahulu.",
+				"No ping history yet. Run a test in the Ping menu first.",
 				"error",
 			);
 			return;
@@ -282,13 +282,13 @@ export function ProviderModelDetail({
 				<div className="flex items-center gap-1.5 text-[10px] font-mono text-[#64748B]">
 					{saving ? (
 						<>
-							<Loader2 className="h-3 w-3 animate-spin text-[#7AA2F7]" />
-							<span>Menyimpan...</span>
+							<Loader2 className="h-3 w-3 animate-spin text-[#7AA2F7] alert" />
+							<span>Saving...</span>
 						</>
 					) : (
 						<>
 							<Check className="h-3 w-3 text-[#00EA88]" />
-							<span className="hidden sm:inline">Tersimpan otomatis</span>
+							<span className="hidden sm:inline">Auto-saved</span>
 						</>
 					)}
 				</div>
@@ -302,7 +302,7 @@ export function ProviderModelDetail({
 						type="text"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
-						placeholder="Cari model atau provider..."
+						placeholder="Search models or providers..."
 						className="w-full bg-[#161B26] border border-[#1E2433] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1D68FE] font-mono"
 					/>
 				</div>
@@ -327,14 +327,14 @@ export function ProviderModelDetail({
 						size="sm"
 						onClick={syncWithPingResults}
 						className="bg-[#00EA88]/15 hover:bg-[#00EA88]/25 text-[#00EA88] border border-[#00EA88]/30 text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
-						title="Otomatis aktifkan model 200 OK dan nonaktifkan model FAIL berdasarkan tes Ping"
+						title="Automatically enable 200 OK models and disable FAIL models based on Ping test results"
 					>
 						<Activity className="h-3 w-3" /> Sync with Ping
 					</Button>
 					<Button
 						size="sm"
 						onClick={() =>
-							persist(new Set(allModels), "Semua model diaktifkan")
+							persist(new Set(allModels), "All models enabled")
 						}
 						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
@@ -342,7 +342,7 @@ export function ProviderModelDetail({
 					</Button>
 					<Button
 						size="sm"
-						onClick={() => persist(new Set(), "Semua model dinonaktifkan")}
+						onClick={() => persist(new Set(), "All models disabled")}
 						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
 						<X className="h-3 w-3" /> Disable All
@@ -354,8 +354,7 @@ export function ProviderModelDetail({
 				<div className="rounded-lg border border-amber-500/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-300 flex items-start gap-2">
 					<TriangleAlert className="h-3.5 w-3.5 mt-0.5 shrink-0" />
 					<span>
-						Whitelist kosong diperlakukan backend sebagai Passthrough (semua
-						model tetap aktif).
+						Empty whitelist is treated as Passthrough by the backend (all models remain active).
 					</span>
 				</div>
 			)}
@@ -363,7 +362,7 @@ export function ProviderModelDetail({
 			{/* Provider accordions: Gateway -> Provider -> Model */}
 			{visibleGroups.length === 0 ? (
 				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 text-xs text-[#64748B]">
-					Tidak ada model yang cocok dengan pencarian.
+					No models match your search query.
 				</div>
 			) : (
 				<div className="space-y-3">

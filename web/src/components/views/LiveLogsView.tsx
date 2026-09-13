@@ -94,12 +94,8 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 			<div className="flex items-center justify-between pb-3 border-b border-[#1E2433] flex-wrap gap-2">
 				<div>
 					<h3 className="text-sm font-semibold text-white tracking-tight">
-						Realtime Traffic Logs
+						Realtime Traffic
 					</h3>
-					<p className="text-xs text-[#8A94A6]">
-						Sesi aktif GN (sejak booting hingga berhenti). Klik baris untuk
-						inspeksi payload & cURL
-					</p>
 				</div>
 				<span className="text-xs font-mono text-[#64748B] flex items-center gap-1.5">
 					<span className="h-2 w-2 rounded-full bg-[#00EA88] animate-ping" />
@@ -269,6 +265,21 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 												{entry.shieldRedacted})
 											</span>
 										)}
+
+										{/* Caller Client App Badge */}
+										{entry.client && entry.client !== "unknown" && (
+											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-[#1E2538] text-[#8A94A6] border border-[#1E2433] font-mono">
+												<Terminal className="h-2.5 w-2.5 text-[#7AA2F7]" />
+												{entry.client}
+											</span>
+										)}
+
+										{/* Upstream Transport Badge */}
+										{entry.upstream && (
+											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-[#161B26] text-[#64748B] border border-[#1E2433] font-mono uppercase">
+												{entry.upstream === "commandcode" ? "direct" : entry.upstream}
+											</span>
+										)}
 									</div>
 
 									{/* Tokens, Latency & Timestamp */}
@@ -383,10 +394,12 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 							</div>
 							<div className="p-2.5 rounded-lg bg-[#161B26] border border-[#1E2433]">
 								<span className="text-[10px] text-[#64748B] block uppercase">
-									Stream
+									Speed (TPS)
 								</span>
-								<span className="text-[#7AA2F7] font-bold">
-									{selectedLog.stream ? "YES (SSE)" : "NO"}
+								<span className="text-[#00EA88] font-bold">
+									{selectedLog.latencyMs > 0 && selectedLog.tokensOutput
+										? `${Math.round((selectedLog.tokensOutput / (selectedLog.latencyMs / 1000)) * 10) / 10} t/s`
+										: "-"}
 								</span>
 							</div>
 						</div>

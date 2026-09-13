@@ -161,13 +161,13 @@ export function HermesView({
 						Recent Hermes Sessions ({filteredSessions.length})
 					</h4>
 					<span className="text-[11px] text-[#64748B] font-mono">
-						Klik baris untuk menyalin Session ID
+						Click row to copy Session ID
 					</span>
 				</div>
 
 				{filteredSessions.length === 0 ? (
 					<div className="py-8 text-center text-xs text-[#64748B]">
-						Tidak ada sesi Hermes pada rentang waktu ini.
+						No Hermes sessions found for this time range.
 					</div>
 				) : (
 					<div className="divide-y divide-[#1E2433]">

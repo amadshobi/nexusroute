@@ -45,6 +45,41 @@ export interface OverviewData {
 		cacheRead: number[];
 		inputFresh: number[];
 	};
+	leaderboard?: {
+		models: ModelLeaderboardItem[];
+		providers: ProviderLeaderboardItem[];
+		clients: ClientLeaderboardItem[];
+	};
+}
+
+export interface ModelLeaderboardItem {
+	model: string;
+	requests: number;
+	tokensTotal: number;
+	tokensInput: number;
+	tokensOutput: number;
+	tokensCache: number;
+	costUsd: number;
+	avgLatencyMs: number;
+	cacheRate: number;
+	sparkline?: number[];
+}
+
+export interface ProviderLeaderboardItem {
+	provider: string;
+	upstream: string;
+	requests: number;
+	tokensTotal: number;
+	costUsd: number;
+	avgLatencyMs: number;
+	sparkline?: number[];
+}
+
+export interface ClientLeaderboardItem {
+	client: string;
+	requests: number;
+	tokensTotal: number;
+	costUsd: number;
 }
 
 export interface QuotaBucket {
@@ -111,6 +146,9 @@ export interface LogEntry {
 	tokensCache?: number;
 	tokensTotal?: number;
 	shieldRedacted?: number;
+	upstream?: string;
+	provider?: string;
+	client?: string;
 	error?: string;
 }
 

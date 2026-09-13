@@ -10,6 +10,7 @@ import {
 	Server,
 	Code2,
 	Bot,
+	Trophy,
 	FlaskConical,
 } from "lucide-react";
 import { NexusIcon } from "@/components/icons/ProviderIcons";
@@ -130,6 +131,18 @@ export function Sidebar({
 						title="Hermes Agent State"
 					>
 						<Bot className="h-4 w-4 text-purple-400" />
+					</button>
+
+					<button
+						onClick={() => handleNavClick("overview-leaderboard")}
+						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+							activeNav === "overview-leaderboard"
+								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+						}`}
+						title="Leaderboard & Intelligence"
+					>
+						<Trophy className="h-4 w-4 text-amber-400" />
 					</button>
 
 					{/* Divider */}
@@ -272,6 +285,18 @@ export function Sidebar({
 								>
 									<Bot className="h-3.5 w-3.5 text-purple-400 shrink-0" />
 									<span>Hermes</span>
+								</button>
+
+								<button
+									onClick={() => handleNavClick("overview-leaderboard")}
+									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
+										activeNav === "overview-leaderboard"
+											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+									}`}
+								>
+									<Trophy className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+									<span>Leaderboard</span>
 								</button>
 							</div>
 						</div>

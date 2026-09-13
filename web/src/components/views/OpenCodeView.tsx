@@ -414,7 +414,7 @@ export function OpenCodeView({
 			<div className="space-y-4">
 				{projectGroups.length === 0 ? (
 					<div className="rounded-xl border border-[#1E2433] bg-[#131722] py-12 text-center text-xs text-[#64748B]">
-						Tidak ada sesi yang cocok dengan rentang waktu ini.
+						No sessions match this time range.
 					</div>
 				) : (
 					projectGroups.map((group) => {

@@ -430,17 +430,17 @@ export default function App() {
 	}, [llmLogs, serverCostSparkline]);
 
 	const restartGateway = async () => {
-		if (!confirm("Restart NexusRoute Gateway sekarang?")) return;
+		if (!confirm("Restart NexusRoute Gateway now?")) return;
 		try {
 			await fetch("/api/dashboard/control/gateway", {
 				method: "POST",
 				headers: { "content-type": "application/json" },
 				body: JSON.stringify({ action: "restart" }),
 			});
-			alert("Sinyal restart dikirim. Halaman akan reload otomatis.");
+			alert("Restart signal sent. The page will reload automatically.");
 			setTimeout(() => window.location.reload(), 2000);
 		} catch {
-			alert("Gagal kirim sinyal restart");
+			alert("Failed to send restart signal.");
 		}
 	};
 

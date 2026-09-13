@@ -122,7 +122,7 @@ export function ProviderModelDetail({
 				showToast(message);
 				await onSaved();
 			} catch (e) {
-				showToast(`Gagal menyimpan: ${(e as Error).message}`, "error");
+				showToast(`Failed to save: ${(e as Error).message}`, "error");
 			} finally {
 				pendingRef.current -= 1;
 				if (pendingRef.current <= 0) {
@@ -136,13 +136,13 @@ export function ProviderModelDetail({
 	const addModel = (model: string) => {
 		const next = new Set(activeSet);
 		next.add(model);
-		persist(next, `${model} diaktifkan ke whitelist`);
+		persist(next, `${model} enabled to whitelist`);
 	};
 
 	const removeModel = (model: string) => {
 		const next = new Set(activeSet);
 		next.delete(model);
-		persist(next, `${model} dinonaktifkan`);
+		persist(next, `${model} disabled`);
 	};
 
 	const setProviderActive = (group: ProviderGroup, active: boolean) => {
@@ -155,8 +155,8 @@ export function ProviderModelDetail({
 		persist(
 			next,
 			active
-				? `Semua model ${label} diaktifkan`
-				: `Semua model ${label} dinonaktifkan`,
+				? `All ${label} models enabled`
+				: `All ${label} models disabled`,
 		);
 	};
 
@@ -193,7 +193,7 @@ export function ProviderModelDetail({
 
 		persist(
 			next,
-			`Sinkron Ping: ${okCount} model aktif (200 OK), ${failCount} dinonaktifkan`,
+			`Ping Sync: ${okCount} models active (200 OK), ${failCount} disabled`,
 		);
 	};
 

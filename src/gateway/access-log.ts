@@ -58,6 +58,9 @@ export interface AccessLogEntry {
 		hopCount: number;
 	};
 	shieldRedacted: number;
+	upstream?: string; // Transport Gateway: "omp" | "vansrouter" | "commandcode"
+	provider?: string; // Real AI Engine: "antigravity" | "commandcode" | "deepseek" | "ollama" | etc.
+	client?: string; // Caller Application: "opencode" | "hermes" | "curl" | etc.
 	error?: string;
 }
 
@@ -306,7 +309,7 @@ function shortenModel(name: string): string {
  */
 export function renderAccessLogsTable(entries: AccessLogEntry[]): string {
 	if (entries.length === 0) {
-		return `  ${ANSI_GRAY}󰋽 Belum ada riwayat request yang tercatat di access log.${ANSI_RESET}\n`;
+		return `  ${ANSI_GRAY}󰋽 No request history recorded in access log yet.${ANSI_RESET}\n`;
 	}
 
 	const rows = entries.map((entry) => {

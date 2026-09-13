@@ -14,6 +14,7 @@ import { DEFAULT_FALLBACK } from "../rules";
 import { sanitizeText, normalizeUpstreamTools } from "../sanitizer";
 import type { FallbackHop } from "../access-log";
 import { isModelBlacklisted, type GatewayContext } from "../context";
+import { detectClientApp, resolveRealProvider } from "../provider-resolver";
 
 function fireTelemetry(
 	model: string,
@@ -193,6 +194,7 @@ export async function handleProxyRequest(
 	const initialModel = primaryModel ?? "unknown";
 	const isStreamReq = parsedBodyInfo?.parsed?.stream === true;
 	const fallbackChain: FallbackHop[] = [];
+	const clientApp = detectClientApp(req);
 
 	// Caching check
 	let promptHash = "";
@@ -220,13 +222,14 @@ export async function handleProxyRequest(
 			const hitCompletion =
 				cached.meta.completionTokens ||
 				Math.max(1, Math.ceil((cached.body?.length || 500) / 3.5));
+			const cachedServedModel = cached.meta.model || primaryModel || "unknown";
 
 			ctx.accessLog.write({
 				ts: reqStartTime,
 				method,
 				path: url.pathname,
 				initialModel,
-				servedModel: cached.meta.model || primaryModel || "unknown",
+				servedModel: cachedServedModel,
 				status: cached.meta.status || 200,
 				latencyMs: Date.now() - reqStartTime,
 				cache: "HIT",
@@ -236,6 +239,9 @@ export async function handleProxyRequest(
 				tokensCache: hitPrompt,
 				tokensTotal: hitPrompt + hitCompletion,
 				shieldRedacted: maskedTokensCount,
+				upstream: "cache",
+				provider: resolveRealProvider(cachedServedModel),
+				client: clientApp,
 			});
 
 			if (cached.isStream && cached.chunks.length > 0) {
@@ -312,17 +318,21 @@ export async function handleProxyRequest(
 					if (logged) return;
 					logged = true;
 					ctx.stats.activeStreams = Math.max(0, ctx.stats.activeStreams - 1);
+					const cmcModel = primaryModel || "unknown";
 					ctx.accessLog.write({
 						ts: reqStartTime,
 						method,
 						path: url.pathname,
 						initialModel: initialModel || "unknown",
-						servedModel: primaryModel || "unknown",
+						servedModel: cmcModel,
 						status: effectiveStatus,
 						latencyMs: Date.now() - reqStartTime,
 						cache: "BYPASS",
 						stream: true,
 						shieldRedacted: 0,
+						upstream: "commandcode",
+						provider: "commandcode",
+						client: clientApp,
 					});
 				};
 
@@ -619,12 +629,13 @@ export async function handleProxyRequest(
 								);
 							}
 
+							const activeServedModel = primaryModel || initialModel || "unknown";
 							ctx.accessLog.write({
 								ts: reqStartTime,
 								method,
 								path: url.pathname,
 								initialModel: initialModel || "unknown",
-								servedModel: primaryModel || initialModel || "unknown",
+								servedModel: activeServedModel,
 								status: upstreamResp.status,
 								latencyMs: Date.now() - reqStartTime,
 								cache: promptHash ? "MISS" : "BYPASS",
@@ -641,6 +652,9 @@ export async function handleProxyRequest(
 											}
 										: undefined,
 								shieldRedacted: maskedTokensCount,
+								upstream: route.upstream.name,
+								provider: resolveRealProvider(activeServedModel, route.upstream.name),
+								client: clientApp,
 							});
 
 							if (ctx.config.mode === "record") {
@@ -801,12 +815,13 @@ export async function handleProxyRequest(
 			fireTelemetry(primaryModel, bodyText, upstreamResp.status, latency);
 		}
 
+		const nonStreamServedModel = primaryModel || initialModel || "unknown";
 		ctx.accessLog.write({
 			ts: reqStartTime,
 			method,
 			path: url.pathname,
 			initialModel: initialModel || "unknown",
-			servedModel: primaryModel || initialModel || "unknown",
+			servedModel: nonStreamServedModel,
 			status: upstreamResp.status,
 			latencyMs: latency,
 			cache: promptHash ? "MISS" : "BYPASS",
@@ -823,6 +838,9 @@ export async function handleProxyRequest(
 						}
 					: undefined,
 			shieldRedacted: maskedTokensCount,
+			upstream: route.upstream.name,
+			provider: resolveRealProvider(nonStreamServedModel, route.upstream.name),
+			client: clientApp,
 		});
 
 		if (ctx.config.cacheEnabled && promptHash && upstreamResp.ok) {
@@ -878,12 +896,13 @@ export async function handleProxyRequest(
 		});
 	} catch (err: any) {
 		ctx.stats.errorsCount++;
+		const errServedModel = primaryModel || initialModel || "unknown";
 		ctx.accessLog.write({
 			ts: reqStartTime,
 			method,
 			path: url.pathname,
 			initialModel: initialModel || "unknown",
-			servedModel: primaryModel || initialModel || "unknown",
+			servedModel: errServedModel,
 			status: 502,
 			latencyMs: Date.now() - reqStartTime,
 			cache: "NONE",
@@ -896,6 +915,9 @@ export async function handleProxyRequest(
 						}
 					: undefined,
 			shieldRedacted: maskedTokensCount,
+			upstream: "error",
+			provider: resolveRealProvider(errServedModel),
+			client: clientApp,
 			error: err.message,
 		});
 		return new Response(

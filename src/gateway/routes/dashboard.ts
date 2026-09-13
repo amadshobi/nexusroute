@@ -2,6 +2,7 @@ import { defaultPricingEngine } from "../openrouter-pricing";
 import { defaultQuotaRegistry } from "../../quota";
 import { saveGatewayConfig } from "../rules";
 import { GN_VERSION } from "../../version";
+import { resolveRealProvider } from "../provider-resolver";
 import {
 	parseTimeBounds,
 	isLocalhostAddress,
@@ -61,6 +62,36 @@ export async function handleDashboardApi(
 		let cacheReadSparkline = new Array(bucketCount).fill(0);
 		let inputFreshSparkline = new Array(bucketCount).fill(0);
 
+		// Leaderboard aggregators
+		const modelMap = new Map<string, {
+			model: string;
+			requests: number;
+			tokensTotal: number;
+			tokensInput: number;
+			tokensOutput: number;
+			tokensCache: number;
+			costUsd: number;
+			latencyTotalMs: number;
+			sparkline: number[];
+		}>();
+
+		const providerMap = new Map<string, {
+			provider: string;
+			upstream: string;
+			requests: number;
+			tokensTotal: number;
+			costUsd: number;
+			latencyTotalMs: number;
+			sparkline: number[];
+		}>();
+
+		const clientMap = new Map<string, {
+			client: string;
+			requests: number;
+			tokensTotal: number;
+			costUsd: number;
+		}>();
+
 		try {
 			const allLogs = ctx.accessLog.readLogs({
 				since: bounds.startMs > 0 ? bounds.startMs : undefined,
@@ -98,8 +129,8 @@ export async function handleDashboardApi(
 
 				let reqCost = 0;
 				let grossCost = 0;
+				const m = l.servedModel || l.initialModel || "unknown";
 				if (freshInTok > 0 || outTok > 0 || cacheTok > 0) {
-					const m = l.servedModel || l.initialModel || "";
 					const rates = defaultPricingEngine.resolveModelPricing(m);
 					if (rates) {
 						reqCost =
@@ -118,17 +149,86 @@ export async function handleDashboardApi(
 				dbGrossCostUsd += grossCost;
 
 				const ts = l.ts;
+				let bucketIdx = -1;
 				if (ts >= windowStart && ts <= windowEnd) {
-					const idx = Math.min(
+					bucketIdx = Math.min(
 						bucketCount - 1,
 						Math.max(0, Math.floor((ts - windowStart) / step)),
 					);
-					reqSparkline[idx] += 1;
-					tokenSparkline[idx] += reqTokens;
-					costSparkline[idx] += reqCost;
-					cacheReadSparkline[idx] += cacheTok;
-					inputFreshSparkline[idx] += freshInTok;
+					reqSparkline[bucketIdx] += 1;
+					tokenSparkline[bucketIdx] += reqTokens;
+					costSparkline[bucketIdx] += reqCost;
+					cacheReadSparkline[bucketIdx] += cacheTok;
+					inputFreshSparkline[bucketIdx] += freshInTok;
 				}
+
+				// Leaderboard: Model
+				let modelStat = modelMap.get(m);
+				if (!modelStat) {
+					modelStat = {
+						model: m,
+						requests: 0,
+						tokensTotal: 0,
+						tokensInput: 0,
+						tokensOutput: 0,
+						tokensCache: 0,
+						costUsd: 0,
+						latencyTotalMs: 0,
+						sparkline: new Array(bucketCount).fill(0),
+					};
+					modelMap.set(m, modelStat);
+				}
+				modelStat.requests += 1;
+				modelStat.tokensTotal += reqTokens;
+				modelStat.tokensInput += inTok;
+				modelStat.tokensOutput += outTok;
+				modelStat.tokensCache += cacheTok;
+				modelStat.costUsd += reqCost;
+				modelStat.latencyTotalMs += l.latencyMs || 0;
+				if (bucketIdx >= 0) {
+					modelStat.sparkline[bucketIdx] += 1;
+				}
+
+				// Leaderboard: Provider (with upstream indicator)
+				const prov = l.provider || resolveRealProvider(m, l.upstream);
+				const up = l.upstream || (prov === "commandcode" ? "commandcode" : "omp");
+				const provKey = `${prov}::${up}`;
+				let provStat = providerMap.get(provKey);
+				if (!provStat) {
+					provStat = {
+						provider: prov,
+						upstream: up,
+						requests: 0,
+						tokensTotal: 0,
+						costUsd: 0,
+						latencyTotalMs: 0,
+						sparkline: new Array(bucketCount).fill(0),
+					};
+					providerMap.set(provKey, provStat);
+				}
+				provStat.requests += 1;
+				provStat.tokensTotal += reqTokens;
+				provStat.costUsd += reqCost;
+				provStat.latencyTotalMs += l.latencyMs || 0;
+				if (bucketIdx >= 0) {
+					provStat.sparkline[bucketIdx] += 1;
+				}
+
+				// Leaderboard: Client
+				const cl = l.client || "unknown";
+				let clStat = clientMap.get(cl);
+				if (!clStat) {
+					clStat = {
+						client: cl,
+						requests: 0,
+						tokensTotal: 0,
+						costUsd: 0,
+					};
+					clientMap.set(cl, clStat);
+				}
+				clStat.requests += 1;
+				clStat.tokensTotal += reqTokens;
+				clStat.costUsd += reqCost;
 			}
 		} catch {
 			// fallback
@@ -200,6 +300,23 @@ export async function handleDashboardApi(
 						tokens: tokenSparkline,
 						cacheRead: cacheReadSparkline,
 						inputFresh: inputFreshSparkline,
+					},
+					leaderboard: {
+						models: Array.from(modelMap.values())
+							.map((m) => ({
+								...m,
+								avgLatencyMs: m.requests > 0 ? Math.round(m.latencyTotalMs / m.requests) : 0,
+								cacheRate: m.tokensInput > 0 ? Number(((m.tokensCache / m.tokensInput) * 100).toFixed(1)) : 0,
+							}))
+							.sort((a, b) => b.requests - a.requests),
+						providers: Array.from(providerMap.values())
+							.map((p) => ({
+								...p,
+								avgLatencyMs: p.requests > 0 ? Math.round(p.latencyTotalMs / p.requests) : 0,
+							}))
+							.sort((a, b) => b.requests - a.requests),
+						clients: Array.from(clientMap.values())
+							.sort((a, b) => b.requests - a.requests),
 					},
 				},
 				null,

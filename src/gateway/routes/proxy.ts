@@ -314,11 +314,26 @@ export async function handleProxyRequest(
 			if (stream && directResp.body) {
 				ctx.stats.activeStreams++;
 				let logged = false;
+				let cmcUsage: {
+					prompt_tokens: number;
+					completion_tokens: number;
+					total_tokens: number;
+					cache_read_tokens?: number;
+				} | null = null;
+
+				const decoder = new TextDecoder();
 				const logOnce = () => {
 					if (logged) return;
 					logged = true;
 					ctx.stats.activeStreams = Math.max(0, ctx.stats.activeStreams - 1);
 					const cmcModel = primaryModel || "unknown";
+					const latencyMs = Date.now() - reqStartTime;
+
+					const promptTok = cmcUsage?.prompt_tokens ?? 0;
+					const compTok = cmcUsage?.completion_tokens ?? 0;
+					const totTok = cmcUsage?.total_tokens ?? promptTok + compTok;
+					const cacheTok = cmcUsage?.cache_read_tokens ?? 0;
+
 					ctx.accessLog.write({
 						ts: reqStartTime,
 						method,
@@ -326,19 +341,97 @@ export async function handleProxyRequest(
 						initialModel: initialModel || "unknown",
 						servedModel: cmcModel,
 						status: effectiveStatus,
-						latencyMs: Date.now() - reqStartTime,
+						latencyMs,
 						cache: "BYPASS",
 						stream: true,
+						tokensInput: promptTok > 0 ? promptTok : undefined,
+						tokensOutput: compTok > 0 ? compTok : undefined,
+						tokensTotal: totTok > 0 ? totTok : undefined,
+						tokensCache: cacheTok,
 						shieldRedacted: 0,
 						upstream: "commandcode",
 						provider: "commandcode",
 						client: clientApp,
 					});
+
+					if (promptTok > 0 || compTok > 0) {
+						try {
+							const cost = calculateCost(
+								"commandcode",
+								cmcModel,
+								promptTok,
+								compTok,
+								cacheTok,
+							);
+							logTelemetry({
+								provider: "commandcode",
+								model: cmcModel,
+								clientApp: clientApp || "unknown",
+								promptTokens: promptTok,
+								completionTokens: compTok,
+								cacheReadTokens: cacheTok,
+								cacheWriteTokens: 0,
+								totalTokens: totTok,
+								costUsd: cost.total,
+								latencyMs,
+								statusCode: effectiveStatus,
+								timestamp: Date.now(),
+							});
+						} catch {}
+					}
 				};
 
+				let lineBuffer = "";
 				const streamWithTeardown = directResp.body.pipeThrough(
 					new TransformStream({
+						transform(chunk, controller) {
+							controller.enqueue(chunk);
+							try {
+								const text = typeof chunk === "string" ? chunk : decoder.decode(chunk, { stream: true });
+								lineBuffer += text;
+								const lines = lineBuffer.split("\n");
+								// Keep the last partial line in buffer
+								lineBuffer = lines.pop() ?? "";
+
+								for (const l of lines) {
+									const trimmed = l.trim();
+									if (trimmed.startsWith("data:") && trimmed !== "data: [DONE]") {
+										try {
+											const parsed = JSON.parse(trimmed.slice(5).trim());
+											if (parsed.usage) {
+												const u = parsed.usage;
+												const cachedTok = Number(
+													u.prompt_tokens_details?.cached_tokens ??
+													u.cache_read_input_tokens ??
+													0,
+												);
+												cmcUsage = {
+													prompt_tokens: Number(u.prompt_tokens || u.input_tokens || 0),
+													completion_tokens: Number(u.completion_tokens || u.output_tokens || 0),
+													total_tokens: Number(u.total_tokens || 0),
+													cache_read_tokens: cachedTok,
+												};
+											}
+										} catch {}
+									}
+								}
+							} catch {}
+						},
 						flush() {
+							if (lineBuffer.trim().startsWith("data:") && lineBuffer.trim() !== "data: [DONE]") {
+								try {
+									const parsed = JSON.parse(lineBuffer.trim().slice(5).trim());
+									if (parsed.usage) {
+										const u = parsed.usage;
+										cmcUsage = {
+											prompt_tokens: Number(u.prompt_tokens || u.input_tokens || 0),
+											completion_tokens: Number(u.completion_tokens || u.output_tokens || 0),
+											total_tokens: Number(u.total_tokens || 0),
+											cache_read_tokens: Number(u.prompt_tokens_details?.cached_tokens ?? 0),
+										};
+									}
+								} catch {}
+							}
 							logOnce();
 						},
 					}),

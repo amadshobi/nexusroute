@@ -178,7 +178,7 @@ export async function logTelemetry(entry: TelemetryEntry): Promise<void> {
     );
   } catch (err) {
     // Never crash the caller on telemetry failure
-    process.stderr.write(`⚠️  telemetry.db write failed: ${(err as Error).message}\n`);
+    process.stderr.write(`[warn] telemetry.db write failed: ${(err as Error).message}\n`);
   }
 }
 
@@ -208,7 +208,7 @@ export function queryTelemetry(options: TelemetryQueryOptions = {}): TelemetryRo
 
     return db.query(sql).all(...params) as TelemetryRow[];
   } catch (err) {
-    process.stderr.write(`⚠️  telemetry.db query failed: ${(err as Error).message}\n`);
+    process.stderr.write(`[warn] telemetry.db query failed: ${(err as Error).message}\n`);
     return [];
   }
 }
@@ -272,7 +272,7 @@ export function getSummary(days: number = 7): TelemetrySummary {
       rowCount: row.rowCount,
     };
   } catch (err) {
-    process.stderr.write(`⚠️  telemetry.db summary failed: ${(err as Error).message}\n`);
+    process.stderr.write(`[warn] telemetry.db summary failed: ${(err as Error).message}\n`);
     return empty;
   }
 }

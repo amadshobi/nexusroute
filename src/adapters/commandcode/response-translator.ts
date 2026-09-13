@@ -21,6 +21,11 @@ export interface TranslatorState {
   toolIndex: number;
   toolIndexById: Map<string, number>;
   finishReason: string | null;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  } | null;
 }
 
 export function createTranslatorState(model: string): TranslatorState {
@@ -32,11 +37,17 @@ export function createTranslatorState(model: string): TranslatorState {
     toolIndex: 0,
     toolIndexById: new Map(),
     finishReason: null,
+    usage: null,
   };
 }
 
-function buildChunk(state: TranslatorState, delta: any, finishReason: string | null = null) {
-  return {
+function buildChunk(
+  state: TranslatorState,
+  delta: any,
+  finishReason: string | null = null,
+  usage: any = null,
+) {
+  const chunk: any = {
     id: state.responseId,
     object: "chat.completion.chunk",
     created: state.created,
@@ -49,6 +60,10 @@ function buildChunk(state: TranslatorState, delta: any, finishReason: string | n
       },
     ],
   };
+  if (usage) {
+    chunk.usage = usage;
+  }
+  return chunk;
 }
 
 /**
@@ -183,7 +198,23 @@ export function parseCommandCodeEvent(line: string, state: TranslatorState): any
       break;
     }
 
-    case "finish-step":
+    case "finish-step": {
+      if (event.usage && typeof event.usage === "object") {
+        const inTok = Number(event.usage.inputTokens || event.usage.input_tokens || 0);
+        const outTok = Number(event.usage.outputTokens || event.usage.output_tokens || 0);
+        const totalTok = Number(event.usage.totalTokens || event.usage.total_tokens || inTok + outTok);
+        const prevPrompt = state.usage?.prompt_tokens ?? 0;
+        const prevComp = state.usage?.completion_tokens ?? 0;
+        const prevTotal = state.usage?.total_tokens ?? 0;
+        state.usage = {
+          prompt_tokens: prevPrompt + inTok,
+          completion_tokens: prevComp + outTok,
+          total_tokens: prevTotal + totalTok,
+        };
+      }
+      break;
+    }
+
     case "finish": {
       let mappedFinish = "stop";
       const r = event.finishReason;
@@ -193,7 +224,28 @@ export function parseCommandCodeEvent(line: string, state: TranslatorState): any
         mappedFinish = "length";
       }
       state.finishReason = mappedFinish;
-      chunks.push(buildChunk(state, {}, mappedFinish));
+
+      if (event.totalUsage && typeof event.totalUsage === "object") {
+        const inTok = Number(event.totalUsage.inputTokens || event.totalUsage.input_tokens || 0);
+        const outTok = Number(event.totalUsage.outputTokens || event.totalUsage.output_tokens || 0);
+        const totalTok = Number(event.totalUsage.totalTokens || event.totalUsage.total_tokens || inTok + outTok);
+        state.usage = {
+          prompt_tokens: inTok,
+          completion_tokens: outTok,
+          total_tokens: totalTok,
+        };
+      } else if (!state.usage && event.usage && typeof event.usage === "object") {
+        const inTok = Number(event.usage.inputTokens || event.usage.input_tokens || 0);
+        const outTok = Number(event.usage.outputTokens || event.usage.output_tokens || 0);
+        const totalTok = Number(event.usage.totalTokens || event.usage.total_tokens || inTok + outTok);
+        state.usage = {
+          prompt_tokens: inTok,
+          completion_tokens: outTok,
+          total_tokens: totalTok,
+        };
+      }
+
+      chunks.push(buildChunk(state, {}, mappedFinish, state.usage));
       state.chunkIndex++;
       break;
     }

@@ -97,10 +97,10 @@ function printBanner(): void {
 function reportDeprecated(cmd: string, replacement: string): void {
 	printBanner();
 	console.error(
-		`\x1b[1;33m⚠️  Command \x1b[0m\x1b[1;37m${cmd}\x1b[0m\x1b[1;33m sudah deprecated.\x1b[0m`,
+		`\x1b[1;33m[warn] Command \x1b[0m\x1b[1;37m${cmd}\x1b[0m\x1b[1;33m is deprecated.\x1b[0m`,
 	);
 	console.error(
-		`\x1b[0m   Gunakan \x1b[1;36m${replacement}\x1b[0m\x1b[0m sebagai gantinya.\x1b[0m`,
+		`\x1b[0m   Use \x1b[1;36m${replacement}\x1b[0m\x1b[0m instead.\x1b[0m`,
 	);
 }
 
@@ -209,7 +209,7 @@ export async function main(argv: string[]): Promise<number> {
 	} catch (err) {
 		const msg = err instanceof Error ? err.message : String(err);
 		console.error("");
-		console.error(`\x1b[1;31m🔥 [Nexus Error] ${cmd} crash:\x1b[0m`);
+		console.error(`\x1b[1;31m[error] [Nexus Error] ${cmd} crash:\x1b[0m`);
 		console.error(`\x1b[0m   ${msg}\x1b[0m`);
 		console.error("");
 		return 1;

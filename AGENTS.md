@@ -15,18 +15,18 @@ Clients (OpenCode, Hermes, Claude Code, curl)
                ▼ (:4010)
 ┌────────────────────────────────────────────────────────┐
 │ NexusRoute Gateway Server (src/gateway/)               │
-│  - context.ts          : Shared GatewayContext         │
-│  - server.ts           : Bun.serve lifecycle & routing │
-│  - provider-resolver.ts: Caller detection & real-prov  │
-│  - access-log.ts       : JSONL structured access log   │
-│  - circuit-breaker.ts  : Cooldown & trip mechanics     │
-│  - openrouter-pricing  : Zero-hardcode pricing engine  │
-│  - routes/proxy.ts     : SSE streaming proxy & cache   │
-│  - routes/dashboard.ts : /api/dashboard REST telemetry │
-│  - routes/models.ts    : Governance & whitelist filter │
-│  - routes/ping-probe.ts: Active health probes          │
-│  - routes/agents.ts    : SQLite telemetry ingestion    │
-│  - routes/static.ts    : Serves web/dist SPA           │
+│  - context.ts            : Shared GatewayContext       │
+│  - server.ts             : Bun.serve lifecycle/routing │
+│  - provider-resolver.ts  : Caller detection/real-prov  │
+│  - access-log.ts         : JSONL structured access log │
+│  - circuit-breaker.ts    : Cooldown & trip mechanics   │
+│  - openrouter-pricing.ts : Zero-hardcode pricing engine│
+│  - routes/proxy.ts       : SSE streaming proxy & cache │
+│  - routes/dashboard.ts   : /api/dashboard REST telecom │
+│  - routes/models.ts      : Governance & whitelist      │
+│  - routes/ping-probe.ts  : Active health probes        │
+│  - routes/agents.ts      : SQLite telemetry ingestion  │
+│  - routes/static.ts      : Serves web/dist SPA         │
 └──────────────┬───────────────────┬─────────────────────┘
                │                   │
                ▼                   ▼
@@ -35,29 +35,56 @@ Clients (OpenCode, Hermes, Claude Code, curl)
 
 ---
 
-## 2. Essential Developer Commands
+## 2. Essential Developer Commands & Toolchains
 
-Run from the repository root:
+### 2.1 Backend & Gateway Commands (Root Repository)
 
 ```bash
-# Typecheck backend (zero emit)
+# Backend typecheck (covers src/, telemetry/, tests/ ONLY via TypeScript 5.4, strict: true)
 bun run typecheck
 
-# Run backend unit tests
+# Run backend unit tests (also runs formatters.test.ts in web/src/lib/)
 bun test
 
 # Run a single focused test file
 bun test tests/gateway/gateway.test.ts
 
-# Build frontend Web Console SPA
-bun run --cwd web build
-
-# Full verification sequence (MANDATORY before marking any task done)
-bun run typecheck && bun test && bun run --cwd web build
-
 # Run local CLI doctor diagnostic
 ./bin/nexus doctor
 ```
+
+### 2.2 Frontend Web Console Commands (`web/`)
+
+```bash
+# Frontend dev server with hot reload (Vite, base path is /dashboard/)
+bun run --cwd web dev
+
+# Frontend lint (oxlint)
+bun run --cwd web lint
+
+# Frontend typecheck + production build (tsc -b && vite build via TypeScript ~6.0)
+# NOTE: This is the ONLY command that typechecks web/ (root bun run typecheck does NOT)
+bun run --cwd web build
+
+# Frontend unit tests
+bun run --cwd web test
+```
+
+### 2.3 Mandatory Full Verification Sequence
+
+🔴 **CRITICAL**: There is **no automated remote CI, no pre-commit hook, and no `.github/` workflow**. The following command sequence is the **SOLE quality gate**. Every agent MUST execute this and verify exit code 0 before declaring any task done:
+
+```bash
+bun run typecheck && bun test && bun run --cwd web build
+```
+
+### 2.4 Rebuild & Service Restart Invariant
+
+> The Bun gateway daemon serves the pre-compiled static bundle from `web/dist/` at `:4010/dashboard/*`.
+> Any code changes inside `web/src/` remain completely invisible until you recompile and restart the daemon:
+> ```bash
+> bun run --cwd web build && systemctl --user restart nexus-gateway.service
+> ```
 
 ---
 
@@ -65,18 +92,18 @@ bun run typecheck && bun test && bun run --cwd web build
 
 1. **Strict 100% English-Only Rule for Code & Interface**:
    - Every file, comment, variable, type, commit message, and user interface element (labels, placeholders, buttons, badges, toast alerts, empty states) **MUST BE IN ENGLISH**.
-   - Zero Indonesian words in codebase and UI strings. (Indonesian is reserved strictly for conversational user chat).
+   - Zero Indonesian words in codebase and UI strings. (Indonesian is reserved strictly for conversational user chat). Existing legacy Indonesian in comments or deprecation strings must be cleaned up opportunistically.
 2. **Zero-Fluff & Dense Vertical Space Rule (Mobile-First Optimization)**:
    - Never add decorative, poetic, or redundant descriptive subtitles underneath page titles or card headers (e.g. `<p className="text-xs text-[#8A94A6]">Manage model catalogs and governance...</p>`).
    - The user operates primarily via Termius mobile SSH and mobile browsers while managing real-world operations: vertical screen real estate is precious. Jump straight into controls, filters, cards, and data tables.
 3. **Strict Zero-Emoji Rule**:
    - Never output emojis in CLI, terminal text, logs, code, or web UI components.
    - Use Lucide React icons (`lucide-react`) or official inline SVGs for Web.
-   - Use Nerd Font glyphs (e.g. `󰄬`, `󰀦`, `󰋼`, `󰚌`) or clean ASCII for terminal CLI.
+   - Use Nerd Font glyphs (e.g. `󰄬`, `󰀦`, `󰋼`, `󰚌`) or clean ASCII (e.g. `[warn]`, `[error]`) for terminal CLI and logs.
 4. **Binary & PATH Coexistence**:
    - `bin/nexus` is the canonical CLI wrapper.
-   - `bin/gn` is an active alias retained for backward compatibility (`~/.local/bin/gn` links here).
-   - **Never delete or move `bin/gn`** without verifying the user's host PATH symlink first.
+   - `bin/gn` is an exact duplicate executable retained for backward compatibility (`~/.local/bin/gn` links here).
+   - **Never delete or move `bin/gn`**. If you modify `bin/nexus`, you must keep `bin/gn` identical.
 5. **Layered Fallback Resolution**:
    - **Env vars**: Prefer `NEXUS_*` (e.g. `NEXUS_GATEWAY_PORT`), fallback to `GN_*`.
    - **Config file**: Check `~/.config/nexus/config.json` first, fallback to `~/.config/gn/config.json`.
@@ -106,10 +133,19 @@ bun run typecheck && bun test && bun run --cwd web build
    - When creating integration tests with `GatewayServer`, bind mock upstreams to dynamic ephemeral ports (`mockServer.port`) instead of defaulting to `4000`, `4001`, or `4010` to prevent collisions with running background services.
 3. **Test Fixtures**:
    - Test fixtures for replay testing live in `~/.config/nexus/fixtures/` (legacy fallback `~/.config/gn/fixtures/`).
+   - Runtime test artifact `.tmp-test-gateway/` is gitignored and ephemeral.
 
 ---
 
 ## 5. Web Console Architecture & Frontend Standards (`web/`)
+
+### Frontend Stack Non-Defaults
+
+- **React 19 + Tailwind CSS v4** via `@tailwindcss/vite` plugin — **no PostCSS config, no `tailwind.config.*`**. Do not look for or create one.
+- **shadcn/ui** with `radix-nova` style (`web/components.json`); `lucide-react` icons.
+- **Path alias `@/` → `web/src/`** (`web/vite.config.ts`, `web/tsconfig.json`).
+- **Vite `base: '/dashboard/'`** — the SPA is served by the Bun gateway at `:4010/dashboard/*`, not at Vite's default root. Dev server also serves under `/dashboard/`.
+- `cn` utility is re-exported from `@/lib/utils.ts` (wraps the `cn` package), not a custom implementation.
 
 ### Keep-Alive View Snapshot Architecture (MANDATORY)
 
@@ -149,15 +185,18 @@ All primary views must remain permanently mounted in the DOM to preserve user in
 
 ### Module Organization Rules
 
-1. **New Page Views**: Place inside `web/src/components/views/`.
-2. **Formatting & Math**: Extract strictly to `web/src/lib/formatters.ts` with comprehensive unit tests in `web/src/lib/formatters.test.ts`. Never define inline formatting logic inside React views.
-3. **Data Contracts**: Single source of truth is `web/src/types/dashboard.ts`.
+1. **New Page Views**: Place strictly inside `web/src/components/views/`.
+2. **Layout & Shell**: Place inside `web/src/components/layout/` (`Sidebar.tsx`, `TopHeader.tsx`).
+3. **Icons & Charts**: `web/src/components/icons/` and `web/src/components/charts/`.
+4. **Formatting & Math**: Extract strictly to `web/src/lib/formatters.ts` with comprehensive unit tests in `web/src/lib/formatters.test.ts`. Never define inline formatting logic inside React views.
+5. **Data Contracts**: Single source of truth is `web/src/types/dashboard.ts`.
 
 ---
 
 ## 6. Systemd Service Quirks
 
 - Canonical service unit: `nexus-gateway.service`.
+- `ExecStart` uses an explicit user home path `%h/civil/projects/nexusroute/...` (intentional for systemd user mode).
 - When modifying systemd paths, `ReadWritePaths` must include:
   `%h/.config/nexus %h/.config/gn %h/.cache/nexus %h/.cache/gn %h/.cache/goblin-nexus %h/.bun`
   (systemd user mode does not auto-create directories outside `CacheDirectory`).

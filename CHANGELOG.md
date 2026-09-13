@@ -5,6 +5,23 @@
 
 ---
 
+## [1.3.0] - 2026-09-13
+
+### Added
+
+- **Traffic Intelligence & Leaderboard Analytics (`src/gateway/`, `web/src/`)**:
+  - Auto-detection client application (`detectClientApp` di `src/gateway/provider-resolver.ts`) via header `x-client-app` / `x-app-name` dan heuristic `User-Agent` (OpenCode, Hermes, Claude Code, cURL, dll).
+  - Real provider resolution (`resolveRealProvider`) yang membedakan provider model sesungguhnya (Antigravity, DeepSeek, Ollama, CommandCode) dari transport gateway (OMP, VansRouter, Direct).
+  - Perekaman field `client`, `upstream`, dan `provider` secara terstruktur pada `AccessLogEntry` di `proxy.ts`.
+  - Agregasi leaderboard pada endpoint `/api/dashboard/overview` meliputi `models` (reqs, tokens, avg latency, context cache rate, cost, sparkline denyut), `providers` (dengan indikator transport gateway `via OMP` / `Direct`), dan `clients`.
+  - Komponen Web Console `LeaderboardSection.tsx` yang fully mobile-first responsive:
+    - Tab switching: **Top Models**, **Top Providers**, dan **Clients / Apps**.
+    - Segmented distribution header bar ala GitHub Language Bar untuk proporsi provider aktif.
+    - Grafik batang bertingkat (progress bar gradient) dikombinasikan dengan sparkline denyut mini real-time per baris model/provider.
+    - Sub-filter mesin model (All, Antigravity, CommandCode, OpenRouter, DeepSeek, Ollama).
+    - Metrik kalkulasi Tokens Per Second (TPS / Speed) pada telemetry log inspector modal di `LiveLogsView.tsx`.
+    - Badge client caller dan transport gateway pada tiap item log di `LiveLogsView.tsx`.
+
 ## [1.2.0] - 2026-09-12
 
 ### Added

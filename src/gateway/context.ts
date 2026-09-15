@@ -120,6 +120,9 @@ export function parseTimeBounds(range: string | null): {
 	switch (range) {
 		case "15m":
 			return { startMs: now - 15 * 60 * 1000, endMs: now };
+		case "1h":
+		case "1H":
+			return { startMs: now - 3600 * 1000, endMs: now };
 		case "today":
 			return { startMs: startOfTodayWib, endMs: now };
 		case "yesterday":

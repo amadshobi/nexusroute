@@ -116,14 +116,39 @@ export async function handleDashboardApi(
 			costUsd: number;
 		}>();
 
+		let trends: {
+			spendDelta: number | null;
+			requestsDelta: number | null;
+			tokensDelta: number | null;
+			cacheRateDelta: number | null;
+			cacheReadDelta: number | null;
+			inputFreshDelta: number | null;
+		} | null = null;
+
 		try {
+			const isRanged = bounds.startMs > 0 && rangeParam !== "all";
+			const span = isRanged
+				? (bounds.endMs !== Infinity ? bounds.endMs : now) - bounds.startMs
+				: 0;
+			const prevStartMs = isRanged ? bounds.startMs - span : 0;
+			const prevEndMs = isRanged ? bounds.startMs : 0;
+
 			const allLogs = ctx.accessLog.readLogs({
-				since: bounds.startMs > 0 ? bounds.startMs : undefined,
+				since: isRanged
+					? prevStartMs
+					: bounds.startMs > 0
+						? bounds.startMs
+						: undefined,
 			});
-			const rangedLogs =
-				bounds.endMs !== Infinity
-					? allLogs.filter((l) => l.ts < bounds.endMs)
-					: allLogs;
+			const rangedLogs = allLogs.filter((l) => {
+				if (bounds.startMs > 0 && l.ts < bounds.startMs) return false;
+				if (bounds.endMs !== Infinity && l.ts >= bounds.endMs) return false;
+				return true;
+			});
+
+			const prevLogs = isRanged
+				? allLogs.filter((l) => l.ts >= prevStartMs && l.ts < prevEndMs)
+				: [];
 
 			dbTotalRequests = rangedLogs.length;
 			dbCacheHits = rangedLogs.filter((l) => l.cache === "HIT").length;
@@ -297,6 +322,65 @@ export async function handleDashboardApi(
 				modelBucket.costUsd += reqCost;
 				actBucket.models[m] = modelBucket;
 			}
+
+			if (isRanged && prevLogs.length > 0) {
+				let prevSpend = 0;
+				let prevTokens = 0;
+				let prevInputFresh = 0;
+				let prevCacheRead = 0;
+
+				for (const pl of prevLogs) {
+					const inTok = pl.tokensInput ?? 0;
+					const outTok = pl.tokensOutput ?? 0;
+					const cacheTok = pl.tokensCache ?? 0;
+					const freshInTok = Math.max(0, inTok - cacheTok);
+					const reqTokens = pl.tokensTotal ?? inTok + outTok;
+					prevTokens += reqTokens;
+					prevInputFresh += freshInTok;
+					prevCacheRead += cacheTok;
+
+					const m = pl.servedModel || pl.initialModel || "unknown";
+					if (freshInTok > 0 || outTok > 0 || cacheTok > 0) {
+						const rates = defaultPricingEngine.resolveModelPricing(m);
+						if (rates) {
+							prevSpend +=
+								(freshInTok / 1_000_000) * rates.inputUsdPer1M +
+								(outTok / 1_000_000) * rates.outputUsdPer1M +
+								(cacheTok / 1_000_000) * rates.cacheReadUsdPer1M;
+						} else {
+							prevSpend += ((freshInTok + outTok) / 1_000_000) * 1.5;
+						}
+					}
+				}
+
+				const computeDelta = (curr: number, prev: number): number | null => {
+					if (prev <= 0) {
+						return curr > 0 ? 100 : 0;
+					}
+					return Number((((curr - prev) / prev) * 100).toFixed(1));
+				};
+
+				const currCacheHitRate =
+					dbInputFreshTokens + dbCacheReadTokens > 0
+						? (dbCacheReadTokens / (dbInputFreshTokens + dbCacheReadTokens)) * 100
+						: 0;
+				const prevCacheHitRate =
+					prevInputFresh + prevCacheRead > 0
+						? (prevCacheRead / (prevInputFresh + prevCacheRead)) * 100
+						: null;
+
+				trends = {
+					spendDelta: computeDelta(dbMarketCostUsd, prevSpend),
+					requestsDelta: computeDelta(dbTotalRequests, prevLogs.length),
+					tokensDelta: computeDelta(dbTotalTokens, prevTokens),
+					cacheRateDelta:
+						prevCacheHitRate !== null
+							? Number((currCacheHitRate - prevCacheHitRate).toFixed(1))
+							: null,
+					cacheReadDelta: computeDelta(dbCacheReadTokens, prevCacheRead),
+					inputFreshDelta: computeDelta(dbInputFreshTokens, prevInputFresh),
+				};
+			}
 		} catch {
 			// fallback
 		}
@@ -361,6 +445,7 @@ export async function handleDashboardApi(
 						errorsCount: svc.errorsCount,
 						mode: ctx.config.mode,
 					},
+					trends: trends ?? undefined,
 					sparklines: {
 						cost: costSparkline,
 						req: reqSparkline,

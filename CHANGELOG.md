@@ -5,6 +5,14 @@
 
 ---
 
+## [1.5.0] - 2026-09-13
+
+### Added
+
+- **feat(gateway)**: 24-bucket time-series `activity` aggregation in `/api/dashboard/overview` with token breakdown (fresh input, cache read, output), cost, and provider/model decomposition.
+- **feat(web)**: OpenRouter-style `ActivityStackedBarChart` component with multi-mode tabs (Tokens, Cost, Requests, Providers, Models), interactive hover tooltips, and mobile responsiveness.
+- **feat(web)**: Integrated Activity Stacked Bar Chart into Dashboard and Leaderboard views with real-time currency sync and engine filtering.
+
 ## [1.4.0] - 2026-09-13
 
 ### Added

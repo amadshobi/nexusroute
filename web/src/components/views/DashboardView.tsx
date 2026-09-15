@@ -1,27 +1,11 @@
 import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { MiniSparkline } from "../charts/MiniSparkline";
+import { ActivityStackedBarChart } from "@/components/charts/ActivityStackedBarChart";
 import { TimeFilterBar } from "../common/TimeFilterBar";
 import { TopModelsTeaser } from "./TopModelsTeaser";
-import { formatCompact } from "@/lib/formatters";
-import type { OverviewData } from "@/types/dashboard";
-
-function formatIdr(usd: number, rate: number = 17000): string {
-	const idr = usd * rate;
-	if (idr >= 1_000_000_000_000) {
-		return `Rp${(idr / 1_000_000_000_000).toFixed(2)}T`;
-	}
-	if (idr >= 1_000_000_000) {
-		return `Rp${(idr / 1_000_000_000).toFixed(2)}M`;
-	}
-	if (idr >= 1_000_000) {
-		return `Rp${(idr / 1_000_000).toFixed(2)}jt`;
-	}
-	if (idr >= 1_000) {
-		return `Rp${(idr / 1_000).toFixed(1)}rb`;
-	}
-	return `Rp${Math.round(idr).toLocaleString("id-ID")}`;
-}
+import { formatCompact, formatIdr } from "@/lib/formatters";
+import type { ActivityBucket, OverviewData } from "@/types/dashboard";
 
 interface DashboardViewProps {
 	overview: OverviewData | null;
@@ -29,6 +13,7 @@ interface DashboardViewProps {
 	setTimeRange: (range: string) => void;
 	onNavigateLeaderboard?: () => void;
 	usdIdrRate?: number;
+	activity?: ActivityBucket[];
 	estCloudCost: string;
 	totalReqCount: number;
 	totalTokens: number;
@@ -49,6 +34,7 @@ export function DashboardView({
 	setTimeRange,
 	onNavigateLeaderboard,
 	usdIdrRate = 17000,
+	activity,
 	estCloudCost,
 	totalReqCount,
 	totalTokens,
@@ -200,7 +186,17 @@ export function DashboardView({
 				</div>
 			</div>
 
-			{/* Third Row: Top Models Teaser */}
+			{/* Third Row: Activity Timeline */}
+			<ActivityStackedBarChart
+				activity={activity}
+				currency={currency}
+				usdIdrRate={usdIdrRate}
+				modes={["tokens", "cost", "requests"]}
+				defaultMode="tokens"
+				title="Activity Timeline"
+			/>
+
+			{/* Fourth Row: Top Models Teaser */}
 			<TopModelsTeaser
 				models={overview?.leaderboard?.models}
 				onViewAll={onNavigateLeaderboard}

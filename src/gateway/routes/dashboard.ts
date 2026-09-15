@@ -26,6 +26,22 @@ function isLocalhostRequest(req: Request, ctx: GatewayContext): boolean {
 	return isLocalhostAddress(peerIp);
 }
 
+/** Build a fixed-length array of empty activity buckets anchored at `start`. */
+function createEmptyActivityBuckets(count: number, start: number, step: number) {
+	return Array.from({ length: count }, (_, i) => ({
+		timestamp: Math.round(start + i * step),
+		requests: 0,
+		cacheHits: 0,
+		tokensInputFresh: 0,
+		tokensCacheRead: 0,
+		tokensOutput: 0,
+		tokensTotal: 0,
+		costUsd: 0,
+		providers: {} as Record<string, { requests: number; tokens: number; costUsd: number }>,
+		models: {} as Record<string, { requests: number; tokens: number; costUsd: number }>,
+	}));
+}
+
 export async function handleDashboardApi(
 	req: Request,
 	url: URL,
@@ -50,6 +66,7 @@ export async function handleDashboardApi(
 		let dbGrossCostUsd = 0;
 
 		const bucketCount = 10;
+		const activityBucketCount = 24;
 		const now = Date.now();
 		let windowStart = bounds.startMs > 0 ? bounds.startMs : now - 3600 * 1000;
 		let windowEnd = bounds.endMs !== Infinity ? bounds.endMs : now;
@@ -61,6 +78,13 @@ export async function handleDashboardApi(
 		let tokenSparkline = new Array(bucketCount).fill(0);
 		let cacheReadSparkline = new Array(bucketCount).fill(0);
 		let inputFreshSparkline = new Array(bucketCount).fill(0);
+
+		let activityStep = windowSpan > 0 ? windowSpan / activityBucketCount : 1;
+		let activityBuckets = createEmptyActivityBuckets(
+			activityBucketCount,
+			windowStart,
+			activityStep,
+		);
 
 		// Leaderboard aggregators
 		const modelMap = new Map<string, {
@@ -109,6 +133,13 @@ export async function handleDashboardApi(
 				windowSpan = windowEnd - windowStart;
 				step = windowSpan > 0 ? windowSpan / bucketCount : 1;
 			}
+
+			activityStep = windowSpan > 0 ? windowSpan / activityBucketCount : 1;
+			activityBuckets = createEmptyActivityBuckets(
+				activityBucketCount,
+				windowStart,
+				activityStep,
+			);
 
 			costSparkline = new Array(bucketCount).fill(0);
 			reqSparkline = new Array(bucketCount).fill(0);
@@ -229,6 +260,42 @@ export async function handleDashboardApi(
 				clStat.requests += 1;
 				clStat.tokensTotal += reqTokens;
 				clStat.costUsd += reqCost;
+
+				// Activity timeline buckets (24 fixed slots)
+				const actBucketIdx = Math.min(
+					activityBucketCount - 1,
+					Math.max(0, Math.floor((ts - windowStart) / activityStep)),
+				);
+				const actBucket = activityBuckets[actBucketIdx];
+				actBucket.requests += 1;
+				if (l.cache === "HIT") {
+					actBucket.cacheHits += 1;
+				}
+				actBucket.tokensInputFresh += freshInTok;
+				actBucket.tokensCacheRead += cacheTok;
+				actBucket.tokensOutput += outTok;
+				actBucket.tokensTotal += reqTokens;
+				actBucket.costUsd += reqCost;
+
+				const provBucket = actBucket.providers[prov] ?? {
+					requests: 0,
+					tokens: 0,
+					costUsd: 0,
+				};
+				provBucket.requests += 1;
+				provBucket.tokens += reqTokens;
+				provBucket.costUsd += reqCost;
+				actBucket.providers[prov] = provBucket;
+
+				const modelBucket = actBucket.models[m] ?? {
+					requests: 0,
+					tokens: 0,
+					costUsd: 0,
+				};
+				modelBucket.requests += 1;
+				modelBucket.tokens += reqTokens;
+				modelBucket.costUsd += reqCost;
+				actBucket.models[m] = modelBucket;
 			}
 		} catch {
 			// fallback
@@ -301,6 +368,7 @@ export async function handleDashboardApi(
 						cacheRead: cacheReadSparkline,
 						inputFresh: inputFreshSparkline,
 					},
+					activity: activityBuckets,
 					leaderboard: {
 						models: Array.from(modelMap.values())
 							.map((m) => ({

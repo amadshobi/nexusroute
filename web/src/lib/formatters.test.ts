@@ -6,6 +6,7 @@ import {
 	formatCostDual,
 	formatDateWIB,
 	formatTimeHHmm,
+	formatBucketTime,
 	formatShortPath,
 	formatIdr,
 	extractModelId,
@@ -111,6 +112,45 @@ describe("formatters", () => {
 			const res = formatTimeHHmm(1788941511806);
 			expect(res).toMatch(/^\d{2}:\d{2}$/);
 			expect(res).not.toContain(".");
+		});
+	});
+
+	describe("formatBucketTime", () => {
+		// 2026-09-13T14:00:00+07:00 => 07:00 UTC
+		const sundayAfternoonWib = Date.UTC(2026, 8, 13, 7, 0, 0);
+
+		it("handles zero, negative and invalid timestamps", () => {
+			expect(formatBucketTime(0)).toBe("-");
+			expect(formatBucketTime(-10)).toBe("-");
+			expect(formatBucketTime(NaN)).toBe("-");
+		});
+
+		it("formats as HH:mm when window span is omitted or <= 48 hours", () => {
+			expect(formatBucketTime(sundayAfternoonWib)).toBe("14:00");
+			expect(formatBucketTime(sundayAfternoonWib, 48 * 60 * 60 * 1000)).toBe(
+				"14:00",
+			);
+			expect(formatBucketTime(sundayAfternoonWib, 60 * 60 * 1000)).toBe(
+				"14:00",
+			);
+		});
+
+		it("formats as ddd HH:mm when window span is <= 7 days", () => {
+			expect(formatBucketTime(sundayAfternoonWib, 3 * 24 * 60 * 60 * 1000)).toBe(
+				"Sun 14:00",
+			);
+			expect(formatBucketTime(sundayAfternoonWib, 7 * 24 * 60 * 60 * 1000)).toBe(
+				"Sun 14:00",
+			);
+		});
+
+		it("formats as dd/MM when window span exceeds 7 days", () => {
+			expect(
+				formatBucketTime(sundayAfternoonWib, 8 * 24 * 60 * 60 * 1000),
+			).toBe("13/09");
+			expect(
+				formatBucketTime(sundayAfternoonWib, 30 * 24 * 60 * 60 * 1000),
+			).toBe("13/09");
 		});
 	});
 

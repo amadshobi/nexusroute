@@ -8,21 +8,24 @@ import {
 	Filter,
 } from "lucide-react";
 import { MiniSparkline } from "../charts/MiniSparkline";
+import { ActivityStackedBarChart } from "@/components/charts/ActivityStackedBarChart";
 import { ProviderIcon } from "../icons/ProviderIcons";
 import { TimeFilterBar } from "../common/TimeFilterBar";
 import { formatCompact } from "@/lib/formatters";
-import type { OverviewData } from "@/types/dashboard";
+import type { ActivityBucket, OverviewData } from "@/types/dashboard";
 
 interface LeaderboardViewProps {
 	overview: OverviewData | null;
 	timeRange: string;
 	setTimeRange: (range: string) => void;
+	activity?: ActivityBucket[];
 }
 
 export function LeaderboardView({
 	overview,
 	timeRange,
 	setTimeRange,
+	activity,
 }: LeaderboardViewProps) {
 	const [modelEngineFilter, setModelEngineFilter] = useState<string>("all");
 
@@ -90,6 +93,15 @@ export function LeaderboardView({
 			<div className="flex items-center">
 				<TimeFilterBar timeRange={timeRange} setTimeRange={setTimeRange} />
 			</div>
+
+			{/* Activity Breakdown (Providers / Models / Tokens / Requests) */}
+			<ActivityStackedBarChart
+				activity={activity}
+				modes={["providers", "models", "tokens", "requests"]}
+				defaultMode="providers"
+				modelFilter={modelEngineFilter}
+				title="Activity Breakdown"
+			/>
 
 			{/* Macro Header Segmented Bar (OpenRouter / GitHub Language style) */}
 			{topProvidersDistribution.length > 0 && (

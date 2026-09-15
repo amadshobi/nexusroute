@@ -1,15 +1,15 @@
 /**
  * ─────────────────────────────────────────────────────────────
- * NexusRoute — Single Source of Truth untuk Versi CLI
+ * NexusRoute — Single Source of Truth for the CLI Version
  * ─────────────────────────────────────────────────────────────
  *
- * Dipisah dari index.ts agar modul gateway/server bisa memakai
- * versi yang sama tanpa menimbulkan circular import.
+ * Kept separate from index.ts so the gateway/server modules can
+ * share the same version without introducing a circular import.
  *
- * `GN_VERSION` dipertahankan sebagai alias backward-compatible
- * (dipakai modul gateway/server & service lama).
+ * `GN_VERSION` is retained as a backward-compatible alias
+ * (used by the gateway/server modules and legacy services).
  */
-export const GN_VERSION = "1.4.0";
+export const GN_VERSION = "1.5.0";
 
-/** Versi kanonik NexusRoute CLI. */
+/** Canonical NexusRoute CLI version. */
 export const NEXUS_VERSION = GN_VERSION;

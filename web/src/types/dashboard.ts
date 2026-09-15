@@ -1,3 +1,16 @@
+export interface ActivityBucket {
+	timestamp: number;
+	requests: number;
+	cacheHits: number;
+	tokensInputFresh: number;
+	tokensCacheRead: number;
+	tokensOutput: number;
+	tokensTotal: number;
+	costUsd: number;
+	providers: Record<string, { requests: number; tokens: number; costUsd: number }>;
+	models: Record<string, { requests: number; tokens: number; costUsd: number }>;
+}
+
 export interface OverviewData {
 	status: string;
 	version: string;
@@ -45,6 +58,7 @@ export interface OverviewData {
 		cacheRead: number[];
 		inputFresh: number[];
 	};
+	activity?: ActivityBucket[];
 	leaderboard?: {
 		models: ModelLeaderboardItem[];
 		providers: ProviderLeaderboardItem[];

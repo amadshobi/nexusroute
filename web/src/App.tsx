@@ -531,6 +531,7 @@ export default function App() {
 									handleViewTimeRangeChange("overview-dashboard", r)
 								}
 								usdIdrRate={usdIdrRate}
+								activity={overview?.activity}
 								estCloudCost={estCloudCost}
 								totalReqCount={totalReqCount}
 								totalTokens={totalTokens}
@@ -560,6 +561,7 @@ export default function App() {
 								setTimeRange={(r) =>
 									handleViewTimeRangeChange("overview-leaderboard", r)
 								}
+								activity={overview?.activity}
 							/>
 						</div>
 

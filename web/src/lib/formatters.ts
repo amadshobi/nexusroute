@@ -68,6 +68,62 @@ export function formatTimeHHmm(timestamp: number): string {
 	return `${h}:${m}`;
 }
 
+/**
+ * Format a bucket timestamp into a compact axis label in WIB (UTC+7).
+ *
+ * The granularity adapts to the total window span:
+ * - `<= 48 hours` (or omitted): `HH:mm`, e.g. `14:00`.
+ * - `<= 7 days`: `ddd HH:mm`, e.g. `Mon 14:00`.
+ * - `> 7 days`: `dd/MM`, e.g. `13/09`.
+ *
+ * Returns `-` for non-positive or invalid timestamps.
+ */
+export function formatBucketTime(
+	timestamp: number,
+	windowSpanMs?: number,
+): string {
+	if (!timestamp || timestamp <= 0 || isNaN(timestamp)) return "-";
+	const date = new Date(timestamp);
+
+	const timeParts = new Intl.DateTimeFormat("en-US", {
+		timeZone: "Asia/Jakarta",
+		hour: "2-digit",
+		minute: "2-digit",
+		hourCycle: "h23",
+		hour12: false,
+	}).formatToParts(date);
+	const hour =
+		timeParts.find((p) => p.type === "hour")?.value.padStart(2, "0") || "00";
+	const minute =
+		timeParts.find((p) => p.type === "minute")?.value.padStart(2, "0") || "00";
+	const hhmm = `${hour}:${minute}`;
+
+	const span = windowSpanMs ?? 48 * 60 * 60 * 1000;
+	if (span <= 48 * 60 * 60 * 1000) return hhmm;
+
+	if (span <= 7 * 24 * 60 * 60 * 1000) {
+		const weekday =
+			new Intl.DateTimeFormat("en-US", {
+				timeZone: "Asia/Jakarta",
+				weekday: "short",
+			})
+				.formatToParts(date)
+				.find((p) => p.type === "weekday")?.value || "";
+		return `${weekday} ${hhmm}`;
+	}
+
+	const dateParts = new Intl.DateTimeFormat("en-GB", {
+		timeZone: "Asia/Jakarta",
+		day: "2-digit",
+		month: "2-digit",
+	}).formatToParts(date);
+	const day =
+		dateParts.find((p) => p.type === "day")?.value.padStart(2, "0") || "00";
+	const month =
+		dateParts.find((p) => p.type === "month")?.value.padStart(2, "0") || "00";
+	return `${day}/${month}`;
+}
+
 export function formatShortPath(fullPath?: string): string {
 	if (!fullPath || fullPath === "/") return "~";
 	return fullPath.replace(/^\/home\/[^/]+/, "~");

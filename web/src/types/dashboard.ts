@@ -14,6 +14,7 @@ export interface ActivityBucket {
 export interface MetricTrends {
 	spendDelta?: number | null;
 	requestsDelta?: number | null;
+	messagesDelta?: number | null;
 	tokensDelta?: number | null;
 	cacheRateDelta?: number | null;
 	cacheReadDelta?: number | null;
@@ -212,8 +213,10 @@ export interface AgentsData {
 		messagesCount: number;
 		tokensInput: number;
 		tokensOutput: number;
+		tokensCacheRead?: number;
 		totalCost: number;
 		recentSessions: OpenCodeSession[];
+		trends?: MetricTrends;
 	};
 	hermes?: {
 		available: boolean;

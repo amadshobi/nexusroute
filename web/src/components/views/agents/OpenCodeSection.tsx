@@ -1,18 +1,18 @@
 import { useMemo, useState } from "react";
 import {
-	ArrowUpRight,
-	ChevronsUpDown,
-	ChevronsDownUp,
+	ChevronRight,
 	Copy,
 	Check,
 	Bot,
+	TrendingUp,
+	TrendingDown,
 } from "lucide-react";
 import { MiniSparkline } from "@/components/charts/MiniSparkline";
 import {
 	formatCompact,
 	formatDateWIB,
 	formatIdr,
-	extractModelId,
+	formatModelDisplayName,
 	computeTimeSeriesBuckets,
 } from "@/lib/formatters";
 import { ProviderIcon } from "@/components/icons/ProviderIcons";
@@ -24,7 +24,7 @@ interface OpenCodeSectionProps {
 	opencode?: OpenCodeAgentData;
 	currency: Currency;
 	usdIdrRate: number;
-	visible: boolean;
+	visible?: boolean;
 	onToggleCurrency: () => void;
 }
 
@@ -32,7 +32,7 @@ export function OpenCodeSection({
 	opencode,
 	currency,
 	usdIdrRate,
-	visible,
+	visible = true,
 	onToggleCurrency,
 }: OpenCodeSectionProps) {
 	const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -123,6 +123,52 @@ export function OpenCodeSection({
 		[sessions],
 	);
 
+	const freshInputSparkline = useMemo(
+		() =>
+			computeTimeSeriesBuckets(
+				sessions,
+				openCodeSessionTs,
+				(s) => s.tokens_input || 0,
+				10,
+			),
+		[sessions],
+	);
+
+	const renderTrendBadge = (
+		delta: number | null | undefined,
+		options: { invertColors?: boolean; suffix?: string } = {},
+	) => {
+		if (delta === null || delta === undefined || isNaN(delta)) {
+			return null;
+		}
+
+		const isZero = delta === 0;
+		const isPositive = delta > 0;
+		const formattedDelta = `${isPositive ? "+" : ""}${delta.toFixed(1)}${options.suffix ?? "%"}`;
+
+		let colorClass = "";
+		const Icon = isPositive ? TrendingUp : TrendingDown;
+
+		if (isZero) {
+			colorClass = "text-[#8A94A6]";
+		} else if (options.invertColors) {
+			// For spending: increase is amber warning, decrease is green saving
+			colorClass = isPositive ? "text-amber-400" : "text-emerald-400";
+		} else {
+			// For requests, tokens, cache: increase is green, decrease is red
+			colorClass = isPositive ? "text-emerald-400" : "text-[#F87171]";
+		}
+
+		return (
+			<span
+				className={`inline-flex items-center gap-0.5 text-[11px] font-mono font-medium ${colorClass}`}
+			>
+				{!isZero && <Icon className="h-3 w-3 shrink-0" />}
+				<span>{formattedDelta}</span>
+			</span>
+		);
+	};
+
 	return (
 		<section className={visible ? "space-y-6" : "hidden"}>
 			<div className="flex items-center gap-2">
@@ -132,11 +178,11 @@ export function OpenCodeSection({
 				</h3>
 			</div>
 
-			<div className="grid grid-cols-2 lg:grid-cols-6 gap-3 sm:gap-4 font-sans">
-				{/* Market Value */}
-				<div className="col-span-2 lg:col-span-2 rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 font-sans">
+				{/* Card 1: Total Spend */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-1">
 					<div className="flex justify-between items-center">
-						<span className="text-xs font-medium text-[#8A94A6]">Market Value</span>
+						<span className="text-xs font-medium text-[#8A94A6]">Total Spend</span>
 						<button
 							type="button"
 							onClick={(e) => {
@@ -155,24 +201,41 @@ export function OpenCodeSection({
 								? formatIdr(stats.cost, usdIdrRate)
 								: `$${stats.cost.toFixed(2)}`}
 						</span>
-						{stats.grossCost > stats.cost ? (
-							<div className="text-[11px] text-[#64748B] font-mono line-through mt-0.5">
-								{currency === "IDR"
-									? formatIdr(stats.grossCost, usdIdrRate)
-									: `$${stats.grossCost.toFixed(2)}`}
-							</div>
-						) : null}
+						<div className="flex items-center gap-2 mt-0.5 min-h-[16px] flex-wrap">
+							{stats.grossCost > stats.cost ? (
+								<div className="text-[11px] text-[#64748B] font-mono line-through">
+									{currency === "IDR"
+										? formatIdr(stats.grossCost, usdIdrRate)
+										: `$${stats.grossCost.toFixed(2)}`}
+								</div>
+							) : null}
+							{renderTrendBadge(opencode?.trends?.spendDelta, {
+								invertColors: true,
+							})}
+						</div>
 					</div>
-					<MiniSparkline data={costSparkline} color="#F59E0B" />
+					<MiniSparkline data={costSparkline} color="#10B981" />
 				</div>
 
-				{/* Token (All) */}
-				<div className="col-span-2 lg:col-span-2 rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+				{/* Card 2: Messages */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-2">
 					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">Token (All)</span>
-						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#7AA2F7]">
-							<ArrowUpRight className="h-3 w-3" />
+						<span className="text-xs font-medium text-[#8A94A6]">Messages</span>
+						{renderTrendBadge(opencode?.trends?.messagesDelta)}
+					</div>
+					<div className="mt-2 mb-1">
+						<span className="text-2xl font-bold tracking-tight text-white font-mono">
+							{formatCompact(stats.messagesCount)}
 						</span>
+					</div>
+					<MiniSparkline data={messagesSparkline} color="#00EA88" />
+				</div>
+
+				{/* Card 3: Tokens */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
+					<div className="flex justify-between items-start">
+						<span className="text-xs font-medium text-[#8A94A6]">Tokens</span>
+						{renderTrendBadge(opencode?.trends?.tokensDelta)}
 					</div>
 					<div className="mt-2 mb-1">
 						<span className="text-2xl font-bold tracking-tight text-white font-mono">
@@ -182,13 +245,28 @@ export function OpenCodeSection({
 					<MiniSparkline data={tokensSparkline} color="#7AA2F7" />
 				</div>
 
-				{/* Cache Read */}
-				<div className="col-span-2 lg:col-span-2 rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+				{/* Card 4: Cache Hit */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-4">
+					<div className="flex justify-between items-start">
+						<span className="text-xs font-medium text-[#8A94A6]">Cache Hit</span>
+						{renderTrendBadge(opencode?.trends?.cacheRateDelta)}
+					</div>
+					<div className="mt-2 mb-1">
+						<span className="text-2xl font-bold tracking-tight text-white font-mono">
+							{stats.cacheHitRate}%
+						</span>
+					</div>
+					<MiniSparkline data={cacheRateSparkline} color="#A855F7" />
+				</div>
+			</div>
+
+			{/* Second Row: 2 Sparkline Cards for Cache Read & Fresh Input */}
+			<div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 font-sans">
+				{/* Card 1: Cache Read */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Cache Read</span>
-						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-purple-400 font-mono">
-							<ArrowUpRight className="h-3 w-3" /> {stats.cacheHitRate}%
-						</span>
+						{renderTrendBadge(opencode?.trends?.cacheReadDelta)}
 					</div>
 					<div className="mt-2 mb-1">
 						<span className="text-2xl font-bold tracking-tight text-white font-mono">
@@ -198,36 +276,18 @@ export function OpenCodeSection({
 					<MiniSparkline data={cacheReadSparkline} color="#A855F7" />
 				</div>
 
-				{/* Cache Hit Rate */}
-				<div className="col-span-1 lg:col-span-3 rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
+				{/* Card 2: Fresh Input */}
+				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
 					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">Cache Hit Rate</span>
-						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-[#00EA88]">
-							<ArrowUpRight className="h-3 w-3" />
-						</span>
-					</div>
-					<div className="mt-2 mb-1">
-						<span className="text-2xl font-bold tracking-tight text-[#00EA88] font-mono">
-							{stats.cacheHitRate}%
-						</span>
-					</div>
-					<MiniSparkline data={cacheRateSparkline} color="#00EA88" />
-				</div>
-
-				{/* Messages */}
-				<div className="col-span-1 lg:col-span-3 rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden">
-					<div className="flex justify-between items-start">
-						<span className="text-xs font-medium text-[#8A94A6]">Messages</span>
-						<span className="inline-flex items-center gap-0.5 text-[11px] font-medium text-sky-400">
-							<ArrowUpRight className="h-3 w-3" />
-						</span>
+						<span className="text-xs font-medium text-[#8A94A6]">Fresh Input</span>
+						{renderTrendBadge(opencode?.trends?.inputFreshDelta)}
 					</div>
 					<div className="mt-2 mb-1">
 						<span className="text-2xl font-bold tracking-tight text-white font-mono">
-							{formatCompact(stats.messagesCount)}
+							{formatCompact(stats.input)}
 						</span>
 					</div>
-					<MiniSparkline data={messagesSparkline} color="#38BDF8" />
+					<MiniSparkline data={freshInputSparkline} color="#7AA2F7" />
 				</div>
 			</div>
 
@@ -252,22 +312,19 @@ export function OpenCodeSection({
 									<div className="flex items-center gap-2.5 min-w-0">
 										<button
 											type="button"
-											className="p-1 rounded text-[#8A94A6] hover:text-white bg-[#1A2030] border border-[#232D42] transition-transform duration-200 shrink-0"
-											title={open ? "Collapse folder" : "Expand folder"}
+											className="p-1 rounded text-[#8A94A6] hover:text-white bg-[#1A2030] border border-[#232D42] transition-colors shrink-0"
+											title={open ? "Collapse project" : "Expand project"}
 										>
-											<div
-												className={`transition-transform duration-200 ${
-													open ? "rotate-180" : "rotate-0"
+											<ChevronRight
+												className={`h-3.5 w-3.5 text-[#8A94A6] transition-transform duration-200 ${
+													open ? "rotate-90 text-[#00EA88]" : "rotate-0"
 												}`}
-											>
-												{open ? (
-													<ChevronsDownUp className="h-3.5 w-3.5 text-[#00EA88]" />
-												) : (
-													<ChevronsUpDown className="h-3.5 w-3.5 text-[#8A94A6]" />
-												)}
-											</div>
+											/>
 										</button>
-										<span className="text-sm font-semibold text-white tracking-tight truncate">
+										<span
+											className="text-sm font-semibold text-white tracking-tight truncate"
+											title={group.projectPath}
+										>
 											{group.displayPath}
 										</span>
 										<span className="text-xs font-mono text-[#00EA88] shrink-0">
@@ -297,20 +354,6 @@ export function OpenCodeSection({
 											const root = node.session;
 											const subagents = node.children;
 											const hasSubagents = subagents.length > 0;
-
-											const rootInTokens = root.tokens_input || 0;
-											const rootCacheTokens = root.tokens_cache_read || 0;
-											const rootCacheRate =
-												rootInTokens + rootCacheTokens > 0
-													? Number(
-															(
-																(rootCacheTokens /
-																	(rootInTokens + rootCacheTokens)) *
-																100
-															).toFixed(1),
-														)
-													: 0;
-											const rootModelClean = extractModelId(root.model);
 
 											return (
 												<div key={root.id} className="divide-y divide-[#1A2030]/60">
@@ -351,98 +394,91 @@ export function OpenCodeSection({
 															</div>
 														</div>
 
-														<div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 shrink-0 font-mono text-xs">
-															<div className="flex items-center gap-1.5 min-w-[130px]">
+														<div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 shrink-0 font-mono text-xs overflow-x-auto scrollbar-none py-0.5">
+															<div className="flex items-center gap-1.5 shrink-0">
 																<ProviderIcon
 																	name={root.model}
 																	className="h-3.5 w-3.5 shrink-0"
 																/>
-																<span className="text-[#CBD5E1] truncate font-sans text-xs max-w-[90px] sm:max-w-[120px]">
-																	{rootModelClean}
+																<span
+																	className="text-white font-medium text-xs whitespace-nowrap"
+																	title={root.model}
+																>
+																	{formatModelDisplayName(root.model)}
 																</span>
 															</div>
 
-															<div className="text-right min-w-[70px]">
-																<div className="text-white font-medium">
+															<div className="text-right min-w-[55px] shrink-0">
+																<span className="text-white font-medium">
 																	{formatCompact(node.totalTokens)}
-																</div>
-																<div className="text-[10px] text-[#64748B]">
-																	{formatCompact(rootCacheTokens)} cache
-																</div>
+																</span>
 															</div>
 
-															<div className="text-right min-w-[75px]">
-																<div className="text-amber-400 font-semibold">
+															<div className="text-right min-w-[65px] shrink-0">
+																<span className="text-amber-400 font-semibold">
 																	{currency === "IDR"
 																		? formatIdr(node.totalCost, usdIdrRate)
-																		: `$${node.totalCost.toFixed(3)}`}
-																</div>
-															</div>
-
-															<div className="min-w-[85px] text-right">
-																<span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded text-[11px] font-medium bg-[#0D261C] border border-[#18573D] text-[#00EA88]">
-																	<ArrowUpRight className="h-3 w-3 shrink-0" />
-																	{rootCacheRate}%
+																		: `$${node.totalCost.toFixed(2)}`}
 																</span>
 															</div>
 														</div>
 													</div>
 
 													{hasSubagents && (
-														<div className="bg-[#0E121B] divide-y divide-[#171D2A] pl-4 sm:pl-8">
-															{subagents.map((sub) => {
-																const subRole = resolveAgentRole(sub.agent);
-																const SubRoleIcon = subRole.icon;
-																const subModelClean = extractModelId(sub.model);
-																const subTokens =
-																	(sub.tokens_input || 0) +
-																	(sub.tokens_output || 0) +
-																	(sub.tokens_cache_read || 0) +
-																	(sub.tokens_cache_write || 0) +
-																	(sub.tokens_reasoning || 0);
+														<div className="bg-[#0B0E15] border-t border-[#1E2433]/40 overflow-x-auto scrollbar-none px-3 sm:px-6 py-2">
+															<table className="w-full text-xs font-mono border-collapse min-w-[380px] sm:min-w-0">
+																<thead>
+																	<tr className="text-[10px] uppercase tracking-wider text-[#64748B] border-b border-[#1E2433]/50 select-none">
+																		<th className="py-1.5 pl-1 pr-3 text-left font-medium w-24">Role</th>
+																		<th className="py-1.5 px-3 text-left font-medium">Model</th>
+																		<th className="py-1.5 px-3 text-right font-medium w-20">Tokens</th>
+																		<th className="py-1.5 pl-3 pr-1 text-right font-medium w-24">Spend</th>
+																	</tr>
+																</thead>
+																<tbody className="divide-y divide-[#161B26]">
+																	{subagents.map((sub) => {
+																		const subRole = resolveAgentRole(sub.agent);
+																		const subTokens =
+																			(sub.tokens_input || 0) +
+																			(sub.tokens_output || 0) +
+																			(sub.tokens_cache_read || 0) +
+																			(sub.tokens_cache_write || 0) +
+																			(sub.tokens_reasoning || 0);
 
-																return (
-																	<div
-																		key={sub.id}
-																		className="px-4 py-2 hover:bg-[#131722] transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
-																	>
-																		<div className="flex items-center gap-2 min-w-0">
-																			<span className="text-[#64748B] font-mono">↳</span>
-																			<SubRoleIcon
-																				className="h-3.5 w-3.5 shrink-0"
-																				style={{ color: subRole.color }}
-																			/>
-																			<span className="font-medium text-[#E2E8F0] font-mono text-xs">
-																				{subRole.label}
-																			</span>
-																		</div>
-
-																		<div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-6 shrink-0 font-mono text-xs">
-																			<div className="flex items-center gap-1.5 min-w-[130px]">
-																				<ProviderIcon
-																					name={sub.model}
-																					className="h-3 w-3 shrink-0"
-																				/>
-																				<span className="text-[#8A94A6] truncate font-sans text-[11px] max-w-[90px] sm:max-w-[120px]">
-																					{subModelClean}
-																				</span>
-																			</div>
-
-																			<div className="text-right min-w-[70px] text-[#8A94A6]">
-																				{formatCompact(subTokens)}
-																			</div>
-
-																			<div className="text-right min-w-[75px] text-amber-400/90 font-medium">
-																				{currency === "IDR"
-																					? formatIdr(sub.cost || 0, usdIdrRate)
-																					: `$${(sub.cost || 0).toFixed(3)}`}
-																			</div>
-
-																			<div className="min-w-[85px]" />
-																		</div>
-																	</div>
-																);
-															})}
+																		return (
+																			<tr
+																				key={sub.id}
+																				className="hover:bg-[#121622]/80 transition-colors"
+																			>
+																				<td className="py-2 pl-1 pr-3 whitespace-nowrap">
+																					<span className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-[#161B26] border border-[#1E2433] text-[#7AA2F7]">
+																						{subRole.label.toLowerCase()}
+																					</span>
+																				</td>
+																				<td className="py-2 px-3 whitespace-nowrap">
+																					<div className="flex items-center gap-1.5 font-sans font-medium text-white">
+																						<ProviderIcon
+																							name={sub.model}
+																							className="h-3.5 w-3.5 shrink-0"
+																						/>
+																						<span title={sub.model}>
+																							{formatModelDisplayName(sub.model)}
+																						</span>
+																					</div>
+																				</td>
+																				<td className="py-2 px-3 text-right text-[#8A94A6] whitespace-nowrap">
+																					{formatCompact(subTokens)}
+																				</td>
+																				<td className="py-2 pl-3 pr-1 text-right text-amber-400/90 font-medium whitespace-nowrap">
+																					{currency === "IDR"
+																						? formatIdr(sub.cost || 0, usdIdrRate)
+																						: `$${(sub.cost || 0).toFixed(2)}`}
+																				</td>
+																			</tr>
+																		);
+																	})}
+																</tbody>
+															</table>
 														</div>
 													)}
 												</div>

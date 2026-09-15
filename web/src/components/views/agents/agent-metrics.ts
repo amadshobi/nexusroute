@@ -1,9 +1,18 @@
-import { formatShortPath } from "@/lib/formatters";
-import type {
-	HermesSession,
-	OpenCodeSession,
-} from "@/types/dashboard";
+import type { OpenCodeSession } from "@/types/dashboard";
 import type { ProjectGroup, SessionTreeNode } from "./agent-types";
+
+/**
+ * Extract clean project folder name (e.g. "/home/user/civil/projects/nexusroute" -> "nexusroute").
+ */
+export function extractProjectFolderName(pathStr: string): string {
+	if (!pathStr || pathStr === "/" || pathStr === "~") return "Default Workspace";
+	if (pathStr.startsWith("session-")) return "General Workspace";
+	const clean = pathStr.replace(/\/+$/, "");
+	const segments = clean.split("/").filter(Boolean);
+	const last = segments[segments.length - 1];
+	if (last && last.startsWith("session-")) return "General Workspace";
+	return last || "Default Workspace";
+}
 
 export interface OpenCodeStats {
 	cost: number;
@@ -85,7 +94,7 @@ export function buildProjectGroups(
 		const rawPath = session.project_path || session.directory || "/";
 		const group = map.get(rawPath) || {
 			projectPath: rawPath,
-			displayPath: formatShortPath(rawPath),
+			displayPath: extractProjectFolderName(rawPath),
 			latestUpdated: 0,
 			totalCost: 0,
 			totalTokens: 0,
@@ -158,9 +167,4 @@ export function buildProjectGroups(
 /** Stable timestamp accessor for OpenCode sessions. */
 export function openCodeSessionTs(s: OpenCodeSession): number {
 	return s.time_updated || s.time_created || 0;
-}
-
-/** Stable timestamp accessor for Hermes sessions (seconds -> ms). */
-export function hermesSessionTs(s: HermesSession): number {
-	return s.last_activity_at ? s.last_activity_at * 1000 : s.started_at * 1000;
 }

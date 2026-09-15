@@ -165,6 +165,18 @@ export function formatModelDisplayName(modelId?: string): string {
 
 	let clean = modelId.trim();
 
+	// 0. Extract clean ID if stored as serialized JSON, e.g. {"id":"...","providerID":"..."}
+	if (clean.startsWith("{")) {
+		try {
+			const parsed = JSON.parse(clean);
+			if (parsed.id) clean = String(parsed.id);
+			else if (parsed.model) clean = String(parsed.model);
+		} catch {
+			const match = clean.match(/"id"\s*:\s*"([^"]+)"/);
+			if (match && match[1]) clean = match[1];
+		}
+	}
+
 	// 1. Take the last meaningful path segment if provider prefixes are present
 	if (clean.includes("/")) {
 		const segments = clean.split("/").filter(Boolean);

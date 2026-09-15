@@ -1,8 +1,5 @@
 import type { AgentsData, OpenCodeSession } from "@/types/dashboard";
 
-/** Segmented filter used by the unified Agents view. */
-export type AgentFilter = "all" | "opencode" | "hermes";
-
 /** A root OpenCode session with its nested subagent sessions. */
 export interface SessionTreeNode {
 	session: OpenCodeSession;
@@ -22,6 +19,5 @@ export interface ProjectGroup {
 }
 
 export type OpenCodeAgentData = AgentsData["opencode"];
-export type HermesAgentData = AgentsData["hermes"];
 
 export type Currency = "USD" | "IDR";

@@ -209,6 +209,19 @@ describe("formatters", () => {
 			);
 		});
 
+		it("parses JSON-serialized model strings from opencode SQLite records", () => {
+			const json = JSON.stringify({
+				id: "google-antigravity/gemini-3.8-flash",
+				providerID: "local-gateway",
+			});
+			expect(formatModelDisplayName(json)).toBe("Gemini 3.8 Flash");
+			const claudeJson = JSON.stringify({
+				id: "anthropic/claude-sonnet-4-6",
+				providerID: "local-gateway",
+			});
+			expect(formatModelDisplayName(claudeJson)).toBe("Claude Sonnet 4 6");
+		});
+
 		it("handles fallback and edge cases gracefully", () => {
 			expect(formatModelDisplayName("")).toBe("Unknown");
 			expect(formatModelDisplayName(undefined)).toBe("Unknown");

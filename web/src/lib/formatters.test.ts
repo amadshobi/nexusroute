@@ -9,6 +9,7 @@ import {
 	formatBucketTime,
 	formatShortPath,
 	formatIdr,
+	formatModelDisplayName,
 	extractModelId,
 	computeTimeSeriesBuckets,
 } from "./formatters";
@@ -174,12 +175,12 @@ describe("formatters", () => {
 			expect(formatIdr(0.1, 17000)).toBe("Rp1.7K");
 		});
 
-		it("formats millions with M suffix", () => {
-			expect(formatIdr(100, 17000)).toBe("Rp1.70M");
+		it("formats millions with jt suffix", () => {
+			expect(formatIdr(100, 17000)).toBe("Rp1.70jt");
 		});
 
-		it("formats billions with B suffix", () => {
-			expect(formatIdr(100_000, 17000)).toBe("Rp1.70B");
+		it("formats billions with M suffix", () => {
+			expect(formatIdr(100_000, 17000)).toBe("Rp1.70M");
 		});
 
 		it("formats trillions with T suffix", () => {
@@ -188,6 +189,32 @@ describe("formatters", () => {
 
 		it("uses the default rate when omitted", () => {
 			expect(formatIdr(100)).toBe(formatIdr(100, 17000));
+		});
+	});
+
+	describe("formatModelDisplayName", () => {
+		it("formats provider-prefixed model IDs into clean human titles", () => {
+			expect(formatModelDisplayName("google-antigravity/gemini-3.8-flash")).toBe(
+				"Gemini 3.8 Flash",
+			);
+			expect(
+				formatModelDisplayName("openrouter/anthropic/claude-3.7-sonnet-20250219"),
+			).toBe("Claude 3.7 Sonnet");
+			expect(formatModelDisplayName("deepseek/deepseek-v4-flash")).toBe(
+				"DeepSeek V4 Flash",
+			);
+			expect(formatModelDisplayName("openai/gpt-4o-mini")).toBe("GPT 4o Mini");
+			expect(formatModelDisplayName("meta-llama/llama-3.3-70b-instruct")).toBe(
+				"Llama 3.3 70B Instruct",
+			);
+		});
+
+		it("handles fallback and edge cases gracefully", () => {
+			expect(formatModelDisplayName("")).toBe("Unknown");
+			expect(formatModelDisplayName(undefined)).toBe("Unknown");
+			expect(formatModelDisplayName("custom-unknown-model")).toBe(
+				"Custom Unknown Model",
+			);
 		});
 	});
 

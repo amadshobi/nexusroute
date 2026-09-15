@@ -11,6 +11,15 @@ export interface ActivityBucket {
 	models: Record<string, { requests: number; tokens: number; costUsd: number }>;
 }
 
+export interface MetricTrends {
+	spendDelta?: number | null;
+	requestsDelta?: number | null;
+	tokensDelta?: number | null;
+	cacheRateDelta?: number | null;
+	cacheReadDelta?: number | null;
+	inputFreshDelta?: number | null;
+}
+
 export interface OverviewData {
 	status: string;
 	version: string;
@@ -22,6 +31,7 @@ export interface OverviewData {
 	localSpendUsd?: number;
 	savingsUsd?: number;
 	timeRange?: string;
+	trends?: MetricTrends;
 	tokensCacheRead?: number;
 	tokensInputFresh?: number;
 	contextCacheRate?: number;

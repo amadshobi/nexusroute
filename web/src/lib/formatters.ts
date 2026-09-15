@@ -131,7 +131,11 @@ export function formatShortPath(fullPath?: string): string {
 
 /**
  * Format a USD amount into a compact IDR string using the given exchange rate.
- * Scales the suffix (K/M/B/T) so large rupiah figures stay readable.
+ * Uses Indonesian financial abbreviations:
+ * - >= 1 Triliun: T
+ * - >= 1 Miliar: M
+ * - >= 1 Juta: jt
+ * - >= 1 Ribu: K
  */
 export function formatIdr(usd: number, rate: number = 17000): string {
 	const idr = usd * rate;
@@ -139,15 +143,82 @@ export function formatIdr(usd: number, rate: number = 17000): string {
 		return `Rp${(idr / 1_000_000_000_000).toFixed(2)}T`;
 	}
 	if (idr >= 1_000_000_000) {
-		return `Rp${(idr / 1_000_000_000).toFixed(2)}B`;
+		return `Rp${(idr / 1_000_000_000).toFixed(2)}M`;
 	}
 	if (idr >= 1_000_000) {
-		return `Rp${(idr / 1_000_000).toFixed(2)}M`;
+		return `Rp${(idr / 1_000_000).toFixed(2)}jt`;
 	}
 	if (idr >= 1_000) {
 		return `Rp${(idr / 1_000).toFixed(1)}K`;
 	}
 	return `Rp${Math.round(idr).toLocaleString("en-US")}`;
+}
+
+/**
+ * Dynamically converts raw model IDs (e.g. "google-antigravity/gemini-3.8-flash",
+ * "openrouter/anthropic/claude-3.7-sonnet", "deepseek-v4-flash") into human-readable
+ * display names ("Gemini 3.8 Flash", "Claude 3.7 Sonnet", "DeepSeek V4 Flash")
+ * using pattern heuristics without requiring hardcoded model registries.
+ */
+export function formatModelDisplayName(modelId?: string): string {
+	if (!modelId) return "Unknown";
+
+	let clean = modelId.trim();
+
+	// 1. Take the last meaningful path segment if provider prefixes are present
+	if (clean.includes("/")) {
+		const segments = clean.split("/").filter(Boolean);
+		clean = segments[segments.length - 1];
+	}
+
+	// 2. Strip deployment/date tags, e.g. -20250219, :free, :exact, @...
+	clean = clean
+		.replace(/:\w+$/i, "")
+		.replace(/-\d{8}$/, "")
+		.replace(/@.*$/, "");
+
+	// 3. Tokenize by hyphen, underscore, or space
+	const tokens = clean.split(/[-_\s]+/).filter(Boolean);
+
+	// 4. Transform tokens using industry-standard acronym & title-case heuristics
+	const formatted = tokens.map((token) => {
+		const lower = token.toLowerCase();
+
+		// Well-known uppercase acronyms
+		if (lower === "gpt") return "GPT";
+		if (lower === "glm") return "GLM";
+		if (lower === "dbrx") return "DBRX";
+		if (lower === "deepseek") return "DeepSeek";
+		if (lower === "minimax") return "MiniMax";
+		if (lower === "moonshot") return "Moonshot";
+		if (lower === "phi") return "Phi";
+
+		// Version tokens: v3, v4, v3.5 -> V3, V4, V3.5
+		if (/^v\d+(\.\d+)?$/i.test(token)) {
+			return token.toUpperCase();
+		}
+
+		// Size tokens: 70b, 8b, 32b, 1.5b -> 70B, 8B, 32B, 1.5B
+		if (/^\d+(\.\d+)?b$/i.test(token)) {
+			return token.toUpperCase();
+		}
+
+		// Model reasoning / numeric identifiers: 3.8, 4o, o1, o3
+		if (/^\d+(\.\d+)?$/i.test(token)) {
+			return token;
+		}
+		if (/^o[1-9]$/i.test(token)) {
+			return token.toLowerCase();
+		}
+		if (/^\d+o(-mini)?$/i.test(token)) {
+			return token;
+		}
+
+		// Standard title capitalization: gemini -> Gemini, flash -> Flash, sonnet -> Sonnet
+		return token.charAt(0).toUpperCase() + token.slice(1);
+	});
+
+	return formatted.join(" ") || modelId;
 }
 
 export function extractModelId(rawModel?: string): string {

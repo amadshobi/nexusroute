@@ -6,14 +6,14 @@ interface TimeFilterBarProps {
 }
 
 export function TimeFilterBar({ timeRange, setTimeRange }: TimeFilterBarProps) {
-	const ranges = ["all", "15m", "today", "yesterday", "24h", "7d", "30d"];
+	const ranges = ["all", "1h", "today", "yesterday", "24h", "7d", "30d"];
 
 	const getLabel = (r: string) => {
 		switch (r) {
 			case "all":
 				return "All Time";
-			case "15m":
-				return "15m";
+			case "1h":
+				return "1h";
 			case "today":
 				return "Today";
 			case "yesterday":

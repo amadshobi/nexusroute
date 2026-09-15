@@ -480,7 +480,7 @@ export default function App() {
 	};
 
 	return (
-		<div className="h-screen w-screen overflow-hidden bg-[#0E1117] text-[#E2E8F0] font-sans antialiased selection:bg-[#1D68FE] selection:text-white flex relative">
+		<div className="h-[100dvh] w-screen overflow-hidden bg-[#0E1117] text-[#E2E8F0] font-sans antialiased selection:bg-[#1D68FE] selection:text-white flex relative">
 			{mobileMenuOpen && (
 				<div
 					onClick={() => setMobileMenuOpen(false)}
@@ -515,8 +515,8 @@ export default function App() {
 					isOnline={isOnline}
 				/>
 
-				<div className="flex-1 h-full overflow-y-auto overflow-x-hidden">
-					<main className="p-4 sm:p-8 space-y-6 max-w-5xl w-full mx-auto">
+				<div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
+					<main className="p-4 sm:p-8 pb-20 sm:pb-16 space-y-6 max-w-5xl w-full mx-auto">
 						<div
 							className={
 								activeNav === "overview-dashboard"

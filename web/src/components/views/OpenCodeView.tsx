@@ -434,7 +434,7 @@ export function OpenCodeView({
 										<button
 											type="button"
 											className="p-1 rounded text-[#8A94A6] hover:text-white bg-[#1A2030] border border-[#232D42] transition-transform duration-200 shrink-0"
-											title={open ? "Tutup Folder" : "Buka Folder"}
+											title={open ? "Collapse Folder" : "Expand Folder"}
 										>
 											<div className={`transition-transform duration-200 ${open ? "rotate-180" : "rotate-0"}`}>
 												{open ? (

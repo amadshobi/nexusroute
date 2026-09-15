@@ -13,17 +13,17 @@ export function TimeFilterBar({ timeRange, setTimeRange }: TimeFilterBarProps) {
 			case "all":
 				return "All Time";
 			case "15m":
-				return "15 Menit";
+				return "15m";
 			case "today":
-				return "Hari Ini";
+				return "Today";
 			case "yesterday":
-				return "Kemarin";
+				return "Yesterday";
 			case "24h":
-				return "24 Jam";
+				return "24h";
 			case "7d":
-				return "7 Hari";
+				return "7d";
 			case "30d":
-				return "1 Bulan";
+				return "30d";
 			default:
 				return r;
 		}

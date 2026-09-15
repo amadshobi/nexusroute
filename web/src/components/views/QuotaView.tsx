@@ -88,7 +88,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 	) {
 		return (
 			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-6 text-center shadow-sm">
-				<p className="text-sm text-[#8A94A6]">Tidak ada metrik quota aktif.</p>
+				<p className="text-sm text-[#8A94A6]">No active quota metrics.</p>
 			</div>
 		);
 	}

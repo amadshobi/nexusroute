@@ -5,6 +5,24 @@
 
 ---
 
+## [1.6.0] - 2026-09-15
+
+### Added
+
+- **feat(gateway)**: Period-over-period (PoP) trend analytics in `/api/dashboard/overview`, calculating historical comparison metrics (`spendDelta`, `requestsDelta`, `tokensDelta`, `cacheRateDelta`, `cacheReadDelta`, `inputFreshDelta`) for bounded time windows (`1h`, `today`, `yesterday`, `24h`, `7d`, `30d`).
+- **feat(gateway)**: Dynamic 1-hour time filter (`1h`/`1H`) support in `parseTimeBounds` (`src/gateway/context.ts`).
+- **feat(web)**: Period-over-period trend badges with directional indicators (`TrendingUp` / `TrendingDown`) across all overview metric cards with semantic coloring (amber for spend increases, emerald for cost savings and throughput growth).
+- **feat(web)**: OpenRouter-inspired single-line Top Models list with dynamic heuristic-based display name formatting (`formatModelDisplayName`) and secondary slug tooltips.
+- **feat(web)**: Indonesian Rupiah formatting enhancement (`formatIdr`) using official financial denominations (`jt` for millions, `M` for billions, `T` for trillions).
+- **feat(web)**: Enhanced responsive mobile viewport handling with dynamic `100dvh` root height and breathing bottom padding (`pb-20 sm:pb-16`).
+
+### Fixed
+
+- **fix(web)**: Replaced static placeholder metric labels (`100%`, `Total`, `Provider`, `Fresh`) with real mathematical trend calculations.
+- **fix(web)**: Resolved flexbox scroll container overflow clipping the bottom cards on mobile viewports.
+
+---
+
 ## [1.5.0] - 2026-09-13
 
 ### Added

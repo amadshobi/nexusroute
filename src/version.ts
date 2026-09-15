@@ -9,7 +9,7 @@
  * `GN_VERSION` is retained as a backward-compatible alias
  * (used by the gateway/server modules and legacy services).
  */
-export const GN_VERSION = "1.5.0";
+export const GN_VERSION = "1.6.0";
 
 /** Canonical NexusRoute CLI version. */
 export const NEXUS_VERSION = GN_VERSION;

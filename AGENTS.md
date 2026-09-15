@@ -82,6 +82,7 @@ bun run typecheck && bun test && bun run --cwd web build
 
 > The Bun gateway daemon serves the pre-compiled static bundle from `web/dist/` at `:4010/dashboard/*`.
 > Any code changes inside `web/src/` remain completely invisible until you recompile and restart the daemon:
+>
 > ```bash
 > bun run --cwd web build && systemctl --user restart nexus-gateway.service
 > ```
@@ -195,7 +196,7 @@ All primary views must remain permanently mounted in the DOM to preserve user in
 
 ## 6. Systemd Service Quirks
 
-- Canonical service unit: `nexus-gateway.service`.
+- Canonical service unit: `gn-gateway.service` (alias `nexus-gateway.service`).
 - `ExecStart` uses an explicit user home path `%h/civil/projects/nexusroute/...` (intentional for systemd user mode).
 - When modifying systemd paths, `ReadWritePaths` must include:
   `%h/.config/nexus %h/.config/gn %h/.cache/nexus %h/.cache/gn %h/.cache/goblin-nexus %h/.bun`

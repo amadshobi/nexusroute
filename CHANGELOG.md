@@ -5,6 +5,22 @@
 
 ---
 
+## [1.7.0] - 2026-09-15
+
+### Added
+
+- **feat(gateway)**: Historical period-over-period (PoP) comparison analytics for OpenCode SQLite telemetry (`src/gateway/routes/agents.ts`), computing deltas for spend, messages, tokens, cache rate, cache read, and fresh input across all time ranges.
+- **feat(web)**: Re-architected subagent session inspector in `OpenCodeSection.tsx` into a high-density, clean developer table layout (`ROLE | MODEL | TOKENS | SPEND`) with horizontal scroll protection for mobile.
+- **feat(web)**: Aligned Agents metric cards 1:1 with Dashboard layout (Row 1: Total Spend, Messages, Tokens, Cache Hit; Row 2: Cache Read, Fresh Input) featuring dynamic `TrendingUp` / `TrendingDown` indicators.
+- **feat(web)**: Clean project folder extraction in `agent-metrics.ts` displaying project directories cleanly (e.g. `nexusroute` instead of full home paths).
+- **feat(web)**: Robust parsing for JSON-serialized model IDs stored in OpenCode SQLite records in `formatModelDisplayName`.
+
+### Removed
+
+- **refactor(web)**: Pruned obsolete views (`HermesView.tsx`, `OpenCodeView.tsx`, `HermesSection.tsx`) and removed segmented agent filter tabs, streamlining `AgentsView.tsx` into a focused OpenCode/OpenChamber command center.
+
+---
+
 ## [1.6.0] - 2026-09-15
 
 ### Added

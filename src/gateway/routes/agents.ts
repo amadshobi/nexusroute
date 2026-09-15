@@ -28,7 +28,7 @@ export async function handleAgentsTelemetry(
 					let countQ = "SELECT COUNT(*) as count FROM session";
 					let msgQ = "SELECT COUNT(*) as count FROM message";
 					let statsQ =
-						"SELECT SUM(tokens_input) as input, SUM(tokens_output) as output, SUM(cost) as cost FROM session";
+						"SELECT SUM(tokens_input) as input, SUM(tokens_output) as output, SUM(tokens_cache_read) as cacheRead, SUM(cost) as cost FROM session";
 					let recentQ = `
 						SELECT 
 							s.id, 
@@ -116,14 +116,85 @@ export async function handleAgentsTelemetry(
 							.all({ ":start": bounds.startMs });
 					}
 
+					let trends: any = null;
+					if (!isAll && bounds.startMs > 0) {
+						const nowMs = Date.now();
+						const span =
+							(bounds.endMs !== Infinity ? bounds.endMs : nowMs) -
+							bounds.startMs;
+						const prevStart = bounds.startMs - span;
+						const prevEnd = bounds.startMs;
+
+						try {
+							const prevStatsQ =
+								"SELECT SUM(tokens_input) as input, SUM(tokens_output) as output, SUM(tokens_cache_read) as cacheRead, SUM(cost) as cost FROM session WHERE time_updated >= :start AND time_updated < :end";
+							const prevMsgQ =
+								"SELECT COUNT(*) as count FROM message WHERE time_updated >= :start AND time_updated < :end";
+
+							const prevStats = ocDb
+								.query(prevStatsQ)
+								.get({ ":start": prevStart, ":end": prevEnd }) as any;
+							const prevMessages =
+								(
+									ocDb
+										.query(prevMsgQ)
+										.get({ ":start": prevStart, ":end": prevEnd }) as any
+								)?.count || 0;
+
+							const computeDelta = (curr: number, prev: number): number | null => {
+								if (prev <= 0) {
+									return curr > 0 ? 100 : 0;
+								}
+								return Number((((curr - prev) / prev) * 100).toFixed(1));
+							};
+
+							const currInput = tokenStats?.input || 0;
+							const currOutput = tokenStats?.output || 0;
+							const currCacheRead = tokenStats?.cacheRead || 0;
+							const currTokens = currInput + currOutput + currCacheRead;
+							const currCost = tokenStats?.cost || 0;
+
+							const prevInput = prevStats?.input || 0;
+							const prevOutput = prevStats?.output || 0;
+							const prevCacheRead = prevStats?.cacheRead || 0;
+							const prevTokens = prevInput + prevOutput + prevCacheRead;
+							const prevCost = prevStats?.cost || 0;
+
+							const currCacheRate =
+								currInput + currCacheRead > 0
+									? (currCacheRead / (currInput + currCacheRead)) * 100
+									: 0;
+							const prevCacheRate =
+								prevInput + prevCacheRead > 0
+									? (prevCacheRead / (prevInput + prevCacheRead)) * 100
+									: null;
+
+							trends = {
+								spendDelta: computeDelta(currCost, prevCost),
+								messagesDelta: computeDelta(messagesCount, prevMessages),
+								tokensDelta: computeDelta(currTokens, prevTokens),
+								cacheRateDelta:
+									prevCacheRate !== null
+										? Number((currCacheRate - prevCacheRate).toFixed(1))
+										: null,
+								cacheReadDelta: computeDelta(currCacheRead, prevCacheRead),
+								inputFreshDelta: computeDelta(currInput, prevInput),
+							};
+						} catch {
+							// fallback
+						}
+					}
+
 					result.opencode = {
 						available: true,
 						sessionsCount,
 						messagesCount,
 						tokensInput: tokenStats?.input || 0,
 						tokensOutput: tokenStats?.output || 0,
+						tokensCacheRead: tokenStats?.cacheRead || 0,
 						totalCost: tokenStats?.cost || 0,
 						recentSessions,
+						trends: trends ?? undefined,
 					};
 				} finally {
 					ocDb.close();

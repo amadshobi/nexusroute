@@ -73,6 +73,14 @@ export const DEFAULT_FALLBACK: FallbackConfig = Object.freeze({
 			"google-antigravity/gemini-3.1-pro",
 		],
 		"google-antigravity/claude-opus-4-6": ["google-antigravity/gemini-3.1-pro"],
+		"google-antigravity/gemini-3.8-flash": [
+			"google-antigravity/gemini-3.7-flash",
+			"google-antigravity/gemini-3.1-pro",
+		],
+		"google-antigravity/gemini-3.7-flash": [
+			"google-antigravity/gemini-3.8-flash",
+			"google-antigravity/gemini-3.1-pro",
+		],
 		"google-antigravity/gemini-3.5-flash": [
 			"opencode/deepseek-v4-flash-free",
 			"ollama-cloud/minimax-m3",

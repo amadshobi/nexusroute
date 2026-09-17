@@ -11,8 +11,14 @@ import {
 	shouldTriggerFallback,
 } from "../circuit-breaker";
 import { DEFAULT_FALLBACK } from "../rules";
-import { sanitizeText, normalizeUpstreamTools } from "../sanitizer";
-import type { FallbackHop } from "../access-log";
+import {
+	sanitizeText,
+	normalizeUpstreamTools,
+	normalizeUpstreamReasoning,
+	detectSalvagableError,
+	buildSalvagedChunks,
+} from "../sanitizer";
+import type { FallbackHop, AccessLogEntry } from "../access-log";
 import { isStaticAssetPath, isProbePath } from "../access-log";
 import { isModelBlacklisted, type GatewayContext } from "../context";
 import { detectClientApp, resolveRealProvider } from "../provider-resolver";
@@ -468,11 +474,15 @@ export async function handleProxyRequest(
 		}
 	}
 
-	// Upstream tool schema normalization (e.g. CommandCode Anthropic tools)
+	// Upstream tool schema and reasoning normalization
 	if (isLlmEndpoint && finalReqBody) {
 		finalReqBody = normalizeUpstreamTools(
 			finalReqBody,
 			targetUrl,
+			initialModel,
+		);
+		finalReqBody = normalizeUpstreamReasoning(
+			finalReqBody,
 			initialModel,
 		);
 	}
@@ -810,6 +820,84 @@ export async function handleProxyRequest(
 
 						if (value) {
 							const text = decoder.decode(value, { stream: true });
+
+							// ── OUTBOUND SSE ERROR SALVAGER ──
+							const salvagable = detectSalvagableError(text);
+							if (salvagable) {
+								console.warn(
+									`[SALVAGER] Intercepted in-band fatal error (${salvagable}). Synthesizing graceful completion.`,
+								);
+								const salvagedChunks = buildSalvagedChunks(
+									salvagable,
+									primaryModel || initialModel || "unknown",
+									isMessagesReq,
+								);
+								for (const chunk of salvagedChunks) {
+									controller.enqueue(encoder.encode(chunk));
+									recordedChunks.push(chunk);
+								}
+
+								ctx.stats.activeStreams = Math.max(
+									0,
+									ctx.stats.activeStreams - 1,
+								);
+								controller.close();
+								try {
+									await reader.cancel();
+								} catch {
+									/* noop */
+								}
+								abortController.abort();
+
+								const activeServedModel =
+									primaryModel || initialModel || "unknown";
+								const entry: AccessLogEntry = {
+									ts: reqStartTime,
+									method,
+									path: url.pathname,
+									initialModel: initialModel || "unknown",
+									servedModel: activeServedModel,
+									status: 200,
+									latencyMs: Date.now() - reqStartTime,
+									cache: "BYPASS",
+									stream: true,
+									tokensInput: streamTokens.promptTokens,
+									tokensOutput: Math.max(
+										1,
+										Math.ceil(streamedContentLength / 3.5),
+									),
+									tokensCache: streamTokens.cacheReadTokens,
+									tokensTotal:
+										streamTokens.promptTokens +
+										Math.max(1, Math.ceil(streamedContentLength / 3.5)),
+									fallback:
+										fallbackChain.length > 1
+											? {
+													chain: fallbackChain,
+													hopCount: fallbackChain.length,
+												}
+											: undefined,
+									shieldRedacted: maskedTokensCount,
+									upstream: route.upstream.name,
+									provider: resolveRealProvider(
+										activeServedModel,
+										route.upstream.name,
+									),
+									client: clientApp,
+									salvaged: salvagable,
+									error: `[SALVAGED] ${salvagable}`,
+								};
+								ctx.accessLog.write(entry);
+								if (ctx.eventBus.subscriberCount() > 0) {
+									ctx.eventBus.emit({
+										type: "request_complete",
+										ts: entry.ts,
+										data: entry,
+									});
+								}
+								return;
+							}
+
 							recordedChunks.push(text);
 							if (
 								text.includes('"usage":') ||

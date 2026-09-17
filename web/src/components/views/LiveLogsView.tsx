@@ -8,6 +8,7 @@ import {
 	Copy,
 	Check,
 	Terminal,
+	LifeBuoy,
 } from "lucide-react";
 import type { LogEntry } from "@/types/dashboard";
 import { formatTimeHHmm, formatDateWIB, formatCompact } from "@/lib/formatters";
@@ -266,6 +267,14 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 											</span>
 										)}
 
+										{/* Stream Salvaged Tag */}
+										{entry.salvaged && (
+											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-amber-500/15 text-amber-300 border border-amber-500/30 font-mono">
+												<LifeBuoy className="h-2.5 w-2.5" /> SALVAGED (
+												{entry.salvaged})
+											</span>
+										)}
+
 										{/* Caller Client App Badge */}
 										{entry.client && entry.client !== "unknown" && (
 											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-[#1E2538] text-[#8A94A6] border border-[#1E2433] font-mono">
@@ -481,6 +490,18 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									)}
 							</div>
 						</div>
+
+						{/* Salvaged Notice if any */}
+						{selectedLog.salvaged && (
+							<div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-mono space-y-1">
+								<span className="text-[10px] font-bold uppercase block text-amber-400">
+									Stream Salvaged ({selectedLog.salvaged})
+								</span>
+								<p>
+									This request encountered an in-band upstream fatal error and was gracefully salvaged into a valid completion turn.
+								</p>
+							</div>
+						)}
 
 						{/* Error Message if any */}
 						{selectedLog.error && (

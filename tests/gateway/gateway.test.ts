@@ -27,7 +27,15 @@ import {
 	DEFAULT_RULES,
 	loadGatewayRules,
 } from "../../src/gateway/rules";
-import { sanitizeText } from "../../src/gateway/sanitizer";
+import {
+	sanitizeText,
+	isReasoningModel,
+	normalizeUpstreamReasoning,
+	sanitizeSchemaForGemini,
+	normalizeUpstreamTools,
+	detectSalvagableError,
+	buildSalvagedChunks,
+} from "../../src/gateway/sanitizer";
 import { FixtureManager } from "../../src/gateway/replay";
 import {
 	AccessLogManager,
@@ -314,6 +322,25 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 						);
 					}
 
+					if (body.model === "trigger-thought-only") {
+						const chunks = [
+							'data: {"choices":[{"delta":{"role":"assistant"}}]}\n\n',
+							'data: {"error":{"message":"thought-only response without final output","type":"upstream_error"}}\n\n',
+						];
+						const encoder = new TextEncoder();
+						const stream = new ReadableStream({
+							start(controller) {
+								for (const chunk of chunks) {
+									controller.enqueue(encoder.encode(chunk));
+								}
+								controller.close();
+							},
+						});
+						return new Response(stream, {
+							headers: { "content-type": "text/event-stream; charset=utf-8" },
+						});
+					}
+
 					// Streaming mock
 					if (body.stream) {
 						const chunks = [
@@ -479,6 +506,28 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 		const text = await res.text();
 		expect(text).toContain("Hi");
 		expect(text).toContain("[DONE]");
+	});
+
+	test("intercepts and salvages thought-only SSE fatal error mid-stream", async () => {
+		const res = await fetch(`http://127.0.0.1:${gwPort}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				model: "trigger-thought-only",
+				messages: [{ role: "user", content: "hi" }],
+				stream: true,
+			}),
+		});
+
+		expect(res.status).toBe(200);
+		const body = await res.text();
+		// Must not contain raw upstream_error error payload
+		expect(body).not.toContain('"upstream_error"');
+		// Must contain salvaged completion chunks
+		expect(body).toContain("chatcmpl-gn-salvaged");
+		expect(body).toContain("[Note: Reasoning concluded without generating final response content.");
+		expect(body).toContain('"finish_reason":"stop"');
+		expect(body).toContain("data: [DONE]");
 	});
 });
 
@@ -749,5 +798,163 @@ describe("7. Access Log & Fallback Chain Analytics", () => {
 		expect(table).toContain("GATEWAY TRAFFIC & FALLBACK LOGS");
 		expect(table).toContain("Traffic Summary");
 		expect(table).toContain("Hit Rate");
+	});
+});
+
+describe("7. Upstream reasoning normalization", () => {
+	test("identifies known reasoning models", () => {
+		expect(isReasoningModel("google-antigravity/gemini-3.1-pro")).toBe(true);
+		expect(isReasoningModel("gemini-3-pro")).toBe(true);
+		expect(isReasoningModel("deepseek-r1")).toBe(true);
+		expect(isReasoningModel("claude-opus-4-6-thinking")).toBe(true);
+		expect(isReasoningModel("gpt-4o-mini")).toBe(false);
+	});
+
+	test("injects fallback reasoning_effort when missing for reasoning model", () => {
+		const rawPayload = JSON.stringify({
+			model: "google-antigravity/gemini-3.1-pro",
+			messages: [{ role: "user", content: "hi" }],
+		});
+		const normalized = normalizeUpstreamReasoning(
+			rawPayload,
+			"google-antigravity/gemini-3.1-pro",
+		);
+		const parsed = JSON.parse(normalized);
+		expect(parsed.reasoning_effort).toBe("high");
+	});
+
+	test("preserves existing reasoning_effort when present", () => {
+		const rawPayload = JSON.stringify({
+			model: "google-antigravity/gemini-3.1-pro",
+			reasoning_effort: "low",
+			messages: [{ role: "user", content: "hi" }],
+		});
+		const normalized = normalizeUpstreamReasoning(
+			rawPayload,
+			"google-antigravity/gemini-3.1-pro",
+		);
+		const parsed = JSON.parse(normalized);
+		expect(parsed.reasoning_effort).toBe("low");
+	});
+
+	test("does not inject reasoning_effort for non-reasoning models", () => {
+		const rawPayload = JSON.stringify({
+			model: "gpt-4o-mini",
+			messages: [{ role: "user", content: "hi" }],
+		});
+		const normalized = normalizeUpstreamReasoning(rawPayload, "gpt-4o-mini");
+		const parsed = JSON.parse(normalized);
+		expect(parsed.reasoning_effort).toBeUndefined();
+	});
+});
+
+describe("8. Antigravity tool schema armor", () => {
+	test("sanitizeSchemaForGemini strips keywords and normalizes object properties", () => {
+		const dirty = {
+			$schema: "http://json-schema.org/draft-07/schema#",
+			title: "SearchOptions",
+			type: "OBJECT",
+			additionalProperties: false,
+			patternProperties: { "^x-": { type: "string" } },
+			properties: {
+				query: {
+					type: "STRING",
+					title: "Query",
+					description: "Search text",
+				},
+				limit: {
+					type: "NUMBER",
+					title: "Limit",
+				},
+			},
+			required: ["query", "nonExistentField"],
+		};
+
+		const cleaned = sanitizeSchemaForGemini(dirty);
+		expect(cleaned.$schema).toBeUndefined();
+		expect(cleaned.title).toBeUndefined();
+		expect(cleaned.additionalProperties).toBeUndefined();
+		expect(cleaned.patternProperties).toBeUndefined();
+		expect(cleaned.type).toBe("object");
+		expect(cleaned.properties.query.title).toBeUndefined();
+		expect(cleaned.properties.query.type).toBe("string");
+		expect(cleaned.required).toEqual(["query"]);
+	});
+
+	test("normalizeUpstreamTools sanitizes tools for Gemini models", () => {
+		const payload = {
+			model: "google-antigravity/gemini-3.8-flash",
+			tools: [
+				{
+					type: "function",
+					function: {
+						name: "testTool",
+						parameters: {
+							$schema: "draft-07",
+							title: "test",
+							type: "object",
+							properties: {
+								input: { type: "string", title: "Input text" },
+							},
+						},
+					},
+				},
+			],
+		};
+
+		const result = normalizeUpstreamTools(
+			JSON.stringify(payload),
+			"http://127.0.0.1:4000/v1",
+			"google-antigravity/gemini-3.8-flash",
+		);
+		const parsed = JSON.parse(result);
+		const params = parsed.tools[0].function.parameters;
+		expect(params.$schema).toBeUndefined();
+		expect(params.title).toBeUndefined();
+		expect(params.properties.input.title).toBeUndefined();
+		expect(params.properties.input.type).toBe("string");
+	});
+});
+
+describe("9. Outbound SSE Error Salvager", () => {
+	test("detectSalvagableError identifies thought-only and malformed-call errors", () => {
+		expect(
+			detectSalvagableError(
+				'data: {"error":{"message":"thought-only response without final output","type":"upstream_error"}}',
+			),
+		).toBe("thought-only");
+
+		expect(
+			detectSalvagableError(
+				'data: {"error":{"message":"Cloud Code Assist API error: MALFORMED_FUNCTION_CALL","type":"upstream_error"}}',
+			),
+		).toBe("malformed-call");
+
+		expect(
+			detectSalvagableError(
+				'data: {"error":{"message":"unknown backend fault","type":"upstream_error"}}',
+			),
+		).toBe("upstream-error");
+
+		expect(
+			detectSalvagableError(
+				'data: {"choices":[{"delta":{"content":"valid text"}}]}',
+			),
+		).toBeNull();
+	});
+
+	test("buildSalvagedChunks generates valid OpenAI and Anthropic streams", () => {
+		const openAiChunks = buildSalvagedChunks("thought-only", "gemini-3.8-flash", false);
+		expect(openAiChunks.length).toBe(3);
+		expect(openAiChunks[0]).toContain("chatcmpl-gn-salvaged");
+		expect(openAiChunks[0]).toContain("[Note: Reasoning concluded");
+		expect(openAiChunks[1]).toContain('"finish_reason":"stop"');
+		expect(openAiChunks[2]).toBe("data: [DONE]\n\n");
+
+		const anthropicChunks = buildSalvagedChunks("malformed-call", "claude", true);
+		expect(anthropicChunks.length).toBe(3);
+		expect(anthropicChunks[0]).toContain("content_block_delta");
+		expect(anthropicChunks[1]).toContain('"stop_reason":"end_turn"');
+		expect(anthropicChunks[2]).toContain("message_stop");
 	});
 });

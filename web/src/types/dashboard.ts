@@ -174,6 +174,7 @@ export interface LogEntry {
 	upstream?: string;
 	provider?: string;
 	client?: string;
+	salvaged?: "thought-only" | "malformed-call" | "upstream-error";
 	error?: string;
 }
 

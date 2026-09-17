@@ -61,6 +61,7 @@ export interface AccessLogEntry {
 	upstream?: string; // Transport Gateway: "omp" | "vansrouter" | "commandcode"
 	provider?: string; // Real AI Engine: "antigravity" | "commandcode" | "deepseek" | "ollama" | etc.
 	client?: string; // Caller Application: "opencode" | "hermes" | "curl" | etc.
+	salvaged?: "thought-only" | "malformed-call" | "upstream-error";
 	error?: string;
 }
 

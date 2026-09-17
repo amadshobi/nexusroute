@@ -34,26 +34,9 @@ ExecStart=%h/.npm-global/bin/bun run %h/civil/projects/nexusroute/src/index.ts s
 WorkingDirectory=%h/civil/projects/nexusroute
 
 # ── Resilience & Resource Limits ──
-Restart=on-failure
+Restart=always
 RestartSec=3
 LimitNOFILE=65536
-
-# ── Security & Sandboxing ──
-ProtectSystem=strict
-PrivateTmp=true
-NoNewPrivileges=true
-
-# Auto-create cache dirs on service start (survives cache cleanup)
-CacheDirectory=nexus nexus-gateway
-
-# Config, cache & runtime paths — manual ReadWritePaths (not auto-created by
-# systemd in user mode). Termasuk legacy gn paths agar migrasi aman,
-# %h/.cache/goblin-nexus untuk telemetry/db.ts, dan %h/.bun untuk eksekusi
-# runtime bun di bawah ProtectSystem=strict.
-ReadWritePaths=%h/.config/nexus %h/.config/gn %h/.cache/nexus %h/.cache/gn %h/.cache/goblin-nexus %h/.bun
-
-# Allow network loopback access (needed for proxy)
-PrivateNetwork=no
 
 # ── Logging ──
 StandardOutput=journal

@@ -43,7 +43,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 	return createPortal(
 		<div
 			role="status"
-			className={`fixed top-3 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 max-w-[calc(100vw-1.5rem)] px-3 py-1.5 rounded-full bg-[#131722]/95 backdrop-blur-md border shadow-2xl text-xs font-mono overflow-x-auto scrollbar-none pointer-events-auto ${
+			className={`fixed top-3 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 max-w-[calc(100vw-1.5rem)] px-3 py-1.5 rounded-full bg-[#0d0f14]/95 bevel-inset backdrop-blur-md border shadow-2xl text-xs font-mono overflow-x-auto scrollbar-none pointer-events-auto ${
 				isError ? "border-rose-500/50 shadow-rose-500/10" : "border-[#00EA88]/50 shadow-[#00EA88]/10"
 			} ${
 				leaving
@@ -62,7 +62,7 @@ export function Toast({ toast, onDismiss }: ToastProps) {
 			<button
 				type="button"
 				onClick={onDismiss}
-				className="ml-1 p-0.5 text-[#8A94A6] hover:text-white rounded-full hover:bg-[#1E2433] transition-colors cursor-pointer"
+				className="ml-1 p-0.5 text-[#8A94A6] hover:text-white rounded-full hover:bg-white/[0.08] transition-colors cursor-pointer"
 				title="Close"
 			>
 				<X className="h-3 w-3" />

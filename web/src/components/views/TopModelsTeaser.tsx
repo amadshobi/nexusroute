@@ -17,8 +17,8 @@ export function TopModelsTeaser({
 	const topModels = useMemo(() => models.slice(0, 5), [models]);
 
 	return (
-		<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-2 animate-card-enter">
-			<div className="flex items-center justify-between pb-2.5 border-b border-[#1E2433]">
+		<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-2 animate-card-enter">
+			<div className="flex items-center justify-between pb-2.5 border-b border-white/[0.08]">
 				<div className="flex items-center gap-2">
 					<Cpu className="h-4 w-4 text-[#00EA88]" />
 					<div>
@@ -41,18 +41,18 @@ export function TopModelsTeaser({
 			</div>
 
 			{topModels.length === 0 ? (
-				<div className="p-6 text-center text-xs text-[#64748B] font-mono border border-dashed border-[#1E2433] rounded-lg">
+				<div className="p-6 text-center text-xs text-[#64748B] font-mono border border-dashed border-white/[0.08] rounded-lg">
 					No model history recorded for this time range.
 				</div>
 			) : (
-				<div className="divide-y divide-[#1E2433]/60">
+				<div className="divide-y divide-white/[0.06]">
 					{topModels.map((item, idx) => {
 						const displayName = formatModelDisplayName(item.model);
 						const hasTokens = item.tokensTotal && item.tokensTotal > 0;
 						return (
 							<div
 								key={item.model}
-								className="flex items-center justify-between py-2.5 px-1.5 hover:bg-[#161B26]/60 rounded-lg transition-colors group cursor-default"
+								className="flex items-center justify-between py-2.5 px-1.5 hover:bg-white/[0.04] rounded-lg transition-colors group cursor-default"
 							>
 								{/* Left: Rank, Icon, Clean Model Name */}
 								<div className="flex items-center gap-3 min-w-0">
@@ -60,7 +60,7 @@ export function TopModelsTeaser({
 										{idx + 1}
 									</span>
 
-									<div className="h-7 w-7 rounded-md bg-[#161B26] border border-[#1E2433] flex items-center justify-center shrink-0 group-hover:border-[#00EA88]/40 transition-colors">
+									<div className="h-7 w-7 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center shrink-0 group-hover:border-[#00EA88]/40 transition-colors">
 										<ProviderIcon name={item.model} className="h-4 w-4" />
 									</div>
 

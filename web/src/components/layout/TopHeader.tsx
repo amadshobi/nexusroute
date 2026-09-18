@@ -62,11 +62,11 @@ export function TopHeader({
 	const isCurrentlySpinning = spinning || loading;
 
 	return (
-		<header className="flex h-14 items-center justify-between px-4 sm:px-8 border-b border-[#1E2433] bg-[#0E1117]/90 backdrop-blur sticky top-0 z-30">
+		<header className="flex h-14 items-center justify-between px-4 sm:px-8 border-b border-white/[0.08] bg-[#0a0a0a]/80 backdrop-blur-md sticky top-0 z-30 bevel-inset-subtle">
 			<div className="flex items-center gap-3">
 				<button
 					onClick={() => setMobileMenuOpen(true)}
-					className="p-1.5 rounded-lg border border-[#1E2433] bg-[#161B26] text-[#94A3B8] hover:text-white md:hidden cursor-pointer"
+					className="p-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-[#94A3B8] hover:text-white md:hidden cursor-pointer bevel-inset-subtle"
 					title="Open mobile menu"
 				>
 					<Menu className="h-4 w-4" />
@@ -75,7 +75,7 @@ export function TopHeader({
 				{setSidebarCollapsed && (
 					<button
 						onClick={() => setSidebarCollapsed((prev) => !prev)}
-						className="p-1.5 rounded-lg border border-[#1E2433] bg-[#161B26] text-[#94A3B8] hover:text-white hover:bg-[#1E2433] hidden md:flex items-center justify-center cursor-pointer transition-colors"
+						className="p-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-[#94A3B8] hover:text-white hover:bg-white/[0.08] hidden md:flex items-center justify-center cursor-pointer transition-colors bevel-inset-subtle"
 						title={
 							sidebarCollapsed
 								? "Expand sidebar (Ctrl+B)"
@@ -109,7 +109,7 @@ export function TopHeader({
 					size="sm"
 					onClick={handleRefresh}
 					disabled={spinning}
-					className="h-8 w-8 p-0 border-[#1E2433] bg-[#161B26] hover:bg-[#1E2433] text-[#94A3B8] hover:text-white cursor-pointer active:scale-95 transition-all"
+					className="h-8 w-8 p-0 border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-[#94A3B8] hover:text-white cursor-pointer active:scale-95 transition-all bevel-inset-subtle"
 					title="Refresh Data Now"
 				>
 					<RefreshCw

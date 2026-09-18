@@ -480,7 +480,14 @@ export default function App() {
 	};
 
 	return (
-		<div className="h-[100dvh] w-screen overflow-hidden bg-[#0E1117] text-[#E2E8F0] font-sans antialiased selection:bg-[#1D68FE] selection:text-white flex relative">
+		<div className="h-[100dvh] w-screen overflow-hidden bg-[#0a0a0a] text-[#E2E8F0] font-sans antialiased selection:bg-[#6799fe]/30 selection:text-white flex relative">
+			{/* Atmospheric Ambient Lighting (DeepSeek / vibedesign static radial glows) */}
+			<div className="pointer-events-none fixed inset-0 overflow-hidden z-0 select-none opacity-70">
+				<div className="absolute -top-32 left-1/4 w-[600px] h-[350px] rounded-full bg-[#1A3870]/25 blur-[120px]" />
+				<div className="absolute top-1/2 -right-24 w-[480px] h-[360px] rounded-full bg-[#2D5F9E]/15 blur-[130px]" />
+				<div className="absolute -bottom-24 left-10 w-[450px] h-[250px] rounded-full bg-[#00EA88]/[0.03] blur-[110px]" />
+			</div>
+
 			{mobileMenuOpen && (
 				<div
 					onClick={() => setMobileMenuOpen(false)}
@@ -501,7 +508,7 @@ export default function App() {
 			/>
 
 			<div
-				className={`min-w-0 flex-1 h-full flex flex-col overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] box-border ${
+				className={`relative z-10 min-w-0 flex-1 h-full flex flex-col overflow-hidden transition-[padding] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] box-border ${
 					sidebarCollapsed ? "md:pl-16" : "md:pl-64"
 				}`}
 			>
@@ -636,7 +643,7 @@ export default function App() {
 								activeNav === "settings-combo" ? "animate-page-enter" : "hidden"
 							}
 						>
-							<div className="p-4 rounded-xl border border-[#1E2433] bg-[#131722] text-sm text-[#8A94A6]">
+							<div className="p-4 rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset text-sm text-[#8A94A6]">
 								Go to Model Governance to configure model combo routing
 								cascade.
 							</div>

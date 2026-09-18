@@ -327,7 +327,7 @@ export function PingView() {
 			{/* Top Header Probe Result: Compact, centered horizontally, non-blocking */}
 			{currentResult && (
 				<div className="sticky top-16 z-30 -mt-2 -mb-2 flex justify-center w-full pointer-events-none animate-page-enter">
-					<div className="pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-full bg-[#131722]/95 backdrop-blur-md border border-[#1E2433] shadow-xl text-[11px] font-mono text-white max-w-full overflow-x-auto scrollbar-none">
+					<div className="pointer-events-auto flex items-center gap-2 px-3 py-1 rounded-full bg-[#0d0f14]/95 backdrop-blur-md border border-white/[0.12] bevel-inset shadow-xl text-[11px] font-mono text-white max-w-full overflow-x-auto scrollbar-none">
 						<span
 							className={`${currentResult.statusCode === 200 ? "text-[#00EA88]" : "text-rose-400"} font-bold`}
 						>
@@ -351,7 +351,7 @@ export function PingView() {
 						<button
 							type="button"
 							onClick={() => setCurrentResult(null)}
-							className="ml-1 p-0.5 text-[#8A94A6] hover:text-white rounded-full hover:bg-[#1E2433] transition-colors cursor-pointer"
+							className="ml-1 p-0.5 text-[#8A94A6] hover:text-white rounded-full hover:bg-white/[0.08] transition-colors cursor-pointer"
 							title="Close"
 						>
 							<X className="h-3 w-3" />
@@ -361,7 +361,7 @@ export function PingView() {
 			)}
 
 			{/* Header */}
-			<div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-[#1E2433]">
+			<div className="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-white/[0.08]">
 
 				<div className="flex items-center gap-2">
 					<div className="relative">
@@ -371,7 +371,7 @@ export function PingView() {
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Filter model..."
-							className="pl-8 pr-3 py-1 text-xs rounded-lg border border-[#1E2433] bg-[#161B26] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00EA88]/40 transition-colors w-44 font-mono"
+							className="pl-8 pr-3 py-1 text-xs rounded-lg border border-white/[0.08] bg-[#161B26] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00EA88]/40 transition-colors w-44 font-mono"
 						/>
 					</div>
 
@@ -379,7 +379,7 @@ export function PingView() {
 						type="button"
 						onClick={fetchTree}
 						disabled={loadingTree}
-						className="p-1.5 rounded-lg border border-[#1E2433] bg-[#161B26] text-[#8A94A6] hover:text-white hover:border-[#00EA88]/40 transition-colors cursor-pointer"
+						className="p-1.5 rounded-lg border border-white/[0.08] bg-[#161B26] text-[#8A94A6] hover:text-white hover:border-[#00EA88]/40 transition-colors cursor-pointer"
 						title="Reload Tree Catalog"
 					>
 						<RefreshCw
@@ -426,10 +426,10 @@ export function PingView() {
 						return (
 							<div
 								key={gw.name}
-								className="rounded-xl border border-[#1E2433] bg-[#131722] overflow-hidden transition-all duration-200"
+								className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset overflow-hidden transition-all duration-200"
 							>
 								{/* Gateway Level: No badge, pure icon button */}
-								<div className="flex items-center justify-between px-4 py-3 bg-[#161B26]/80 border-b border-[#1E2433]/70 select-none">
+								<div className="flex items-center justify-between px-4 py-3 bg-white/[0.04] border-b border-white/[0.08] select-none">
 									<button
 										type="button"
 										onClick={() => toggleGateway(gw.name)}
@@ -456,7 +456,7 @@ export function PingView() {
 										type="button"
 										onClick={() => runProbe("gateway", gw.name)}
 										disabled={isGwProbing}
-										className="p-1 rounded border border-[#1E2433] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+										className="p-1 rounded border border-white/[0.08] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 disabled:opacity-50"
 										title={`Ping ${gw.displayName}`}
 									>
 										{isGwProbing ? (
@@ -485,10 +485,10 @@ export function PingView() {
 												return (
 													<div
 														key={prov.name}
-														className="rounded-lg border border-[#1E2433]/60 bg-[#0E1117]/50 overflow-hidden"
+														className="rounded-lg border border-white/[0.06] bg-black/40 overflow-hidden"
 													>
 														{/* Provider Level: No badge, pure icon button */}
-														<div className="flex items-center justify-between px-3 py-2 bg-[#161B26]/40 border-b border-[#1E2433]/40 select-none">
+														<div className="flex items-center justify-between px-3 py-2 bg-white/[0.03] border-b border-white/[0.06] select-none">
 															<button
 																type="button"
 																onClick={() => toggleProvider(provKey)}
@@ -516,7 +516,7 @@ export function PingView() {
 																type="button"
 																onClick={() => runProviderProbe(gw.name, prov)}
 																disabled={isProvProbing}
-																className="p-1 rounded border border-[#1E2433] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+																className="p-1 rounded border border-white/[0.08] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 disabled:opacity-50"
 																title={`Ping all models in ${prov.name}`}
 															>
 																{isProvProbing ? (
@@ -529,7 +529,7 @@ export function PingView() {
 
 														{/* Models List: Model ID with Snapshot Badge */}
 														{isProvExpanded && (
-															<div className="divide-y divide-[#1E2433]/30 pl-6 pr-3 py-1">
+															<div className="divide-y divide-white/[0.04] pl-6 pr-3 py-1">
 																{prov.models.map((model) => {
 																	const isModelProbing =
 																		probingTargets[
@@ -577,7 +577,7 @@ export function PingView() {
 																					)
 																				}
 																				disabled={isModelProbing}
-																				className="p-1 rounded border border-[#1E2433] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 ml-2 disabled:opacity-50"
+																				className="p-1 rounded border border-white/[0.08] hover:border-[#00EA88]/40 text-[#8A94A6] hover:text-[#00EA88] bg-transparent transition-colors cursor-pointer shrink-0 ml-2 disabled:opacity-50"
 																				title={`Ping Model ${model.id}`}
 																			>
 																				{isModelProbing ? (
@@ -604,7 +604,7 @@ export function PingView() {
 			)}
 
 			{/* INFORMASI STATUS FOOTER (Permanent at bottom of page) */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 text-xs space-y-2 mt-8">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 text-xs space-y-2 mt-8">
 				<div className="font-semibold text-white uppercase tracking-wider text-[10px] font-sans">
 					Informasi Status
 				</div>

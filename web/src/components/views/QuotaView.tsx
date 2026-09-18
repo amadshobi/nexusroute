@@ -87,7 +87,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 		(!hasProviders && (!quota.entries || quota.entries.length === 0))
 	) {
 		return (
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-6 text-center shadow-sm">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-6 text-center shadow-sm">
 				<p className="text-sm text-[#8A94A6]">No active quota metrics.</p>
 			</div>
 		);
@@ -101,7 +101,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 				return (
 					<div
 						key={provider.provider}
-						className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 shadow-sm transition-all duration-200"
+						className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 shadow-sm transition-all duration-200"
 					>
 						{/* Provider Card Header (Clickable Accordion Trigger) */}
 						<div
@@ -144,7 +144,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 						>
 							<div className="overflow-hidden">
 								{/* 2-Column Accounts Grid */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 mt-2 border-t border-[#1E2433]">
+								<div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 mt-2 border-t border-white/[0.08]">
 									{provider.accounts.map(
 										(account: AccountQuota, accIdx: number) => {
 											const isCopied = copiedKey === account.email;
@@ -152,10 +152,10 @@ export function QuotaView({ quota }: QuotaViewProps) {
 											return (
 												<div
 													key={`${account.email}-${accIdx}`}
-													className="rounded-lg border border-[#1E2433] bg-[#161B26]/60 p-3 space-y-2.5"
+													className="rounded-lg border border-white/[0.08] bg-white/[0.04] bevel-inset-subtle p-3 space-y-2.5"
 												>
 													{/* Account Header */}
-													<div className="flex items-center justify-between gap-2 pb-2 border-b border-[#1E2433]/60">
+													<div className="flex items-center justify-between gap-2 pb-2 border-b border-white/[0.08]">
 														<div className="flex items-center gap-1.5 min-w-0">
 															<User className="h-3 w-3 text-[#7AA2F7] shrink-0" />
 															<span className="text-xs font-semibold text-white font-mono truncate">
@@ -164,7 +164,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 															<button
 																type="button"
 																onClick={() => copyEmail(account.email)}
-																className="p-0.5 rounded text-[#64748B] hover:text-white hover:bg-[#1E2433] transition-colors cursor-pointer shrink-0"
+																className="p-0.5 rounded text-[#64748B] hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer shrink-0"
 																title="Copy email"
 															>
 																{isCopied ? (
@@ -214,7 +214,7 @@ export function QuotaView({ quota }: QuotaViewProps) {
 																return (
 																	<div
 																		key={`${group.displayName}-${grpIdx}`}
-																		className="rounded-md border border-[#1E2433]/70 bg-[#11151F] p-2 space-y-1.5"
+																		className="rounded-md border border-white/[0.08]/70 bg-[#11151F] p-2 space-y-1.5"
 																	>
 																		{/* Group Title */}
 																		<div className="flex items-center gap-1.5">

@@ -99,7 +99,7 @@ export function DashboardView({
 
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
 				{/* Card 1: Total spend (True Market Value) */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-1">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-1">
 					<div className="flex justify-between items-center">
 						<span className="text-xs font-medium text-[#8A94A6]">
 							Total Spend
@@ -110,7 +110,7 @@ export function DashboardView({
 								e.stopPropagation();
 								setCurrency((prev) => (prev === "USD" ? "IDR" : "USD"));
 							}}
-							className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border border-[#1E2433] bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
+							className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] bevel-inset-subtle text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
 							title="Switch Currency USD / IDR"
 						>
 							{currency}
@@ -139,7 +139,7 @@ export function DashboardView({
 				</div>
 
 				{/* Card 2: Requests */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-2">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-2">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Requests</span>
 						{renderTrendBadge(overview?.trends?.requestsDelta)}
@@ -153,7 +153,7 @@ export function DashboardView({
 				</div>
 
 				{/* Card 3: Token */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Tokens</span>
 						{renderTrendBadge(overview?.trends?.tokensDelta)}
@@ -167,7 +167,7 @@ export function DashboardView({
 				</div>
 
 				{/* Card 4: Context Cache Rate */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-4">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-4">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">
 							Cache Hit
@@ -186,7 +186,7 @@ export function DashboardView({
 			{/* Second Row: 2 Sparkline Cards for Cache Read & Input */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
 				{/* Card 1: Cache Read */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">
 							Cache Read
@@ -202,7 +202,7 @@ export function DashboardView({
 				</div>
 
 				{/* Card 2: Input */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Fresh Input</span>
 						{renderTrendBadge(overview?.trends?.inputFreshDelta)}

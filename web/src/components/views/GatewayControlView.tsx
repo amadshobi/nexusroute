@@ -38,8 +38,8 @@ export function GatewayControlView({
 	return (
 		<div className="space-y-4 max-w-2xl">
 			{/* Card 1: Daemon Lifecycle */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 shadow-sm space-y-4">
-				<div className="pb-3 border-b border-[#1E2433]">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 shadow-sm space-y-4">
+				<div className="pb-3 border-b border-white/[0.08]">
 					<h3 className="text-sm font-semibold text-white">
 						Gateway Lifecycle Control
 					</h3>
@@ -48,7 +48,7 @@ export function GatewayControlView({
 					</p>
 				</div>
 
-				<div className="flex items-center justify-between p-3.5 rounded-lg bg-[#161B26] border border-[#1E2433] text-xs font-mono">
+				<div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle text-xs font-mono">
 					<div className="space-y-1">
 						<span className="text-[#8A94A6] block">Daemon Status</span>
 						{isOnline ? (
@@ -74,8 +74,8 @@ export function GatewayControlView({
 			</div>
 
 			{/* Card 2: Currency & Pricing Settings */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 shadow-sm space-y-4">
-				<div className="pb-3 border-b border-[#1E2433]">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 shadow-sm space-y-4">
+				<div className="pb-3 border-b border-white/[0.08]">
 					<h3 className="text-sm font-semibold text-white">
 						Market Value Currency Exchange
 					</h3>
@@ -95,13 +95,13 @@ export function GatewayControlView({
 								value={rateInput}
 								onChange={(e) => setRateInput(e.target.value)}
 								placeholder="17000"
-								className="w-full h-9 pl-9 pr-3 rounded-lg border border-[#1E2433] bg-[#161B26] text-xs font-mono text-white focus:outline-none focus:border-[#1D68FE] transition-colors"
+								className="w-full h-9 pl-9 pr-3 rounded-lg border border-white/[0.08] bg-white/[0.04] text-xs font-mono text-white focus:outline-none focus:border-[#1D68FE] transition-colors"
 							/>
 						</div>
 						<Button
 							type="submit"
 							size="sm"
-							className="bg-[#161B26] hover:bg-[#1E2433] text-white border border-[#1E2433] text-xs h-9 px-4 gap-1.5 cursor-pointer transition-colors"
+							className="bg-white/[0.04] hover:bg-white/[0.08] text-white border border-white/[0.08] bevel-inset-subtle text-xs h-9 px-4 gap-1.5 cursor-pointer transition-colors"
 						>
 							{saved ? (
 								<>

@@ -55,39 +55,96 @@
 }
 
 :root {
-  /* Trizzle Palette default dark */
-  --background: #121620;
-  --foreground: #f8fafc;
-  --card: #1a1f2c;
-  --card-foreground: #f8fafc;
-  --popover: #1a1f2c;
-  --popover-foreground: #f8fafc;
-  --primary: #1d68fe;
+  /* vibedesign deepseek-harness-dark DNA */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: hsla(0, 0%, 100%, 0.06);
+  --card-foreground: #ffffff;
+  --popover: #0d0f14;
+  --popover-foreground: #ffffff;
+  --primary: #6799fe;
   --primary-foreground: #ffffff;
-  --secondary: #22293a;
-  --secondary-foreground: #f8fafc;
-  --muted: #1e2536;
-  --muted-foreground: #94a3b8;
-  --accent: #22293a;
-  --accent-foreground: #7aa2f7;
+  --secondary: hsla(0, 0%, 100%, 0.04);
+  --secondary-foreground: #ffffff;
+  --muted: hsla(0, 0%, 100%, 0.03);
+  --muted-foreground: hsla(0, 0%, 100%, 0.55);
+  --accent: hsla(0, 0%, 100%, 0.05);
+  --accent-foreground: #6799fe;
   --destructive: #ef4444;
-  --border: #262f40;
-  --input: #262f40;
-  --ring: #1d68fe;
-  --chart-1: #1d68fe;
+  --border: hsla(0, 0%, 100%, 0.08);
+  --input: hsla(0, 0%, 100%, 0.04);
+  --ring: #6799fe;
+  --chart-1: #00ea88;
   --chart-2: #7aa2f7;
   --chart-3: #10b981;
   --chart-4: #f59e0b;
-  --chart-5: #8a2be2;
+  --chart-5: #a855f7;
   --radius: 0.75rem;
-  --sidebar: #161b26;
-  --sidebar-foreground: #f8fafc;
-  --sidebar-primary: #1d68fe;
+  --sidebar: #0c0d12;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #00ea88;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1e2536;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #262f40;
-  --sidebar-ring: #1d68fe;
+  --sidebar-accent: hsla(0, 0%, 100%, 0.05);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: hsla(0, 0%, 100%, 0.08);
+  --sidebar-ring: #00ea88;
+}
+
+/* vibedesign: surfaces & transparency hierarchy */
+.surface-1 {
+  background-color: hsla(0, 0%, 100%, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.surface-2 {
+  background-color: hsla(0, 0%, 100%, 0.03);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.surface-3 {
+  background-color: hsla(0, 0%, 100%, 0.02);
+}
+.surface-code {
+  background-color: rgba(0, 0, 0, 0.45);
+}
+
+/* vibedesign: subpixel borders */
+.border-subpixel {
+  border-color: hsla(0, 0%, 100%, 0.08);
+}
+.border-subpixel-hover:hover {
+  border-color: hsla(0, 0%, 100%, 0.20);
+}
+
+/* vibedesign: signature inset light bevel (1px top highlight) */
+.bevel-inset {
+  box-shadow: inset 0px 1px 0px 0px hsla(0, 0%, 100%, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.bevel-inset-subtle {
+  box-shadow: inset 0px 1px 0px 0px hsla(0, 0%, 100%, 0.08);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.bevel-inset-active {
+  box-shadow: inset 0px 1px 0px 0px hsla(0, 0%, 100%, 0.22), 0 0 24px -6px rgba(103, 153, 254, 0.20);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* vibedesign: signature chassis for telemetry & overview cards */
+.card-chassis {
+  background-color: hsla(0, 0%, 100%, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid hsla(0, 0%, 100%, 0.08);
+  box-shadow: inset 0px 1px 0px 0px hsla(0, 0%, 100%, 0.12);
+  transition: border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-chassis:hover {
+  border-color: hsla(0, 0%, 100%, 0.18);
+  background-color: hsla(0, 0%, 100%, 0.07);
 }
 
 @layer base {

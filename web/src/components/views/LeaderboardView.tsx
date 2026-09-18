@@ -29,9 +29,18 @@ export function LeaderboardView({
 }: LeaderboardViewProps) {
 	const [modelEngineFilter, setModelEngineFilter] = useState<string>("all");
 
-	const models = overview?.leaderboard?.models ?? [];
-	const providers = overview?.leaderboard?.providers ?? [];
-	const clients = overview?.leaderboard?.clients ?? [];
+	const models = useMemo(
+		() => overview?.leaderboard?.models ?? [],
+		[overview?.leaderboard?.models],
+	);
+	const providers = useMemo(
+		() => overview?.leaderboard?.providers ?? [],
+		[overview?.leaderboard?.providers],
+	);
+	const clients = useMemo(
+		() => overview?.leaderboard?.clients ?? [],
+		[overview?.leaderboard?.clients],
+	);
 	const totalRequests = overview?.totalRequests ?? 0;
 
 	// Filtered models
@@ -105,7 +114,7 @@ export function LeaderboardView({
 
 			{/* Macro Header Segmented Bar (OpenRouter / GitHub Language style) */}
 			{topProvidersDistribution.length > 0 && (
-				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-3">
+				<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-3">
 					<div className="flex items-center justify-between text-xs text-[#8A94A6]">
 						<div className="flex items-center gap-2 font-medium text-white">
 							<Layers className="h-4 w-4 text-[#7AA2F7]" />
@@ -116,7 +125,7 @@ export function LeaderboardView({
 						</span>
 					</div>
 
-					<div className="h-2.5 w-full bg-[#161B26] rounded-full overflow-hidden flex border border-[#1E2433]">
+					<div className="h-2.5 w-full bg-white/[0.04] rounded-full overflow-hidden flex border border-white/[0.08]">
 						{topProvidersDistribution.map((item, idx) => (
 							<div
 								key={idx}
@@ -134,7 +143,7 @@ export function LeaderboardView({
 						{topProvidersDistribution.map((item, idx) => (
 							<div
 								key={idx}
-								className="flex items-center gap-1.5 text-[#8A94A6] bg-[#161B26] px-2.5 py-1 rounded-md border border-[#1E2433]"
+								className="flex items-center gap-1.5 text-[#8A94A6] bg-white/[0.04] px-2.5 py-1 rounded-md border border-white/[0.08]"
 							>
 								<span
 									className="h-2 w-2 rounded-full shrink-0"
@@ -156,8 +165,8 @@ export function LeaderboardView({
 			{/* 3 DISTINCT INDEPENDENT SECTIONS (OPENROUTER ANALYTICS STYLE) */}
 
 			{/* SECTION 1: TOP MODELS */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-4">
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1E2433]">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-4">
+				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
 					<div className="flex items-center gap-2">
 						<Cpu className="h-4 w-4 text-[#00EA88]" />
 						<div>
@@ -177,7 +186,7 @@ export function LeaderboardView({
 								onClick={() => setModelEngineFilter(p)}
 								className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer capitalize ${
 									modelEngineFilter === p
-										? "bg-[#1E2538] text-[#00EA88] border border-[#1E2433] font-semibold"
+										? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 bevel-inset-subtle font-semibold"
 										: "text-[#64748B] hover:text-white"
 								}`}
 							>
@@ -188,7 +197,7 @@ export function LeaderboardView({
 				</div>
 
 				{filteredModels.length === 0 ? (
-					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-[#1E2433] rounded-lg">
+					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-white/[0.08] rounded-lg">
 						No model history found for the selected filter.
 					</div>
 				) : (
@@ -198,7 +207,7 @@ export function LeaderboardView({
 							return (
 								<div
 									key={item.model}
-									className="p-3.5 rounded-lg bg-[#161B26] border border-[#1E2433] hover:border-[#2A344A] transition-all space-y-2.5"
+									className="p-3.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle hover:border-white/[0.18] transition-all space-y-2.5"
 								>
 									<div className="flex items-center justify-between gap-2">
 										<div className="flex items-center gap-2.5 min-w-0">
@@ -266,8 +275,8 @@ export function LeaderboardView({
 			</div>
 
 			{/* SECTION 2: TOP PROVIDERS & TRANSPORT GATEWAYS */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-4">
-				<div className="flex items-center justify-between pb-3 border-b border-[#1E2433]">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-4">
+				<div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
 					<div className="flex items-center gap-2">
 						<Boxes className="h-4 w-4 text-[#7AA2F7]" />
 						<div>
@@ -279,7 +288,7 @@ export function LeaderboardView({
 				</div>
 
 				{providers.length === 0 ? (
-					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-[#1E2433] rounded-lg">
+					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-white/[0.08] rounded-lg">
 						No provider history recorded yet.
 					</div>
 				) : (
@@ -291,7 +300,7 @@ export function LeaderboardView({
 							return (
 								<div
 									key={`${item.provider}::${item.upstream}`}
-									className="p-3.5 rounded-lg bg-[#161B26] border border-[#1E2433] hover:border-[#2A344A] transition-all space-y-2.5"
+									className="p-3.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle hover:border-white/[0.18] transition-all space-y-2.5"
 								>
 									<div className="flex items-center justify-between gap-2">
 										<div className="flex items-center gap-2 min-w-0">
@@ -360,8 +369,8 @@ export function LeaderboardView({
 			</div>
 
 			{/* SECTION 3: TOP CLIENT APPS */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-4">
-				<div className="flex items-center justify-between pb-3 border-b border-[#1E2433]">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-4">
+				<div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
 					<div className="flex items-center gap-2">
 						<Terminal className="h-4 w-4 text-[#A855F7]" />
 						<div>
@@ -373,7 +382,7 @@ export function LeaderboardView({
 				</div>
 
 				{clients.length === 0 ? (
-					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-[#1E2433] rounded-lg">
+					<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-white/[0.08] rounded-lg">
 						No client application history in access log.
 					</div>
 				) : (
@@ -383,7 +392,7 @@ export function LeaderboardView({
 							return (
 								<div
 									key={item.client}
-									className="p-3.5 rounded-lg bg-[#161B26] border border-[#1E2433] hover:border-[#2A344A] transition-all space-y-2.5"
+									className="p-3.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle hover:border-white/[0.18] transition-all space-y-2.5"
 								>
 									<div className="flex items-center justify-between gap-2">
 										<div className="flex items-center gap-2 min-w-0">

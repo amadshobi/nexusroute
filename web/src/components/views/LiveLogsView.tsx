@@ -90,9 +90,9 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 	};
 
 	return (
-		<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 shadow-sm space-y-4 relative">
+		<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 shadow-sm space-y-4 relative">
 			{/* Header & Title */}
-			<div className="flex items-center justify-between pb-3 border-b border-[#1E2433] flex-wrap gap-2">
+			<div className="flex items-center justify-between pb-3 border-b border-white/[0.08] flex-wrap gap-2">
 				<div>
 					<h3 className="text-sm font-semibold text-white tracking-tight">
 						Realtime Traffic
@@ -107,12 +107,12 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 			{/* Filter and Search Bar */}
 			<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
 				{/* Filter Chips */}
-				<div className="flex items-center bg-[#161B26] border border-[#1E2433] rounded-lg p-0.5 text-xs font-medium overflow-x-auto">
+				<div className="flex items-center bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle rounded-lg p-0.5 text-xs font-medium overflow-x-auto">
 					<button
 						onClick={() => setFilterType("all")}
 						className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
 							filterType === "all"
-								? "bg-[#1E2538] text-[#00EA88] font-semibold"
+								? "bg-white/[0.08] bevel-inset-subtle text-[#00EA88] font-semibold"
 								: "text-[#8A94A6] hover:text-white"
 						}`}
 					>
@@ -122,7 +122,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						onClick={() => setFilterType("success")}
 						className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
 							filterType === "success"
-								? "bg-[#1E2538] text-emerald-400 font-semibold"
+								? "bg-white/[0.08] bevel-inset-subtle text-emerald-400 font-semibold"
 								: "text-[#8A94A6] hover:text-white"
 						}`}
 					>
@@ -132,7 +132,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						onClick={() => setFilterType("errors")}
 						className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
 							filterType === "errors"
-								? "bg-[#1E2538] text-rose-400 font-semibold"
+								? "bg-white/[0.08] bevel-inset-subtle text-rose-400 font-semibold"
 								: "text-[#8A94A6] hover:text-white"
 						}`}
 					>
@@ -142,7 +142,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						onClick={() => setFilterType("cache")}
 						className={`px-2.5 py-1 rounded-md transition-colors whitespace-nowrap cursor-pointer ${
 							filterType === "cache"
-								? "bg-[#1E2538] text-amber-400 font-semibold"
+								? "bg-white/[0.08] bevel-inset-subtle text-amber-400 font-semibold"
 								: "text-[#8A94A6] hover:text-white"
 						}`}
 					>
@@ -158,7 +158,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						placeholder="Search model, path, method..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
-						className="w-full bg-[#161B26] border border-[#1E2433] rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#1D68FE] font-mono"
+						className="w-full bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#1D68FE] font-mono"
 					/>
 					{searchQuery && (
 						<button
@@ -190,7 +190,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 					</button>
 				</div>
 			) : (
-				<div className="divide-y divide-[#1E2433] max-h-[550px] overflow-y-auto">
+				<div className="divide-y divide-white/[0.06] max-h-[550px] overflow-y-auto">
 					{filteredLogs.map((entry, idx) => {
 						const hasFallback =
 							entry.servedModel &&
@@ -210,7 +210,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 							<div
 								key={`${entry.ts}-${idx}`}
 								onClick={() => setSelectedLog(entry)}
-								className="py-3 px-2.5 flex flex-col gap-1.5 text-xs hover:bg-[#161B26] hover:border-[#1D68FE]/30 border border-transparent rounded-lg transition-all cursor-pointer group"
+								className="py-3 px-2.5 flex flex-col gap-1.5 text-xs hover:bg-white/[0.04] hover:border-[#1D68FE]/30 border border-transparent rounded-lg transition-all cursor-pointer group"
 							>
 								<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
 									<div className="flex items-center gap-2 flex-wrap">
@@ -222,7 +222,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 										</span>
 
 										{/* HTTP Method */}
-										<span className="px-1.5 py-0.5 rounded bg-[#1E2433] text-[10px] font-mono text-[#94A3B8] uppercase">
+										<span className="px-1.5 py-0.5 rounded bg-white/[0.08] text-[10px] font-mono text-[#94A3B8] uppercase">
 											{entry.method || "POST"}
 										</span>
 
@@ -277,7 +277,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 
 										{/* Caller Client App Badge */}
 										{entry.client && entry.client !== "unknown" && (
-											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-[#1E2538] text-[#8A94A6] border border-[#1E2433] font-mono">
+											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-white/[0.08] bevel-inset-subtle text-[#8A94A6] border border-white/[0.08] font-mono">
 												<Terminal className="h-2.5 w-2.5 text-[#7AA2F7]" />
 												{entry.client}
 											</span>
@@ -285,7 +285,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 
 										{/* Upstream Transport Badge */}
 										{entry.upstream && (
-											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-[#161B26] text-[#64748B] border border-[#1E2433] font-mono uppercase">
+											<span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] bg-white/[0.04] text-[#64748B] border border-white/[0.08] font-mono uppercase">
 												{entry.upstream === "commandcode" ? "direct" : entry.upstream}
 											</span>
 										)}
@@ -295,7 +295,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									<div className="flex items-center gap-2.5 text-[#8A94A6] font-mono text-[11px] shrink-0">
 										{(typeof entry.tokensInput === "number" ||
 											typeof entry.tokensOutput === "number") && (
-											<span className="text-[10px] text-[#8A94A6] bg-[#161B26] px-1.5 py-0.5 rounded border border-[#1E2433]">
+											<span className="text-[10px] text-[#8A94A6] bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.08]">
 												<span className="text-[#7AA2F7]">
 													{formatCompact(entry.tokensInput ?? 0)}
 												</span>
@@ -347,10 +347,10 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 				>
 					<div
 						onClick={(e) => e.stopPropagation()}
-						className="w-full max-w-2xl bg-[#131722] border border-[#1E2433] rounded-xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
+						className="w-full max-w-2xl bg-[#0d0f14] border border-white/[0.12] bevel-inset rounded-xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto"
 					>
 						{/* Modal Header */}
-						<div className="flex items-center justify-between pb-3 border-b border-[#1E2433]">
+						<div className="flex items-center justify-between pb-3 border-b border-white/[0.08]">
 							<div className="flex items-center gap-2.5">
 								<Terminal className="h-5 w-5 text-[#00EA88]" />
 								<div>
@@ -364,7 +364,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 							</div>
 							<button
 								onClick={() => setSelectedLog(null)}
-								className="p-1 rounded-md text-[#64748B] hover:text-white hover:bg-[#1E2433] transition-colors cursor-pointer"
+								className="p-1 rounded-md text-[#64748B] hover:text-white hover:bg-white/[0.08] transition-colors cursor-pointer"
 							>
 								<X className="h-4 w-4" />
 							</button>
@@ -372,7 +372,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 
 						{/* Quick Metrics Grid */}
 						<div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
-							<div className="p-2.5 rounded-lg bg-[#161B26] border border-[#1E2433]">
+							<div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle">
 								<span className="text-[10px] text-[#64748B] block uppercase">
 									Status
 								</span>
@@ -383,7 +383,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									{selectedLog.status === 200 ? "OK" : "ERR"})
 								</span>
 							</div>
-							<div className="p-2.5 rounded-lg bg-[#161B26] border border-[#1E2433]">
+							<div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle">
 								<span className="text-[10px] text-[#64748B] block uppercase">
 									Latency
 								</span>
@@ -393,7 +393,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									{selectedLog.latencyMs}ms
 								</span>
 							</div>
-							<div className="p-2.5 rounded-lg bg-[#161B26] border border-[#1E2433]">
+							<div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle">
 								<span className="text-[10px] text-[#64748B] block uppercase">
 									Cache
 								</span>
@@ -401,7 +401,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									{selectedLog.cache}
 								</span>
 							</div>
-							<div className="p-2.5 rounded-lg bg-[#161B26] border border-[#1E2433]">
+							<div className="p-2.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle">
 								<span className="text-[10px] text-[#64748B] block uppercase">
 									Speed (TPS)
 								</span>
@@ -414,7 +414,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						</div>
 
 						{/* Token Breakdown Metrics */}
-						<div className="p-3 rounded-lg bg-[#161B26] border border-[#1E2433] space-y-2">
+						<div className="p-3 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle space-y-2">
 							<div className="flex items-center justify-between">
 								<span className="text-[10px] text-[#64748B] uppercase font-mono block">
 									Token Usage Breakdown
@@ -433,7 +433,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 								</span>
 							</div>
 							<div className="grid grid-cols-3 gap-2 font-mono text-xs">
-								<div className="p-2 rounded bg-[#0E1117] border border-[#1E2433]">
+								<div className="p-2 rounded bg-black/50 border border-white/[0.08] bevel-inset-subtle">
 									<span className="text-[10px] text-[#8A94A6] block">
 										Input / Prompt
 									</span>
@@ -443,7 +443,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 											: "-"}
 									</span>
 								</div>
-								<div className="p-2 rounded bg-[#0E1117] border border-[#1E2433]">
+								<div className="p-2 rounded bg-black/50 border border-white/[0.08] bevel-inset-subtle">
 									<span className="text-[10px] text-[#8A94A6] block">
 										Output / Completion
 									</span>
@@ -453,7 +453,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 											: "-"}
 									</span>
 								</div>
-								<div className="p-2 rounded bg-[#0E1117] border border-[#1E2433]">
+								<div className="p-2 rounded bg-black/50 border border-white/[0.08] bevel-inset-subtle">
 									<span className="text-[10px] text-[#8A94A6] block">
 										Cache Read
 									</span>
@@ -467,7 +467,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						</div>
 
 						{/* Routing Detail */}
-						<div className="p-3 rounded-lg bg-[#161B26] border border-[#1E2433] space-y-1 text-xs font-mono">
+						<div className="p-3 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle space-y-1 text-xs font-mono">
 							<span className="text-[10px] text-[#64748B] uppercase block">
 								Model Resolution
 							</span>
@@ -524,19 +524,19 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 									{new Date(selectedLog.ts).toISOString()})
 								</span>
 							</div>
-							<pre className="p-3 rounded-lg bg-[#0E1117] border border-[#1E2433] text-[11px] font-mono text-white/90 overflow-x-auto max-h-48 select-all">
+							<pre className="p-3 rounded-lg bg-black/50 border border-white/[0.08] bevel-inset-subtle text-[11px] font-mono text-white/90 overflow-x-auto max-h-48 select-all">
 								{JSON.stringify(selectedLog, null, 2)}
 							</pre>
 						</div>
 
 						{/* Modal Actions */}
-						<div className="flex items-center justify-between pt-2 border-t border-[#1E2433] flex-wrap gap-2">
+						<div className="flex items-center justify-between pt-2 border-t border-white/[0.08] flex-wrap gap-2">
 							<div className="flex items-center gap-2">
 								<button
 									onClick={() =>
 										copyToClipboard(generateCurl(selectedLog), "cURL")
 									}
-									className="px-3 py-1.5 rounded-lg bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-xs font-mono text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+									className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-mono text-white flex items-center gap-1.5 transition-colors cursor-pointer"
 								>
 									{copyFeedback === "cURL" ? (
 										<Check className="h-3.5 w-3.5 text-[#00EA88]" />
@@ -553,7 +553,7 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 											"JSON",
 										)
 									}
-									className="px-3 py-1.5 rounded-lg bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-xs font-mono text-white flex items-center gap-1.5 transition-colors cursor-pointer"
+									className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-xs font-mono text-white flex items-center gap-1.5 transition-colors cursor-pointer"
 								>
 									{copyFeedback === "JSON" ? (
 										<Check className="h-3.5 w-3.5 text-[#00EA88]" />

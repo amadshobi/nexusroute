@@ -39,8 +39,8 @@ export function ProviderAccordion({
 	const label = providerDisplayName(provider);
 
 	return (
-		<div className="rounded-xl border border-[#1E2433] bg-[#131722] overflow-hidden">
-			<div className="flex items-center justify-between gap-3 p-3 hover:bg-[#161B26] transition-colors">
+		<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset overflow-hidden">
+			<div className="flex items-center justify-between gap-3 p-3 hover:bg-white/[0.04] transition-colors">
 				<button
 					onClick={onToggle}
 					className="flex items-center gap-2 min-w-0 flex-1 text-left cursor-pointer"
@@ -64,7 +64,7 @@ export function ProviderAccordion({
 						className={`text-[10px] font-mono px-2 py-0.5 rounded-md border whitespace-nowrap ${
 							activeCount > 0
 								? "bg-[#00EA88]/10 border-[#00EA88]/30 text-[#00EA88]"
-								: "bg-[#161B26] border-[#1E2433] text-[#64748B]"
+								: "bg-[#161B26] border-white/[0.08] text-[#64748B]"
 						}`}
 					>
 						{activeCount > 0 ? "Active" : "Inactive"}
@@ -72,14 +72,14 @@ export function ProviderAccordion({
 					<button
 						onClick={onActivateAll}
 						title={`Activate all ${label} models`}
-						className="inline-flex items-center justify-center h-6 w-6 rounded bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-[#00EA88] hover:text-[#00EA88]/80 cursor-pointer transition-colors"
+						className="inline-flex items-center justify-center h-6 w-6 rounded bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#00EA88] hover:text-[#00EA88]/80 cursor-pointer transition-colors"
 					>
 						<Plus className="h-3 w-3" />
 					</button>
 					<button
 						onClick={onDeactivateAll}
 						title={`Deactivate all ${label} models`}
-						className="inline-flex items-center justify-center h-6 w-6 rounded bg-[#161B26] hover:bg-[#1E2433] border border-[#1E2433] text-[#8A94A6] hover:text-rose-400 cursor-pointer transition-colors"
+						className="inline-flex items-center justify-center h-6 w-6 rounded bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#8A94A6] hover:text-rose-400 cursor-pointer transition-colors"
 					>
 						<Minus className="h-3 w-3" />
 					</button>
@@ -87,7 +87,7 @@ export function ProviderAccordion({
 			</div>
 
 			{open && (
-				<div className="border-t border-[#1E2433] p-3 space-y-3">
+				<div className="border-t border-white/[0.08] p-3 space-y-3">
 					<div className="space-y-2">
 						<span className="text-[10px] uppercase tracking-wider text-[#64748B] font-mono block">
 							Active ({activeModels.length})
@@ -103,7 +103,7 @@ export function ProviderAccordion({
 									return (
 										<div
 											key={model}
-											className="flex items-center justify-between gap-1.5 rounded-lg bg-[#161B26] border border-[#1E2433] px-2.5 py-1.5 hover:border-[#1E2538] transition-colors min-w-0"
+											className="flex items-center justify-between gap-1.5 rounded-lg bg-[#161B26] border border-white/[0.08] px-2.5 py-1.5 hover:border-[#1E2538] transition-colors min-w-0"
 										>
 											<span className="flex items-center gap-1.5 min-w-0 flex-1">
 												<Cpu className="h-3 w-3 text-[#00EA88] shrink-0" />
@@ -159,7 +159,7 @@ export function ProviderAccordion({
 										<button
 											key={model}
 											onClick={() => onAdd(model)}
-											className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#1E2433] bg-[#161B26] px-3 py-1 text-[11px] font-mono text-[#8A94A6] hover:border-[#1D68FE] hover:text-[#7AA2F7] transition-colors cursor-pointer"
+											className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-white/[0.08] bg-[#161B26] px-3 py-1 text-[11px] font-mono text-[#8A94A6] hover:border-[#1D68FE] hover:text-[#7AA2F7] transition-colors cursor-pointer"
 										>
 											<Plus className="h-3 w-3" /> {shortModelName(model)}
 											{snap && (

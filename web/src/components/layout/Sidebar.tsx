@@ -44,14 +44,14 @@ export function Sidebar({
 
 	return (
 		<aside
-			className={`fixed inset-y-0 left-0 h-screen flex flex-col border-r border-[#1E2433] bg-[#121622] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-40 ${
+			className={`fixed inset-y-0 left-0 h-screen flex flex-col border-r border-white/[0.08] bg-[#0c0d12] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] z-40 ${
 				mobileMenuOpen
 					? "translate-x-0 shadow-2xl w-64"
 					: "-translate-x-full md:translate-x-0"
 			} ${collapsed ? "md:w-16" : "md:w-64"} shrink-0 select-none`}
 		>
 			{/* Brand Header */}
-			<div className="flex h-14 items-center justify-between px-3 border-b border-[#1E2433] shrink-0 overflow-hidden">
+			<div className="flex h-14 items-center justify-between px-3 border-b border-white/[0.08] shrink-0 overflow-hidden">
 				<button
 					onClick={() => handleNavClick("overview-dashboard")}
 					className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none min-w-0 flex-1"
@@ -78,7 +78,7 @@ export function Sidebar({
 
 				<button
 					onClick={() => setMobileMenuOpen(false)}
-					className="p-1 rounded-md text-[#64748B] hover:text-white hover:bg-[#1A2030] md:hidden shrink-0"
+					className="p-1 rounded-md text-[#64748B] hover:text-white hover:bg-white/[0.05] md:hidden shrink-0"
 					title="Close mobile menu"
 				>
 					<X className="h-5 w-5" />
@@ -100,8 +100,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("overview-dashboard")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "overview-dashboard"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Dashboard"
 					>
@@ -112,8 +112,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("overview-agents")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "overview-agents"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Agents Telemetry"
 					>
@@ -124,8 +124,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("overview-leaderboard")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "overview-leaderboard"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Leaderboard & Intelligence"
 					>
@@ -133,15 +133,15 @@ export function Sidebar({
 					</button>
 
 					{/* Divider */}
-					<div className="w-8 border-t border-[#1E2433] my-1" />
+					<div className="w-8 border-t border-white/[0.08] my-1" />
 
 					{/* Monitor Group */}
 					<button
 						onClick={() => handleNavClick("logs")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "logs"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Logs"
 					>
@@ -152,8 +152,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("ping")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "ping"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Ping"
 					>
@@ -164,8 +164,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("quota")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "quota"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Quota"
 					>
@@ -173,15 +173,15 @@ export function Sidebar({
 					</button>
 
 					{/* Divider */}
-					<div className="w-8 border-t border-[#1E2433] my-1" />
+					<div className="w-8 border-t border-white/[0.08] my-1" />
 
 					{/* Control Plane Group */}
 					<button
 						onClick={() => handleNavClick("settings-gateway")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "settings-gateway"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Gateway Settings"
 					>
@@ -192,8 +192,8 @@ export function Sidebar({
 						onClick={() => handleNavClick("settings-models")}
 						className={`h-9 w-9 rounded-lg flex items-center justify-center transition-all cursor-pointer ${
 							activeNav === "settings-models"
-								? "bg-[#1E2538] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
-								: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+								? "bg-white/[0.08] text-[#00EA88] border border-[#00EA88]/30 shadow-sm shadow-[#00EA88]/10"
+								: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 						}`}
 						title="Model Governance"
 					>
@@ -215,8 +215,8 @@ export function Sidebar({
 							onClick={() => setSidebarOverviewOpen(!sidebarOverviewOpen)}
 							className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
 								!sidebarOverviewOpen && activeNav.startsWith("overview-")
-									? "text-white bg-[#1A2030]/60"
-									: "text-[#8A94A6] hover:text-white hover:bg-[#1A2030]"
+									? "text-white bg-white/[0.06]/60"
+									: "text-[#8A94A6] hover:text-white hover:bg-white/[0.05]"
 							}`}
 						>
 							<div className="flex items-center gap-3">
@@ -237,13 +237,13 @@ export function Sidebar({
 									: "grid-rows-[0fr] opacity-0 pointer-events-none"
 							}`}
 						>
-							<div className="overflow-hidden min-h-0 ml-4 pl-3 border-l border-[#1E2433] space-y-1 py-1">
+							<div className="overflow-hidden min-h-0 ml-4 pl-3 border-l border-white/[0.08] space-y-1 py-1">
 								<button
 									onClick={() => handleNavClick("overview-dashboard")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
 										activeNav === "overview-dashboard"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+											? "bg-white/[0.08] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 									}`}
 								>
 									<LayoutDashboard className="h-3.5 w-3.5 text-blue-400 shrink-0" />
@@ -254,8 +254,8 @@ export function Sidebar({
 									onClick={() => handleNavClick("overview-agents")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
 										activeNav === "overview-agents"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+											? "bg-white/[0.08] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 									}`}
 								>
 									<Bot className="h-3.5 w-3.5 text-sky-400 shrink-0" />
@@ -266,8 +266,8 @@ export function Sidebar({
 									onClick={() => handleNavClick("overview-leaderboard")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
 										activeNav === "overview-leaderboard"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+											? "bg-white/[0.08] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 									}`}
 								>
 									<Trophy className="h-3.5 w-3.5 text-amber-400 shrink-0" />
@@ -278,7 +278,7 @@ export function Sidebar({
 					</div>
 
 					{/* MONITOR */}
-					<div className="space-y-1 pt-2 border-t border-[#1E2433]">
+					<div className="space-y-1 pt-2 border-t border-white/[0.08]">
 						<span className="px-3 text-[10px] font-semibold tracking-wider text-[#64748B] uppercase block">
 							Monitor
 						</span>
@@ -287,8 +287,8 @@ export function Sidebar({
 							onClick={() => handleNavClick("logs")}
 							className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
 								activeNav === "logs"
-									? "bg-[#1E2538] text-[#00EA88] shadow-sm font-semibold"
-									: "text-[#94A3B8] hover:bg-[#1A2030] hover:text-white"
+									? "bg-white/[0.08] text-[#00EA88] shadow-sm font-semibold"
+									: "text-[#94A3B8] hover:bg-white/[0.05] hover:text-white"
 							}`}
 						>
 							<Terminal className="h-4 w-4 shrink-0" />
@@ -299,8 +299,8 @@ export function Sidebar({
 							onClick={() => handleNavClick("ping")}
 							className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
 								activeNav === "ping"
-									? "bg-[#1E2538] text-[#00EA88] shadow-sm font-semibold"
-									: "text-[#94A3B8] hover:bg-[#1A2030] hover:text-white"
+									? "bg-white/[0.08] text-[#00EA88] shadow-sm font-semibold"
+									: "text-[#94A3B8] hover:bg-white/[0.05] hover:text-white"
 							}`}
 						>
 							<FlaskConical className="h-4 w-4 shrink-0" />
@@ -311,8 +311,8 @@ export function Sidebar({
 							onClick={() => handleNavClick("quota")}
 							className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${
 								activeNav === "quota"
-									? "bg-[#1E2538] text-[#00EA88] shadow-sm font-semibold"
-									: "text-[#94A3B8] hover:bg-[#1A2030] hover:text-white"
+									? "bg-white/[0.08] text-[#00EA88] shadow-sm font-semibold"
+									: "text-[#94A3B8] hover:bg-white/[0.05] hover:text-white"
 							}`}
 						>
 							<Database className="h-4 w-4 shrink-0" />
@@ -321,7 +321,7 @@ export function Sidebar({
 					</div>
 
 					{/* CONTROL PLANE / SETTINGS ACCORDION */}
-					<div className="space-y-1 pt-2 border-t border-[#1E2433]">
+					<div className="space-y-1 pt-2 border-t border-white/[0.08]">
 						<span className="px-3 text-[10px] font-semibold tracking-wider text-[#64748B] uppercase block">
 							Control Plane
 						</span>
@@ -330,8 +330,8 @@ export function Sidebar({
 							onClick={() => setSidebarSettingsOpen(!sidebarSettingsOpen)}
 							className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-semibold transition-colors cursor-pointer ${
 								!sidebarSettingsOpen && activeNav.startsWith("settings-")
-									? "text-white bg-[#1A2030]/60"
-									: "text-[#8A94A6] hover:text-white hover:bg-[#1A2030]"
+									? "text-white bg-white/[0.06]/60"
+									: "text-[#8A94A6] hover:text-white hover:bg-white/[0.05]"
 							}`}
 						>
 							<div className="flex items-center gap-3">
@@ -352,13 +352,13 @@ export function Sidebar({
 									: "grid-rows-[0fr] opacity-0 pointer-events-none"
 							}`}
 						>
-							<div className="overflow-hidden min-h-0 ml-4 pl-3 border-l border-[#1E2433] space-y-1 py-1">
+							<div className="overflow-hidden min-h-0 ml-4 pl-3 border-l border-white/[0.08] space-y-1 py-1">
 								<button
 									onClick={() => handleNavClick("settings-gateway")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
 										activeNav === "settings-gateway"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+											? "bg-white/[0.08] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 									}`}
 								>
 									<Server className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
@@ -369,8 +369,8 @@ export function Sidebar({
 									onClick={() => handleNavClick("settings-models")}
 									className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-xs transition-all duration-200 cursor-pointer ${
 										activeNav === "settings-models"
-											? "bg-[#1E2538] text-[#00EA88] font-semibold translate-x-1"
-											: "text-[#94A3B8] hover:text-white hover:bg-[#161B26]"
+											? "bg-white/[0.08] text-[#00EA88] font-semibold translate-x-1"
+											: "text-[#94A3B8] hover:text-white hover:bg-white/[0.05]"
 									}`}
 								>
 									<Layers className="h-3.5 w-3.5 text-amber-400 shrink-0" />

@@ -180,7 +180,7 @@ export function OpenCodeSection({
 
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 font-sans">
 				{/* Card 1: Total Spend */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-1">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-1">
 					<div className="flex justify-between items-center">
 						<span className="text-xs font-medium text-[#8A94A6]">Total Spend</span>
 						<button
@@ -189,7 +189,7 @@ export function OpenCodeSection({
 								e.stopPropagation();
 								onToggleCurrency();
 							}}
-							className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border border-[#1E2433] bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
+							className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] bevel-inset-subtle text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
 							title="Switch currency USD / IDR"
 						>
 							{currency}
@@ -218,7 +218,7 @@ export function OpenCodeSection({
 				</div>
 
 				{/* Card 2: Messages */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-2">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-2">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Messages</span>
 						{renderTrendBadge(opencode?.trends?.messagesDelta)}
@@ -232,7 +232,7 @@ export function OpenCodeSection({
 				</div>
 
 				{/* Card 3: Tokens */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-3">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Tokens</span>
 						{renderTrendBadge(opencode?.trends?.tokensDelta)}
@@ -246,7 +246,7 @@ export function OpenCodeSection({
 				</div>
 
 				{/* Card 4: Cache Hit */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-4">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-4">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Cache Hit</span>
 						{renderTrendBadge(opencode?.trends?.cacheRateDelta)}
@@ -263,7 +263,7 @@ export function OpenCodeSection({
 			{/* Second Row: 2 Sparkline Cards for Cache Read & Fresh Input */}
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 font-sans">
 				{/* Card 1: Cache Read */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-5">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Cache Read</span>
 						{renderTrendBadge(opencode?.trends?.cacheReadDelta)}
@@ -277,7 +277,7 @@ export function OpenCodeSection({
 				</div>
 
 				{/* Card 2: Fresh Input */}
-				<div className="group rounded-xl border border-[#1E2433] bg-[#131722] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
+				<div className="group rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] p-4 flex flex-col justify-between shadow-sm relative overflow-hidden transition-all duration-200 animate-card-enter stagger-6">
 					<div className="flex justify-between items-start">
 						<span className="text-xs font-medium text-[#8A94A6]">Fresh Input</span>
 						{renderTrendBadge(opencode?.trends?.inputFreshDelta)}
@@ -294,7 +294,7 @@ export function OpenCodeSection({
 			{/* Project / session tree */}
 			<div className="space-y-4">
 				{projectGroups.length === 0 ? (
-					<div className="rounded-xl border border-[#1E2433] bg-[#131722] py-12 text-center text-xs text-[#64748B]">
+					<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] py-12 text-center text-xs text-[#64748B]">
 						No sessions match this time range.
 					</div>
 				) : (
@@ -303,11 +303,11 @@ export function OpenCodeSection({
 						return (
 							<div
 								key={group.projectPath}
-								className="rounded-xl border border-[#1E2433] bg-[#131722] overflow-hidden shadow-sm transition-all"
+								className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset hover:border-white/[0.18] overflow-hidden shadow-sm transition-all"
 							>
 								<div
 									onClick={() => toggleProject(group.projectPath)}
-									className="flex items-center justify-between px-4 py-3 bg-[#131722] hover:bg-[#161B26] border-b border-[#1E2433] transition-colors cursor-pointer select-none"
+									className="flex items-center justify-between px-4 py-3 bg-white/[0.02] hover:bg-white/[0.05] border-b border-white/[0.08] transition-colors cursor-pointer select-none"
 								>
 									<div className="flex items-center gap-2.5 min-w-0">
 										<button
@@ -425,10 +425,10 @@ export function OpenCodeSection({
 													</div>
 
 													{hasSubagents && (
-														<div className="bg-[#0B0E15] border-t border-[#1E2433]/40 overflow-x-auto scrollbar-none px-3 sm:px-6 py-2">
+														<div className="bg-[#0B0E15] border-t border-white/[0.08]/40 overflow-x-auto scrollbar-none px-3 sm:px-6 py-2">
 															<table className="w-full text-xs font-mono border-collapse min-w-[380px] sm:min-w-0">
 																<thead>
-																	<tr className="text-[10px] uppercase tracking-wider text-[#64748B] border-b border-[#1E2433]/50 select-none">
+																	<tr className="text-[10px] uppercase tracking-wider text-[#64748B] border-b border-white/[0.08]/50 select-none">
 																		<th className="py-1.5 pl-1 pr-3 text-left font-medium w-24">Role</th>
 																		<th className="py-1.5 px-3 text-left font-medium">Model</th>
 																		<th className="py-1.5 px-3 text-right font-medium w-20">Tokens</th>
@@ -451,7 +451,7 @@ export function OpenCodeSection({
 																				className="hover:bg-[#121622]/80 transition-colors"
 																			>
 																				<td className="py-2 pl-1 pr-3 whitespace-nowrap">
-																					<span className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-[#161B26] border border-[#1E2433] text-[#7AA2F7]">
+																					<span className="px-1.5 py-0.5 text-[10px] font-mono font-medium rounded bg-[#161B26] border border-white/[0.08] text-[#7AA2F7]">
 																						{subRole.label.toLowerCase()}
 																					</span>
 																				</td>

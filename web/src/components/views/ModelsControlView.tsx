@@ -77,7 +77,7 @@ export function ModelsControlView({
 
 			{/* Provider cards */}
 			{providerEntries.length === 0 ? (
-				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 text-xs text-[#64748B]">
+				<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 text-xs text-[#64748B]">
 					No upstream catalogs yet. Click Refresh or verify the gateway is running.
 				</div>
 			) : (
@@ -95,7 +95,7 @@ export function ModelsControlView({
 						return (
 							<div
 								key={name}
-								className="rounded-xl border border-[#1E2433] bg-[#131722] p-4 shadow-sm flex flex-col gap-3 hover:border-[#1E2538] transition-colors"
+								className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 shadow-sm flex flex-col gap-3 hover:border-white/[0.18] transition-colors"
 							>
 								<div className="flex items-start justify-between gap-2">
 									<div className="flex items-center gap-2 min-w-0">
@@ -109,7 +109,7 @@ export function ModelsControlView({
 											All Active (Passthrough)
 										</span>
 									) : activeCount === 0 ? (
-										<span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-[#161B26] border border-[#1E2433] text-[#64748B] whitespace-nowrap">
+										<span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-[#64748B] whitespace-nowrap">
 											0 Active
 										</span>
 									) : (
@@ -120,7 +120,7 @@ export function ModelsControlView({
 								</div>
 
 								<div className="space-y-1.5">
-									<div className="h-1.5 w-full rounded-full bg-[#161B26] overflow-hidden">
+									<div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
 										<div
 											className="h-full rounded-full bg-[#00EA88]"
 											style={{ width: `${pct}%` }}

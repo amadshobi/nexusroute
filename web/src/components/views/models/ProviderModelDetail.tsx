@@ -271,7 +271,7 @@ export function ProviderModelDetail({
 						variant="ghost"
 						size="sm"
 						onClick={onBack}
-						className="text-[#8A94A6] hover:text-white hover:bg-[#161B26] h-8 px-2 gap-1.5 text-xs cursor-pointer"
+						className="text-[#8A94A6] hover:text-white hover:bg-white/[0.04] h-8 px-2 gap-1.5 text-xs cursor-pointer"
 					>
 						<ArrowLeft className="h-3.5 w-3.5" /> Back to Providers
 					</Button>
@@ -298,7 +298,7 @@ export function ProviderModelDetail({
 			</div>
 
 			{/* Search & Actions Bar */}
-			<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
+			<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-2.5 flex flex-col sm:flex-row sm:items-center gap-2">
 				<div className="relative flex-1">
 					<Search className="h-3.5 w-3.5 text-[#64748B] absolute left-3 top-1/2 -translate-y-1/2" />
 					<input
@@ -306,7 +306,7 @@ export function ProviderModelDetail({
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Search models or providers..."
-						className="w-full bg-[#161B26] border border-[#1E2433] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1D68FE] font-mono"
+						className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1D68FE] font-mono"
 					/>
 				</div>
 				<div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
@@ -314,7 +314,7 @@ export function ProviderModelDetail({
 					<Button
 						size="sm"
 						onClick={toggleAllExpandCollapse}
-						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
+						className="bg-[#161B26] hover:bg-white/[0.08] text-[#8A94A6] border border-white/[0.08] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
 						{isAllCollapsed ? (
 							<>
@@ -339,14 +339,14 @@ export function ProviderModelDetail({
 						onClick={() =>
 							persist(new Set(allModels), "All models enabled")
 						}
-						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
+						className="bg-[#161B26] hover:bg-white/[0.08] text-[#8A94A6] border border-white/[0.08] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
 						<SlidersHorizontal className="h-3 w-3" /> Activate All
 					</Button>
 					<Button
 						size="sm"
 						onClick={() => persist(new Set(), "All models disabled")}
-						className="bg-[#161B26] hover:bg-[#1E2433] text-[#8A94A6] border border-[#1E2433] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
+						className="bg-[#161B26] hover:bg-white/[0.08] text-[#8A94A6] border border-white/[0.08] text-xs h-8 px-2.5 gap-1.5 cursor-pointer whitespace-nowrap"
 					>
 						<X className="h-3 w-3" /> Deactivate All
 					</Button>
@@ -364,7 +364,7 @@ export function ProviderModelDetail({
 
 			{/* Provider accordions: Gateway -> Provider -> Model */}
 			{visibleGroups.length === 0 ? (
-				<div className="rounded-xl border border-[#1E2433] bg-[#131722] p-5 text-xs text-[#64748B]">
+				<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 text-xs text-[#64748B]">
 					No models match your search query.
 				</div>
 			) : (

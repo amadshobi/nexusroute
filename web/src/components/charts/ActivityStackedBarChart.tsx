@@ -262,11 +262,11 @@ export function ActivityStackedBarChart({
 	return (
 		<div
 			className={cn(
-				"rounded-xl border border-[#1E2433] bg-[#131722] p-4 sm:p-5 shadow-sm space-y-4",
+				"rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-4 sm:p-5 shadow-sm space-y-4",
 				className,
 			)}
 		>
-			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#1E2433]">
+			<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/[0.08]">
 				<div className="flex items-center gap-2">
 					<Activity className="h-4 w-4 text-[#7AA2F7]" />
 					<h3 className="text-sm font-semibold text-white tracking-tight">
@@ -293,7 +293,7 @@ export function ActivityStackedBarChart({
 			</div>
 
 			{isEmpty ? (
-				<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-[#1E2433] rounded-lg">
+				<div className="p-8 text-center text-xs text-[#64748B] font-mono border border-dashed border-white/[0.08] rounded-lg">
 					No activity recorded in this time range.
 				</div>
 			) : (
@@ -360,7 +360,7 @@ export function ActivityStackedBarChart({
 
 							{hovered && hoveredIndex !== null && (
 								<div
-									className="absolute z-20 pointer-events-none rounded-lg bg-[#0E1117]/95 border border-[#1E2433] p-2.5 shadow-2xl text-xs font-mono"
+									className="absolute z-20 pointer-events-none rounded-lg bg-[#0a0a0a]/95 border border-white/[0.12] bevel-inset p-2.5 shadow-2xl text-xs font-mono"
 									style={{
 										top: 4,
 										left: `${((hoveredIndex + 0.5) / buckets.length) * 100}%`,

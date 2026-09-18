@@ -89,11 +89,11 @@ export function TimeFilterBar({ timeRange, setTimeRange }: TimeFilterBarProps) {
 	return (
 		<div
 			ref={containerRef}
-			className="relative flex items-center bg-[#161B26] border border-[#1E2433] rounded-lg p-0.5 text-xs font-medium overflow-x-auto max-w-full scrollbar-none"
+			className="relative flex items-center bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle rounded-lg p-0.5 text-xs font-medium overflow-x-auto max-w-full scrollbar-none"
 		>
 			{/* Smooth Sliding Pill Indicator */}
 			<div
-				className={`absolute top-0.5 bottom-0.5 rounded-md bg-[#1E2538] border border-[#00EA88]/20 shadow-sm pointer-events-none ${
+				className={`absolute top-0.5 bottom-0.5 rounded-md bg-white/[0.08] border border-[#00EA88]/30 bevel-inset-subtle shadow-sm pointer-events-none ${
 					hasMounted
 						? "transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]"
 						: "transition-none"

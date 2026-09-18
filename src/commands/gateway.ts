@@ -515,11 +515,11 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 				}
 				printGnHeader("GATEWAY INSTANCE STATUS");
 				console.log(
-					`  ${ANSI_RED}❌ Gateway Interceptor is not running on port ${port}.${ANSI_RESET}`,
+					`  ${ANSI_RED}󰅚 Gateway Interceptor is not running on port ${port}.${ANSI_RESET}`,
 				);
 				console.log(`  ${ANSI_GRAY}Reason: ${err.message}${ANSI_RESET}`);
 				console.log(
-					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Jalankan ${ANSI_CYAN}nexus start${ANSI_RESET} untuk mengaktifkan interceptor.\n`,
+					`\n  ${ANSI_YELLOW}Hint:${ANSI_RESET} Run ${ANSI_CYAN}nexus start${ANSI_RESET} to activate the interceptor.\n`,
 				);
 				return 1;
 			}
@@ -577,7 +577,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 					return 1;
 				}
 				console.error(
-					`  ${ANSI_RED}❌ Failed to fetch stats from port ${port}: ${err.message}${ANSI_RESET}`,
+					`  ${ANSI_RED}󰅚 Failed to fetch stats from port ${port}: ${err.message}${ANSI_RESET}`,
 				);
 				return 1;
 			}
@@ -623,7 +623,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 				if (!isJson) {
 					printGnHeader("GATEWAY REAL-TIME TRAFFIC STREAM");
 					console.log(
-						`  ${ANSI_GRAY}Streaming live gateway requests... Tekan Ctrl+C untuk berhenti.${ANSI_RESET}\n`,
+						`  ${ANSI_GRAY}Streaming live gateway requests... Press Ctrl+C to stop.${ANSI_RESET}\n`,
 					);
 				}
 
@@ -632,7 +632,7 @@ export async function handleGatewayCommand(argv: string[]): Promise<number> {
 					ac.abort();
 					if (!isJson) {
 						console.log(
-							`\n  ${ANSI_YELLOW}Streaming log dihentikan.${ANSI_RESET}\n`,
+							`\n  ${ANSI_YELLOW}Log streaming terminated.${ANSI_RESET}\n`,
 						);
 					}
 					process.exit(0);

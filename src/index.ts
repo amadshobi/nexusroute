@@ -104,33 +104,33 @@ function reportDeprecated(cmd: string, replacement: string): void {
 	);
 }
 
-/** Cetak bantuan level-1 (banner + daftar command makro). */
+/** Print Level-1 help (banner + command overview). */
 function showHelp(): void {
 	printBanner();
 	console.log("USAGE");
 	console.log("  $ nexus <command> [flags]");
 	console.log(
-		"  $ nexus <command> --help               \x1b[1;33m󰋽 Panduan mendalam Level-2 per-command!\x1b[0m",
+		"  $ nexus <command> --help               \x1b[1;33m󰋽 Comprehensive Level-2 help per command!\x1b[0m",
 	);
 	console.log("");
 	console.log("CORE COMMANDS");
 	console.log(
-		"  start         \x1b[1;36m󰐌\x1b[0m Jalankan hybrid gateway interceptor (4010 -> OMP + VansRouter)",
+		"  start         \x1b[1;36m󰐌\x1b[0m Start hybrid gateway interceptor (4010 -> OMP + VansRouter)",
 	);
 	console.log(
-		"  stop          \x1b[1;31m󰓛\x1b[0m Hentikan gateway aktif (systemd service / instruksi kill PID)",
+		"  stop          \x1b[1;31m󰓛\x1b[0m Stop active gateway (systemd service / PID kill)",
 	);
 	console.log(
-		"  status        \x1b[1;36m󰋼\x1b[0m Cek status gateway instance aktif & latency",
+		"  status        \x1b[1;36m󰋼\x1b[0m Check active gateway instance status & latency",
 	);
 	console.log(
-		"  stats         \x1b[1;36m󰓅\x1b[0m Statistik performa, hit-rate cache, dan error count",
+		"  stats         \x1b[1;36m󰓅\x1b[0m Performance metrics, cache hit rate, and error counters",
 	);
 	console.log(
-		"  logs, log     \x1b[1;36m󰌱\x1b[0m Audit traffic real-time, status cache, & riwayat fallback",
+		"  logs, log     \x1b[1;36m󰌱\x1b[0m Real-time traffic audit, cache status, & fallback history",
 	);
 	console.log(
-		"  cache <action>\x1b[1;36m󰃨\x1b[0m Manajemen cache (prune: hapus expired, clear: kosongkan)",
+		"  cache <action>\x1b[1;36m󰃨\x1b[0m Cache management (prune: remove expired, clear: empty all)",
 	);
 	console.log("");
 	console.log("MANAGEMENT & TOOLS");
@@ -146,19 +146,19 @@ function showHelp(): void {
 	console.log("");
 	console.log("REPLAY & TESTING");
 	console.log(
-		"  record <name> \x1b[1;36m󰑈\x1b[0m Jalankan gateway dalam mode record JSONL fixture",
+		"  record <name> \x1b[1;36m󰑈\x1b[0m Run gateway in record mode to capture JSONL fixtures",
 	);
 	console.log(
-		"  mock <name>   \x1b[1;36m󰘦\x1b[0m Jalankan gateway dalam mode mock replay tanpa upstream",
+		"  mock <name>   \x1b[1;36m󰘦\x1b[0m Run gateway in mock replay mode without live upstreams",
 	);
 	console.log("");
 	console.log("META");
-	console.log("  help, h       \x1b[1;36m󰈙\x1b[0m Tampilkan panduan ini");
-	console.log("  version, v    \x1b[1;36m󰓹\x1b[0m Tampilkan versi");
+	console.log("  help, h       \x1b[1;36m󰈙\x1b[0m Display this help guide");
+	console.log("  version, v    \x1b[1;36m󰓹\x1b[0m Show version");
 	console.log("");
 	console.log("HINT");
 	console.log(
-		"  \x1b[0;90mCoba jalankan:\x1b[0m \x1b[1;36mnexus start -h\x1b[0m  \x1b[0;90matau\x1b[0m  \x1b[1;36mnexus quota -h\x1b[0m  \x1b[0;90muntuk panduan detail per-command!\x1b[0m",
+		"  \x1b[0;90mTry running:\x1b[0m \x1b[1;36mnexus start -h\x1b[0m  \x1b[0;90mor\x1b[0m  \x1b[1;36mnexus quota -h\x1b[0m  \x1b[0;90mfor detailed command options!\x1b[0m",
 	);
 	console.log("");
 }

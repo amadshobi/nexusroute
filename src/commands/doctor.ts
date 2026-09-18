@@ -33,6 +33,8 @@ import {
 	ANSI_YELLOW,
 } from "../utils/formatter";
 
+import { resolveDefaultCacheDir } from "../gateway/cache";
+
 // ─── Paths (single source of truth) ──────────────────────────
 
 const PATHS = {
@@ -40,7 +42,7 @@ const PATHS = {
 	agentDb: join(homedir(), ".omp", "agent", "agent.db"),
 	opencodeDb: join(homedir(), ".local", "share", "opencode", "opencode.db"),
 	statsDb: join(homedir(), ".omp", "stats.db"),
-	cacheDir: join(homedir(), ".config", "gn", "cache"),
+	cacheDir: resolveDefaultCacheDir(),
 	opencodeConfig: join(homedir(), ".config", "opencode", "opencode.jsonc"),
 	brokerService: "omp-broker.service",
 	gatewayService: "omp-gateway.service",
@@ -76,25 +78,25 @@ function printDoctorHelp(): void {
 		"NEXUS DOCTOR — System & Service Health Diagnostic (Tree)",
 		"════════════════════════════════════════════════════════════",
 		"",
-		"DESKRIPSI:",
-		"  Diagnostic menyeluruh untuk seluruh infrastruktur NexusRoute & OpenCode:",
+		"DESCRIPTION:",
+		"  Comprehensive diagnostic for NexusRoute & OpenCode infrastructure:",
 		"  1. Daemons & Runtimes (omp, bun, systemd services, gateway & broker ports)",
 		"  2. Databases & Telemetry (agent.db, opencode.db, stats.db, auth token)",
 		"  3. Auth & Provider Matrix (Zero-Secret live reachability & account check)",
 		"  4. Storage & Configuration (cache permissions & opencode.jsonc)",
 		"",
-		"PENGGUNAAN:",
+		"USAGE:",
 		"  nexus doctor [flags]",
 		"  nexus doc    [flags]",
 		"",
 		"FLAGS:",
-		"      --short   Hanya tampilkan kategori/check yang warn/error",
-		"      --json    Output JSON mentah (untuk script monitoring/CI)",
-		"  -h, --help    Tampilkan panduan ini",
+		"      --short   Show only categories/checks with warnings or errors",
+		"      --json    Raw JSON output (for monitoring scripts and CI)",
+		"  -h, --help    Display this help guide",
 		"",
-		"CONTOH:",
+		"EXAMPLES:",
 		"  nexus doctor                # Full diagnostic tree",
-		"  nexus doc --short           # Hanya issue bermasalah",
+		"  nexus doc --short           # Only problematic checks",
 		"  nexus doctor --json         # JSON payload",
 		"",
 		"RELATED:",
@@ -128,7 +130,7 @@ function checkOmpBinary(): DoctorCheckResult {
 		name: "omp binary",
 		status: "warn",
 		detail: "NOT FOUND in $PATH",
-		hint: "Install OMP CLI binary ke ~/.local/bin/omp atau tambahkan ke PATH.",
+		hint: "Install OMP CLI binary to ~/.local/bin/omp or add it to PATH.",
 	};
 }
 
@@ -145,7 +147,7 @@ function checkBunRuntime(): DoctorCheckResult {
 		name: "bun runtime",
 		status: "error",
 		detail: "NOT FOUND",
-		hint: "Bun runtime diperlukan untuk menjalankan tools NexusRoute.",
+		hint: "Bun runtime is required to run NexusRoute tools.",
 	};
 }
 
@@ -223,14 +225,14 @@ async function checkGatewayPort(): Promise<DoctorCheckResult> {
 			name: "Port 4000 (Gateway)",
 			status: "warn",
 			detail: `HTTP ${res.status} (${lat} ms)`,
-			hint: "Gateway merespons tapi status bukan 200. Cek log: journalctl --user -u omp-gateway.service",
+			hint: "Gateway responded with non-200 status. Check logs: journalctl --user -u omp-gateway.service",
 		};
 	} catch (err) {
 		return {
 			name: "Port 4000 (Gateway)",
 			status: "error",
 			detail: "Unreachable (Connection refused/timeout)",
-			hint: "Service gateway mati atau tidak listening di port 4000. Jalankan 'nexus restart'.",
+			hint: "Gateway service is down or not listening on port 4000. Run 'nexus restart'.",
 		};
 	}
 }
@@ -257,7 +259,7 @@ function checkBrokerPort(): Promise<DoctorCheckResult> {
 				name: "Port 4001 (Broker)",
 				status: "warn",
 				detail: "Timeout (1000 ms)",
-				hint: "Broker port lambat merespons. Cek omp-broker.service.",
+				hint: "Broker port is slow to respond. Check omp-broker.service.",
 			});
 		});
 
@@ -267,7 +269,7 @@ function checkBrokerPort(): Promise<DoctorCheckResult> {
 				name: "Port 4001 (Broker)",
 				status: "error",
 				detail: "Connection Refused",
-				hint: "Broker tidak aktif di port 4001. Jalankan 'nexus restart'.",
+				hint: "Broker is inactive on port 4001. Run 'nexus restart'.",
 			});
 		});
 
@@ -281,7 +283,7 @@ function checkAgentDb(): DoctorCheckResult {
 			name: "agent.db",
 			status: "error",
 			detail: `NOT FOUND at ${PATHS.agentDb}`,
-			hint: "Jalankan omp-broker sekali untuk generate DB otomatis.",
+			hint: "Run omp-broker once to auto-generate the database.",
 		};
 	}
 	try {
@@ -297,7 +299,7 @@ function checkAgentDb(): DoctorCheckResult {
 			name: "agent.db",
 			status: "error",
 			detail: `Unreadable: ${(err as Error).message}`,
-			hint: "Cek permission file: chmod 600 ~/.omp/agent/agent.db",
+			hint: "Check file permissions: chmod 600 ~/.omp/agent/agent.db",
 		};
 	}
 }
@@ -308,7 +310,7 @@ function checkOpenCodeDb(): DoctorCheckResult {
 			name: "opencode.db",
 			status: "warn",
 			detail: `NOT FOUND at ${PATHS.opencodeDb}`,
-			hint: "Belum ada riwayat sesi OpenCode. Jalankan opencode untuk inisialisasi.",
+			hint: "No OpenCode session history found yet. Run opencode to initialize.",
 		};
 	}
 	try {
@@ -358,7 +360,7 @@ function checkStatsDb(): DoctorCheckResult {
 		return {
 			name: "stats.db",
 			status: "warn",
-			detail: "Exists tapi tidak readable",
+			detail: "Exists but unreadable",
 		};
 	}
 }
@@ -376,7 +378,7 @@ function checkBrokerToken(): DoctorCheckResult {
 			name: "auth-broker.token",
 			status: "warn",
 			detail: `NOT FOUND at ${PATHS.brokerToken}`,
-			hint: "Set env OMP_AUTH_BROKER_TOKEN atau restart omp-broker service.",
+			hint: "Set OMP_AUTH_BROKER_TOKEN env or restart omp-broker service.",
 		};
 	}
 	try {
@@ -385,7 +387,7 @@ function checkBrokerToken(): DoctorCheckResult {
 			return {
 				name: "auth-broker.token",
 				status: "warn",
-				detail: "File exists tapi kosong",
+				detail: "File exists but empty",
 				hint: "Re-generate token: omp-cli token regenerate",
 			};
 		}
@@ -398,7 +400,7 @@ function checkBrokerToken(): DoctorCheckResult {
 		return {
 			name: "auth-broker.token",
 			status: "warn",
-			detail: "Exists tapi tidak readable",
+			detail: "Exists but unreadable",
 		};
 	}
 }
@@ -409,8 +411,8 @@ function checkAuthMatrix(): DoctorCheckResult[] {
 			{
 				name: "Auth Accounts",
 				status: "warn",
-				detail: "agent.db tidak ditemukan",
-				hint: "Jalankan omp auth login untuk menghubungkan provider.",
+				detail: "agent.db not found",
+				hint: "Run 'omp auth login' to connect providers.",
 			},
 		];
 	}
@@ -439,8 +441,8 @@ function checkAuthMatrix(): DoctorCheckResult[] {
 				{
 					name: "Auth Accounts",
 					status: "warn",
-					detail: "Tidak ada kredensial aktif yang terdaftar",
-					hint: "Hubungkan akun AI via: omp auth login",
+					detail: "No active credentials registered",
+					hint: "Connect AI accounts via: omp auth login",
 				},
 			];
 		}
@@ -459,7 +461,7 @@ function checkAuthMatrix(): DoctorCheckResult[] {
 			{
 				name: "Auth Matrix",
 				status: "warn",
-				detail: `Gagal membaca auth_credentials: ${(err as Error).message}`,
+				detail: `Failed to read auth_credentials: ${(err as Error).message}`,
 			},
 		];
 	}
@@ -471,7 +473,7 @@ function checkCacheStorage(): DoctorCheckResult {
 			name: "Cache Storage",
 			status: "warn",
 			detail: `NOT FOUND at ${PATHS.cacheDir}`,
-			hint: "Direktori cache akan otomatis dibuat saat menjalankan gn ping/bench.",
+			hint: "Cache directory will be created automatically on next ping/bench run.",
 		};
 	}
 	try {
@@ -489,17 +491,18 @@ function checkCacheStorage(): DoctorCheckResult {
 				}
 			} catch {}
 		}
+		const rel = PATHS.cacheDir.replace(homedir(), "~");
 		return {
 			name: "Cache Storage",
 			status: "ok",
-			detail: `~/.config/gn/cache (${count} files)`,
+			detail: `${rel} (${count} files)`,
 		};
 	} catch {
 		return {
 			name: "Cache Storage",
 			status: "warn",
-			detail: "Directory exists tapi tidak writable",
-			hint: `Perbaiki permission: chmod 700 ${PATHS.cacheDir}`,
+			detail: "Directory exists but not writable",
+			hint: `Fix directory permissions: chmod 700 ${PATHS.cacheDir}`,
 		};
 	}
 }
@@ -510,7 +513,7 @@ function checkOpenCodeConfig(): DoctorCheckResult {
 			name: "OpenCode Config",
 			status: "warn",
 			detail: `NOT FOUND at ${PATHS.opencodeConfig}`,
-			hint: "Buat konfigurasi opencode di ~/.config/opencode/opencode.jsonc",
+			hint: "Create OpenCode configuration at ~/.config/opencode/opencode.jsonc",
 		};
 	}
 	try {
@@ -524,7 +527,7 @@ function checkOpenCodeConfig(): DoctorCheckResult {
 		return {
 			name: "OpenCode Config",
 			status: "warn",
-			detail: "File exists tapi tidak readable",
+			detail: "File exists but unreadable",
 		};
 	}
 }
@@ -546,21 +549,21 @@ function runSystemctlCheck(service: string, label: string): DoctorCheckResult {
 				name: label,
 				status: "error",
 				detail: `${out} (service down)`,
-				hint: `Restart service dengan: systemctl --user restart ${service} atau 'nexus restart'`,
+				hint: `Restart service: systemctl --user restart ${service} or 'nexus restart'`,
 			};
 		}
 		return {
 			name: label,
 			status: "warn",
 			detail: `${out || "unknown status"}`,
-			hint: `Cek status service: systemctl --user status ${service}`,
+			hint: `Check service status: systemctl --user status ${service}`,
 		};
 	} catch (err) {
 		return {
 			name: label,
 			status: "warn",
 			detail: "systemctl call failed",
-			hint: "Pastikan systemd user session aktif.",
+			hint: "Ensure systemd user session is active.",
 		};
 	}
 }
@@ -699,7 +702,7 @@ export async function handleDoctorCommand(argv: string[]): Promise<number> {
 
 	if (displayCategories.length === 0 && args.short) {
 		console.log(
-			`${ANSI_GREEN}  🎉 Semua check OK — tidak ada warning atau error!${ANSI_RESET}\n`,
+			`${ANSI_GREEN}  󰄬 All checks passed — no warnings or errors!${ANSI_RESET}\n`,
 		);
 	} else {
 		renderDiagnosticTree(displayCategories);
@@ -714,7 +717,7 @@ export async function handleDoctorCommand(argv: string[]): Promise<number> {
 	);
 	if (totalError === 0 && totalWarn === 0) {
 		console.log(
-			`  ${ANSI_GREEN}🎉 SYSTEM 100% OPERATIONAL${ANSI_RESET} · ${ANSI_BOLD}${totalOk}/${allChecks.length} Checks Passed${ANSI_RESET} (No Blockers)\n`,
+			`  ${ANSI_GREEN}󰄬 SYSTEM 100% OPERATIONAL${ANSI_RESET} · ${ANSI_BOLD}${totalOk}/${allChecks.length} Checks Passed${ANSI_RESET} (No Blockers)\n`,
 		);
 	} else {
 		const statusParts = [];
@@ -742,11 +745,11 @@ export async function handleRestartCommand(argv: string[]): Promise<number> {
 				"NEXUS RESTART — Restart OMP Proxy Services",
 				"════════════════════════════════════════════════════════════",
 				"",
-				"DESKRIPSI:",
-				"  Restart systemd user services: omp-broker.service dan",
-				"  omp-gateway.service. Aman dipanggil kapan saja.",
+				"DESCRIPTION:",
+				"  Restart systemd user services: omp-broker.service and",
+				"  omp-gateway.service. Safe to execute anytime.",
 				"",
-				"PENGGUNAAN:",
+				"USAGE:",
 				"  nexus restart",
 				"  nexus r",
 				"",
@@ -775,13 +778,13 @@ export async function handleRestartCommand(argv: string[]): Promise<number> {
 		const stderrOut = await new Response(proc.stderr).text();
 
 		if (exitCode !== 0) {
-			stderr.write(`❌ systemctl restart gagal (exit ${exitCode})\n`);
+			stderr.write(`󰅚 systemctl restart failed (exit ${exitCode})\n`);
 			if (stderrOut) stderr.write(`${stderrOut}\n`);
 			return 1;
 		}
 
 		console.log(
-			`${ANSI_GREEN}✅ Services restarted successfully!${ANSI_RESET}\n`,
+			`${ANSI_GREEN}󰄬 Services restarted successfully!${ANSI_RESET}\n`,
 		);
 		return 0;
 	} catch (err) {

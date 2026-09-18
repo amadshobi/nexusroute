@@ -50,14 +50,14 @@ const ACTIVE_COMMANDS: Record<string, string> = {
 };
 
 /**
- * Peta migrasi subcommand lama yang sudah dihapus/dilebur.
+ * Map of migrations for deprecated/merged commands.
  */
 const DEPRECATED_MIGRATIONS: Record<string, string> = {
-	ollama: `Command 'nexus ollama' telah dilebur ke 'nexus quota'.\n  💡 Gunakan: ${ANSI_CYAN}nexus quota${ANSI_RESET} (Live Quota Dashboard termasuk Ollama Cloud).`,
-	o: `Command 'nexus ollama' telah dilebur ke 'nexus quota'.\n  💡 Gunakan: ${ANSI_CYAN}nexus quota${ANSI_RESET} (Live Quota Dashboard termasuk Ollama Cloud).`,
-	ocm: `Tool 'ocm' telah dilebur ke 'nexus config'.\n  💡 Gunakan: ${ANSI_CYAN}nexus config get <target>${ANSI_RESET} atau ${ANSI_CYAN}nexus config set <path> <val>${ANSI_RESET}.`,
-	quarantine: `Command 'nexus quarantine' telah dipangkas (deprecated).\n  💡 Jalankan ${ANSI_CYAN}nexus help${ANSI_RESET} untuk melihat daftar subcommand aktif.`,
-	export: `Command 'nexus export' telah dipangkas (deprecated).\n  💡 Jalankan ${ANSI_CYAN}nexus help${ANSI_RESET} untuk melihat daftar subcommand aktif.`,
+	ollama: `Command 'nexus ollama' has been merged into 'nexus quota'.\n  󰌵 Use: ${ANSI_CYAN}nexus quota${ANSI_RESET} (Live Quota Dashboard including Ollama Cloud).`,
+	o: `Command 'nexus ollama' has been merged into 'nexus quota'.\n  󰌵 Use: ${ANSI_CYAN}nexus quota${ANSI_RESET} (Live Quota Dashboard including Ollama Cloud).`,
+	ocm: `Tool 'ocm' has been merged into 'nexus config'.\n  󰌵 Use: ${ANSI_CYAN}nexus config get <target>${ANSI_RESET} or ${ANSI_CYAN}nexus config set <path> <val>${ANSI_RESET}.`,
+	quarantine: `Command 'nexus quarantine' is deprecated.\n  󰌵 Run ${ANSI_CYAN}nexus help${ANSI_RESET} to view active subcommands.`,
+	export: `Command 'nexus export' is deprecated.\n  󰌵 Run ${ANSI_CYAN}nexus help${ANSI_RESET} to view active subcommands.`,
 };
 
 /**
@@ -129,16 +129,16 @@ export function handleUnknownCommand(cmd: string): void {
 
 	console.error("");
 	console.error(
-		`\x1b[1;31m󰅚 [Nexus Error]\x1b[0m Subcommand tidak dikenal: \x1b[1;37m"${cmd}"\x1b[0m`,
+		`\x1b[1;31m󰅚 [Nexus Error]\x1b[0m Unknown subcommand: \x1b[1;37m"${cmd}"\x1b[0m`,
 	);
 
 	if (suggestion) {
 		console.error(
-			`\n  ${ANSI_YELLOW}󰋽 Maksud lu: ${ANSI_BOLD}${ANSI_CYAN}${suggestion}${ANSI_RESET}${ANSI_YELLOW}?${ANSI_RESET}`,
+			`\n  ${ANSI_YELLOW}󰋽 Did you mean: ${ANSI_BOLD}${ANSI_CYAN}${suggestion}${ANSI_RESET}${ANSI_YELLOW}?${ANSI_RESET}`,
 		);
 	}
 
 	console.error(
-		`  ${ANSI_GRAY}💡 Jalankan ${ANSI_CYAN}nexus help${ANSI_GRAY} untuk melihat daftar subcommand yang tersedia.${ANSI_RESET}\n`,
+		`  ${ANSI_GRAY}󰌵 Run ${ANSI_CYAN}nexus help${ANSI_GRAY} to view available subcommands.${ANSI_RESET}\n`,
 	);
 }

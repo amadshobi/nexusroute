@@ -13,6 +13,7 @@ import {
 import { DEFAULT_FALLBACK } from "../rules";
 import {
 	sanitizeText,
+	sanitizeClaudeCodeWatermarks,
 	normalizeUpstreamTools,
 	normalizeUpstreamReasoning,
 	detectSalvagableError,
@@ -220,7 +221,7 @@ export async function handleProxyRequest(
 		promptHash = computePromptHash(parsedBodyInfo.parsed);
 		const cached = ctx.cacheManager.get(promptHash);
 
-		if (cached) {
+		if (cached && (isStreamReq ? cached.isStream : !cached.isStream)) {
 			ctx.stats.cacheHits++;
 			const respHeaders = new Headers(cached.meta.headers || {});
 			respHeaders.set("X-GN-Cache", "HIT");
@@ -476,6 +477,7 @@ export async function handleProxyRequest(
 
 	// Upstream tool schema and reasoning normalization
 	if (isLlmEndpoint && finalReqBody) {
+		finalReqBody = sanitizeClaudeCodeWatermarks(finalReqBody);
 		finalReqBody = normalizeUpstreamTools(
 			finalReqBody,
 			targetUrl,
@@ -725,11 +727,21 @@ export async function handleProxyRequest(
 							);
 							controller.close();
 
+							const hasStreamError = recordedChunks.some(
+								(c) =>
+									c.includes('"type":"error"') ||
+									c.includes('event: error') ||
+									c.includes('"type":"api_error"') ||
+									c.includes('"status":"RESOURCE_EXHAUSTED"') ||
+									c.includes('"error":{'),
+							);
+
 							if (
 								ctx.config.cacheEnabled &&
 								promptHash &&
 								recordedChunks.length > 0 &&
-								upstreamResp.ok
+								upstreamResp.ok &&
+								!hasStreamError
 							) {
 								const headerObj: Record<string, string> = {};
 								respHeaders.forEach((v, k) => {

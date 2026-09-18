@@ -93,7 +93,7 @@ export class FixtureManager {
 			appendFileSync(fullPath, line, { mode: 0o600 });
 		} catch (err) {
 			process.stderr.write(
-				`⚠️  [GN Gateway Replay] Failed to record fixture: ${(err as Error).message}\n`,
+				`[WARN] [GN Gateway Replay] Failed to record fixture: ${(err as Error).message}\n`,
 			);
 		}
 	}
@@ -166,7 +166,7 @@ export class FixtureManager {
 			});
 		} catch (err) {
 			process.stderr.write(
-				`⚠️  [GN Gateway Replay] Mock failed: ${(err as Error).message}\n`,
+				`[WARN] [GN Gateway Replay] Mock failed: ${(err as Error).message}\n`,
 			);
 			return null;
 		}

@@ -151,7 +151,7 @@ function getOllamaCredentialsFromDb(): OllamaCredential[] {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    stderr.write(`⚠️  ollama-me: gagal query auth_credentials: ${msg}\n`);
+    stderr.write(`[WARN] ollama-me: failed to query auth_credentials: ${msg}\n`);
     return [];
   }
 }
@@ -319,7 +319,7 @@ export async function fetchOllamaAccountsMeta(): Promise<OllamaAccountMeta[]> {
           // Log non-OK responses so silent enrichment failures
           // become diagnosable instead of vanishing into the void.
           stderr.write(
-            `⚠️  ollama.com/settings -> HTTP ${res.status} (account=${email})\n`
+            `[WARN] ollama.com/settings -> HTTP ${res.status} (account=${email})\n`
           );
         }
       } catch (err) {
@@ -327,7 +327,7 @@ export async function fetchOllamaAccountsMeta(): Promise<OllamaAccountMeta[]> {
         // we can tell DNS, TLS, timeout, or auth issues apart.
         const msg = err instanceof Error ? err.message : String(err);
         stderr.write(
-          `⚠️  ollama.com/settings fetch failed (account=${email}): ${msg}\n`
+          `[WARN] ollama.com/settings fetch failed (account=${email}): ${msg}\n`
         );
       }
     }

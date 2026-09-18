@@ -189,9 +189,9 @@ export class AccessLogManager {
 			const line = JSON.stringify(entry) + "\n";
 			appendFileSync(this.logPath, line, { mode: 0o600 });
 		} catch (err) {
-			// Best effort — jangan pernah throw ke pipeline request utama
+			// Best effort — never throw to main request pipeline
 			process.stderr.write(
-				`⚠️  [GN AccessLog] Failed to append access log: ${(err as Error).message}\n`,
+				`[WARN] [GN AccessLog] Failed to append access log: ${(err as Error).message}\n`,
 			);
 		}
 	}
@@ -383,9 +383,9 @@ export function renderAccessLogsTable(entries: AccessLogEntry[]): string {
 		if (entry.status >= 500 || entry.error) {
 			statusBadge = `${ANSI_RED}✖ ${entry.status || "ERR"}${ANSI_RESET}`;
 		} else if (entry.status >= 400) {
-			statusBadge = `${ANSI_YELLOW}⚠ ${entry.status}${ANSI_RESET}`;
+			statusBadge = `${ANSI_YELLOW}󰀦 ${entry.status}${ANSI_RESET}`;
 		} else if (entry.fallback && entry.fallback.hopCount > 1) {
-			statusBadge = `${ANSI_YELLOW}⚠ FB×${entry.fallback.hopCount - 1}${ANSI_RESET}`;
+			statusBadge = `${ANSI_YELLOW}󰀦 FB×${entry.fallback.hopCount - 1}${ANSI_RESET}`;
 		}
 
 		// 5. Cache Badge
@@ -493,9 +493,9 @@ export function formatLiveLogLine(entry: AccessLogEntry): string {
 	if (entry.status >= 500 || entry.error) {
 		statusBadge = `${ANSI_RED}✖ ${entry.status || "ERR"}${ANSI_RESET}`;
 	} else if (entry.status >= 400) {
-		statusBadge = `${ANSI_YELLOW}⚠ ${entry.status}${ANSI_RESET}`;
+		statusBadge = `${ANSI_YELLOW}󰀦 ${entry.status}${ANSI_RESET}`;
 	} else if (entry.fallback && entry.fallback.hopCount > 1) {
-		statusBadge = `${ANSI_YELLOW}⚠ FB×${entry.fallback.hopCount - 1}${ANSI_RESET}`;
+		statusBadge = `${ANSI_YELLOW}󰀦 FB×${entry.fallback.hopCount - 1}${ANSI_RESET}`;
 	}
 
 	let cacheBadge = `${ANSI_GRAY}MISS${ANSI_RESET}`;
@@ -504,7 +504,7 @@ export function formatLiveLogLine(entry: AccessLogEntry): string {
 	}
 
 	const modelChain = formatModelChain(entry);
-	const shieldStr = entry.shieldRedacted > 0 ? ` 🛡️${entry.shieldRedacted}` : "";
+	const shieldStr = entry.shieldRedacted > 0 ? ` 󰒃 ${entry.shieldRedacted}` : "";
 
 	return `│ ${ANSI_GRAY}${timeStr}${ANSI_RESET} │ ${methodPath.padEnd(20)} │ ${modelChain} │ ${statusBadge} │ ${cacheBadge} │ ${entry.latencyMs}ms${shieldStr}`;
 }

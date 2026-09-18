@@ -176,7 +176,7 @@ export class PromptCacheManager {
 			renameSync(tmpDataPath, dataPath);
 		} catch (err) {
 			process.stderr.write(
-				`⚠️  [GN Gateway Cache] Failed to write cache for ${hash}: ${(err as Error).message}\n`,
+				`[WARN] [GN Gateway Cache] Failed to write cache for ${hash}: ${(err as Error).message}\n`,
 			);
 		}
 	}

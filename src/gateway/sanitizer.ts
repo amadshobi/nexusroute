@@ -142,6 +142,10 @@ export function sanitizeSchemaForGemini(schema: any): any {
 		cleaned.properties = {};
 	}
 
+	// Ensure array types always have an items definition (required by Google Gemini / Antigravity protobuf)
+	if (cleaned.type === "array" && (!cleaned.items || typeof cleaned.items !== "object")) {
+		cleaned.items = { type: "string" };
+	}
 	// Filter required array to only reference existing properties
 	if (Array.isArray(cleaned.required) && cleaned.properties) {
 		const propKeys = new Set(Object.keys(cleaned.properties));
@@ -206,15 +210,25 @@ export function normalizeUpstreamTools(
 					parsed.tools = transformedTools;
 				}
 			} else if (isGeminiOrAntigravity) {
-				const sanitizedTools = parsed.tools.map((t: any) => {
-					if (t.type === "function" && t.function?.parameters) {
+				const sanitizedTools = parsed.tools.map((t: Record<string, unknown>) => {
+					if (t.type === "function" && t.function && typeof t.function === "object") {
+						const fn = t.function as Record<string, unknown>;
+						if (fn.parameters) {
+							modified = true;
+							return {
+								...t,
+								function: {
+									...fn,
+									parameters: sanitizeSchemaForGemini(fn.parameters),
+								},
+							};
+						}
+					}
+					if (t.input_schema && typeof t.input_schema === "object") {
 						modified = true;
 						return {
 							...t,
-							function: {
-								...t.function,
-								parameters: sanitizeSchemaForGemini(t.function.parameters),
-							},
+							input_schema: sanitizeSchemaForGemini(t.input_schema),
 						};
 					}
 					return t;
@@ -231,6 +245,128 @@ export function normalizeUpstreamTools(
 		}
 	} catch {
 		// return unparsed body if JSON parse fails
+	}
+
+	return bodyStr;
+}
+/**
+ * Sanitizes Claude Code client watermarks and billing headers that trigger
+ * upstream vendor filters (e.g. Google Cloud Code Assist returning 429 RESOURCE_EXHAUSTED).
+ */
+export function sanitizeClaudeCodeWatermarks(bodyStr: string): string {
+	if (!bodyStr) return bodyStr;
+	if (
+		!bodyStr.includes("x-anthropic-billing-header") &&
+		!bodyStr.includes("You are a Claude agent, built on Anthropic's Claude Agent SDK.")
+	) {
+		return bodyStr;
+	}
+
+	try {
+		const parsed = JSON.parse(bodyStr) as Record<string, unknown>;
+		let modified = false;
+
+		// 1. Sanitize system prompt (string or blocks array)
+		if (typeof parsed.system === "string") {
+			const original = parsed.system;
+			let cleaned = original.replace(
+				/x-anthropic-billing-header:[^\n]*(\n|$)/gi,
+				"",
+			);
+			cleaned = cleaned.replace(
+				/You are a Claude agent, built on Anthropic's Claude Agent SDK\./gi,
+				"You are a Claude agent, built on Claude Agent SDK.",
+			);
+			if (cleaned !== original) {
+				parsed.system = cleaned;
+				modified = true;
+			}
+		} else if (Array.isArray(parsed.system)) {
+			const newSystem: unknown[] = [];
+			for (const item of parsed.system) {
+				if (!item || typeof item !== "object") continue;
+				const block = item as Record<string, unknown>;
+				if (
+					typeof block.text === "string" &&
+					block.text.includes("x-anthropic-billing-header:")
+				) {
+					modified = true;
+					continue; // Drop client billing header block
+				}
+				if (
+					typeof block.text === "string" &&
+					block.text.includes(
+						"You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+					)
+				) {
+					modified = true;
+					newSystem.push({
+						...block,
+						text: block.text.replace(
+							/You are a Claude agent, built on Anthropic's Claude Agent SDK\./gi,
+							"You are a Claude agent, built on Claude Agent SDK.",
+						),
+					});
+					continue;
+				}
+				newSystem.push(block);
+			}
+			if (modified) {
+				parsed.system = newSystem;
+			}
+		}
+
+		// 2. Sanitize messages if watermark leaked into message content
+		if (Array.isArray(parsed.messages)) {
+			for (const m of parsed.messages) {
+				if (!m || typeof m !== "object") continue;
+				const msg = m as Record<string, unknown>;
+				if (typeof msg.content === "string") {
+					if (
+						msg.content.includes("x-anthropic-billing-header:") ||
+						msg.content.includes(
+							"You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+						)
+					) {
+						msg.content = msg.content
+							.replace(/x-anthropic-billing-header:[^\n]*(\n|$)/gi, "")
+							.replace(
+								/You are a Claude agent, built on Anthropic's Claude Agent SDK\./gi,
+								"You are a Claude agent, built on Claude Agent SDK.",
+							);
+						modified = true;
+					}
+				} else if (Array.isArray(msg.content)) {
+					for (const part of msg.content) {
+						if (part && typeof part === "object") {
+							const block = part as Record<string, unknown>;
+							if (typeof block.text === "string") {
+								if (
+									block.text.includes("x-anthropic-billing-header:") ||
+									block.text.includes(
+										"You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+									)
+								) {
+									block.text = block.text
+										.replace(/x-anthropic-billing-header:[^\n]*(\n|$)/gi, "")
+										.replace(
+											/You are a Claude agent, built on Anthropic's Claude Agent SDK\./gi,
+											"You are a Claude agent, built on Claude Agent SDK.",
+										);
+									modified = true;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if (modified) {
+			return JSON.stringify(parsed);
+		}
+	} catch {
+		// return unparsed on parse failure
 	}
 
 	return bodyStr;

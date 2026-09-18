@@ -33,6 +33,7 @@ import {
 	normalizeUpstreamReasoning,
 	sanitizeSchemaForGemini,
 	normalizeUpstreamTools,
+	sanitizeClaudeCodeWatermarks,
 	detectSalvagableError,
 	buildSalvagedChunks,
 } from "../../src/gateway/sanitizer";
@@ -956,5 +957,116 @@ describe("9. Outbound SSE Error Salvager", () => {
 		expect(anthropicChunks[0]).toContain("content_block_delta");
 		expect(anthropicChunks[1]).toContain('"stop_reason":"end_turn"');
 		expect(anthropicChunks[2]).toContain("message_stop");
+	});
+});
+describe("10. Claude Code Watermark Sanitizer", () => {
+	test("strips billing header and replaces client SDK watermark in system blocks", () => {
+		const raw = JSON.stringify({
+			model: "claude-sonnet-4-6",
+			system: [
+				{
+					type: "text",
+					text: "x-anthropic-billing-header: cc_version=2.1.274.834; cc_entrypoint=sdk-cli;",
+				},
+				{
+					type: "text",
+					text: "You are a Claude agent, built on Anthropic's Claude Agent SDK.",
+				},
+				{
+					type: "text",
+					text: "Stay concise and execute tasks.",
+				},
+			],
+		});
+
+		const cleaned = sanitizeClaudeCodeWatermarks(raw);
+		const parsed = JSON.parse(cleaned);
+
+		expect(parsed.system).toHaveLength(2);
+		expect(parsed.system[0].text).toBe(
+			"You are a Claude agent, built on Claude Agent SDK.",
+		);
+		expect(parsed.system[1].text).toBe("Stay concise and execute tasks.");
+	});
+
+	test("strips billing header and sanitizes string system prompt", () => {
+		const raw = JSON.stringify({
+			model: "claude-sonnet-4-6",
+			system:
+				"x-anthropic-billing-header: test\nYou are a Claude agent, built on Anthropic's Claude Agent SDK.\nHelp user.",
+		});
+
+		const cleaned = sanitizeClaudeCodeWatermarks(raw);
+		const parsed = JSON.parse(cleaned);
+
+		expect(parsed.system).not.toContain("x-anthropic-billing-header");
+		expect(parsed.system).toContain(
+			"You are a Claude agent, built on Claude Agent SDK.",
+		);
+		expect(parsed.system).toContain("Help user.");
+	});
+
+	test("bypasses payloads without watermarks", () => {
+		const raw = JSON.stringify({
+			model: "claude-sonnet-4-6",
+			system: "You are a helpful assistant.",
+		});
+		expect(sanitizeClaudeCodeWatermarks(raw)).toBe(raw);
+	});
+});
+describe("11. Gemini Array Items Armor & Anthropic Tool Normalization", () => {
+	test("ensures nested 2D arrays receive an items definition", () => {
+		const rawSchema = {
+			type: "object",
+			properties: {
+				where: {
+					type: "array",
+					items: {
+						type: "array",
+					},
+					description: "{maxItems: 10}",
+				},
+			},
+		};
+
+		const sanitized = sanitizeSchemaForGemini(rawSchema);
+		expect(sanitized.properties.where.type).toBe("array");
+		expect(sanitized.properties.where.items.type).toBe("array");
+		expect(sanitized.properties.where.items.items).toEqual({ type: "string" });
+	});
+
+	test("normalizes Anthropic-format tools (input_schema) for Gemini/Antigravity", () => {
+		const rawBody = JSON.stringify({
+			model: "google-antigravity/gemini-3.8-flash",
+			tools: [
+				{
+					name: "ArtifactData",
+					description: "Data accessor",
+					input_schema: {
+						type: "object",
+						properties: {
+							where: {
+								type: "array",
+								items: {
+									type: "array",
+								},
+							},
+						},
+					},
+				},
+			],
+		});
+
+		const normalized = normalizeUpstreamTools(
+			rawBody,
+			"http://127.0.0.1:4000/v1",
+			"google-antigravity/gemini-3.8-flash",
+		);
+		const parsed = JSON.parse(normalized);
+		const tool = parsed.tools[0];
+
+		expect(tool.input_schema.properties.where.items.items).toEqual({
+			type: "string",
+		});
 	});
 });

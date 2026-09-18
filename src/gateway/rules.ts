@@ -235,7 +235,7 @@ export function loadGatewayRules(): GatewayRules {
 		return merged;
 	} catch (err) {
 		process.stderr.write(
-			`⚠️  [GN Gateway] Failed to parse config from ${path}: ${(err as Error).message}. Using defaults.\n`,
+			`[WARN] [GN Gateway] Failed to parse config from ${path}: ${(err as Error).message}. Using defaults.\n`,
 		);
 		return DEFAULT_RULES;
 	}

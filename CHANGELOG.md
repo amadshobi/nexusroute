@@ -1,7 +1,29 @@
 # Changelog — NexusRoute (`nexus`)
 
-> Riwayat lengkap perubahan untuk **NexusRoute** (sebelumnya dikenal sebagai `gn` / Goblin Nexus).
-> Format mengikuti [Keep a Changelog](https://keepachangelog.com/).
+> Full history of changes for **NexusRoute** (formerly `gn` / Goblin Nexus).
+> Follows [Keep a Changelog](https://keepachangelog.com/).
+
+---
+
+## [1.8.0] - 2026-09-18
+
+### Added
+
+- **feat(gateway)**: Claude Code watermark & billing header sanitizer (`sanitizeClaudeCodeWatermarks`), stripping `x-anthropic-billing-header` blocks and client SDK identifiers that trigger upstream vendor filters (e.g. 429 `RESOURCE_EXHAUSTED` or 400 Bad Request on Google Cloud Code Assist / Antigravity).
+- **feat(gateway)**: Resilient Gemini schema armor (`sanitizeSchemaForGemini`), ensuring multidimensional and nested array properties always include an `items` type definition required by Google Antigravity protobuf compiler.
+- **feat(gateway)**: Anthropic `input_schema` normalization support for Gemini/Antigravity upstreams.
+- **feat(web)**: Implemented `vibedesign` design token system (pure black `#0a0a0a` canvas, atmospheric ambient lighting glows, 1px top-light bevel inset reflection `.bevel-inset`, `.card-chassis`, and HSLA translucent surfaces).
+
+### Fixed
+
+- **fix(gateway)**: Poisoned cache prevention for streaming responses by verifying recorded SSE chunks are free of in-band error events (`event: error`, `"type":"error"`, `"status":"RESOURCE_EXHAUSTED"`) before committing to cache.
+- **fix(gateway)**: Segregated prompt cache retrieval based on streaming mode (`isStreamReq`), preventing stream requests from retrieving non-streaming cached responses and vice versa.
+- **fix(web)**: Resolved oxlint `exhaustive-deps` warnings in `LeaderboardView.tsx` with memoized data references.
+- **fix(cli)**: Resolved `nexus doctor` cache directory resolution via `resolveDefaultCacheDir()`, eliminating false-positive cache path warnings.
+
+### Refactored
+
+- **refactor(cli)**: Enforced strict English-only and Zero-Emoji rules across CLI commands (`doctor`, `gateway`, `index`, `error`, `access-log`), replacing legacy emojis with standard Nerd Font glyphs and clean ASCII badges.
 
 ---
 

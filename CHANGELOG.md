@@ -5,6 +5,16 @@
 
 ---
 
+## [1.8.1] - 2026-09-19
+
+### Fixed
+
+- **fix(gateway)**: Fallback chain abort isolation — each fallback candidate now uses a fresh `AbortController` (still propagating client `req.signal`), preventing a TTFB-timeout abort on the primary hop from instantly failing every fallback fetch with `AbortError`.
+- **fix(gateway)**: Eliminated opaque 502 `Body already used` responses by synthesizing a deterministic JSON error payload (including the full fallback chain) when the primary body was canceled and all fallback candidates are exhausted.
+- **fix(gateway)**: Marked the losing upstream fetch rejection as handled in the TTFB `Promise.race`, removing raw `AbortError` DOMException unhandled-rejection dumps from the journal; aborts are now logged as a single concise `[proxy] request aborted` line with structured context preserved in the access log.
+
+---
+
 ## [1.8.0] - 2026-09-18
 
 ### Added

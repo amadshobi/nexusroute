@@ -306,8 +306,18 @@ export function ProviderModelDetail({
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Search models or providers..."
-						className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-[#1D68FE] font-mono"
+						className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg pl-9 pr-8 py-1.5 text-xs text-white focus:outline-none focus:border-[#1D68FE] font-mono"
 					/>
+					{search && (
+						<button
+							type="button"
+							onClick={() => setSearch("")}
+							className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-white cursor-pointer"
+							title="Clear search"
+						>
+							<X className="h-3.5 w-3.5" />
+						</button>
+					)}
 				</div>
 				<div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
 					{/* Single Expand / Collapse Button */}

@@ -96,6 +96,7 @@ export function TopHeader({
 					<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00EA88]/10 text-[#00EA88] border border-[#00EA88]/20 text-xs font-mono">
 						<span className="h-1.5 w-1.5 rounded-full bg-[#00EA88] animate-pulse" />
 						<span>Live</span>
+						<span className="text-[10px] text-[#00EA88]/70 font-mono hidden sm:inline">:4010</span>
 					</div>
 				) : (
 					<div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-xs font-mono">

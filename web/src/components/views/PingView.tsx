@@ -371,8 +371,18 @@ export function PingView() {
 							value={searchQuery}
 							onChange={(e) => setSearchQuery(e.target.value)}
 							placeholder="Filter model..."
-							className="pl-8 pr-3 py-1 text-xs rounded-lg border border-white/[0.08] bg-[#161B26] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00EA88]/40 transition-colors w-44 font-mono"
+							className="pl-8 pr-7 py-1 text-xs rounded-lg border border-white/[0.08] bg-[#161B26] text-white placeholder-[#64748B] focus:outline-none focus:border-[#00EA88]/40 transition-colors w-44 font-mono"
 						/>
+						{searchQuery && (
+							<button
+								type="button"
+								onClick={() => setSearchQuery("")}
+								className="absolute right-2 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-white cursor-pointer"
+								title="Clear filter"
+							>
+								<X className="h-3.5 w-3.5" />
+							</button>
+						)}
 					</div>
 
 					<button

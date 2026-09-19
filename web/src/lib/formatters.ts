@@ -252,8 +252,8 @@ export function extractModelId(rawModel?: string): string {
 }
 
 /**
- * Mengelompokkan item ke bucket waktu dinamis untuk sparkline tanpa data palsu.
- * Jika item kosong, menghasilkan array 0 sesuai jumlah bucket.
+ * Groups items into dynamic time buckets for sparklines without synthetic data.
+ * If items are empty, yields a zero-filled array matching the bucket count.
  */
 export function computeTimeSeriesBuckets<T>(
 	items: T[],

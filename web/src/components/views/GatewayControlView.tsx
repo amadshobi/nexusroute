@@ -43,9 +43,6 @@ export function GatewayControlView({
 					<h3 className="text-sm font-semibold text-white">
 						Gateway Lifecycle Control
 					</h3>
-					<p className="text-xs text-[#8A94A6] mt-0.5">
-						Status runtime daemon, restart, dan shutdown gateway
-					</p>
 				</div>
 
 				<div className="flex items-center justify-between p-3.5 rounded-lg bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle text-xs font-mono">
@@ -79,9 +76,6 @@ export function GatewayControlView({
 					<h3 className="text-sm font-semibold text-white">
 						Market Value Currency Exchange
 					</h3>
-					<p className="text-xs text-[#8A94A6] mt-0.5">
-						USD to IDR exchange rate for Market Value calculation in Dashboard
-					</p>
 				</div>
 
 				<form onSubmit={handleSaveRate} className="space-y-3">

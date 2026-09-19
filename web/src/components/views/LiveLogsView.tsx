@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
 	Search,
 	ArrowRight,
@@ -9,6 +9,7 @@ import {
 	Check,
 	Terminal,
 	LifeBuoy,
+	Download,
 } from "lucide-react";
 import type { LogEntry } from "@/types/dashboard";
 import { formatTimeHHmm, formatDateWIB, formatCompact } from "@/lib/formatters";
@@ -24,6 +25,34 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 	const [filterType, setFilterType] = useState<LogFilterType>("all");
 	const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 	const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+	const [exported, setExported] = useState(false);
+	const searchInputRef = useRef<HTMLInputElement | null>(null);
+
+	// Keyboard shortcuts: '/' to focus search, 'Escape' to dismiss modal or clear search
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				if (selectedLog) {
+					setSelectedLog(null);
+				} else if (searchQuery) {
+					setSearchQuery("");
+				}
+			} else if (e.key === "/" && !selectedLog) {
+				const target = e.target as HTMLElement;
+				if (
+					target?.tagName === "INPUT" ||
+					target?.tagName === "TEXTAREA" ||
+					target?.isContentEditable
+				) {
+					return;
+				}
+				e.preventDefault();
+				searchInputRef.current?.focus();
+			}
+		};
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
+	}, [selectedLog, searchQuery]);
 
 	const copyToClipboard = async (text: string, label: string) => {
 		try {
@@ -89,6 +118,27 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 		return `curl -X ${entry.method || "POST"} ${protocol}//${host}${entry.path} \\\n  -H "Content-Type: application/json" \\\n  -d '{"model": "${entry.servedModel || entry.initialModel}"}'`;
 	};
 
+	const exportFilteredLogs = () => {
+		try {
+			const jsonString = `data:text/json;charset=utf-8,${encodeURIComponent(
+				JSON.stringify(filteredLogs, null, 2),
+			)}`;
+			const downloadAnchor = document.createElement("a");
+			downloadAnchor.setAttribute("href", jsonString);
+			downloadAnchor.setAttribute(
+				"download",
+				`nexusroute-logs-${Date.now()}.json`,
+			);
+			document.body.appendChild(downloadAnchor);
+			downloadAnchor.click();
+			downloadAnchor.remove();
+			setExported(true);
+			setTimeout(() => setExported(false), 2000);
+		} catch {
+			// Fallback
+		}
+	};
+
 	return (
 		<div className="rounded-xl border border-white/[0.08] bg-white/[0.06] bevel-inset p-5 shadow-sm space-y-4 relative">
 			{/* Header & Title */}
@@ -98,10 +148,32 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 						Realtime Traffic
 					</h3>
 				</div>
-				<span className="text-xs font-mono text-[#64748B] flex items-center gap-1.5">
-					<span className="h-2 w-2 rounded-full bg-[#00EA88] animate-ping" />
-					Active Session ({logs.length} Logs)
-				</span>
+				<div className="flex items-center gap-3">
+					{filteredLogs.length > 0 && (
+						<button
+							type="button"
+							onClick={exportFilteredLogs}
+							className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/[0.08] bg-white/[0.04] hover:bg-white/[0.08] text-xs font-mono text-[#8A94A6] hover:text-white transition-colors cursor-pointer"
+							title="Export filtered logs to JSON"
+						>
+							{exported ? (
+								<>
+									<Check className="h-3 w-3 text-[#00EA88]" />
+									<span className="text-[#00EA88]">Exported</span>
+								</>
+							) : (
+								<>
+									<Download className="h-3 w-3" />
+									<span>Export JSON</span>
+								</>
+							)}
+						</button>
+					)}
+					<span className="text-xs font-mono text-[#64748B] flex items-center gap-1.5">
+						<span className="h-2 w-2 rounded-full bg-[#00EA88] animate-ping" />
+						Active Session ({logs.length} Logs)
+					</span>
+				</div>
 			</div>
 
 			{/* Filter and Search Bar */}
@@ -154,8 +226,9 @@ export function LiveLogsView({ logs }: LiveLogsViewProps) {
 				<div className="relative flex-1 max-w-xs">
 					<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#64748B]" />
 					<input
+						ref={searchInputRef}
 						type="text"
-						placeholder="Search model, path, method..."
+						placeholder="Search model, path, method... (/)"
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						className="w-full bg-white/[0.04] border border-white/[0.08] bevel-inset-subtle rounded-lg pl-8 pr-7 py-1.5 text-xs text-white placeholder-[#64748B] focus:outline-none focus:border-[#1D68FE] font-mono"

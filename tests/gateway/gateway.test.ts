@@ -312,6 +312,15 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 				if (url.pathname === "/v1/chat/completions") {
 					const body: any = await req.json();
 
+					// Marker payload: fail every model so the fallback cascade
+					// exhausts all candidates (used by the all-fail regression test)
+					if (body.messages?.[0]?.content === "fallback-cascade-fail") {
+						return new Response(
+							JSON.stringify({ error: "rate limit exceeded" }),
+							{ status: 429, headers: { "content-type": "application/json" } },
+						);
+					}
+
 					// Trigger simulated 429 for model "trigger-429"
 					if (body.model === "trigger-429") {
 						return new Response(
@@ -529,6 +538,29 @@ describe("6. Master Gateway Server End-to-End Integration", () => {
 		expect(body).toContain("[Note: Reasoning concluded without generating final response content.");
 		expect(body).toContain('"finish_reason":"stop"');
 		expect(body).toContain("data: [DONE]");
+	});
+
+	test("returns readable error response when primary and all fallback candidates fail", async () => {
+		// Regression: primary body was canceled for the fallback flow, and when
+		// every fallback hop failed the canceled body was re-read, surfacing as
+		// a 502 "Body already used" instead of a deterministic error payload.
+		const res = await fetch(`http://127.0.0.1:${gwPort}/v1/chat/completions`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				model: "trigger-429",
+				messages: [{ role: "user", content: "fallback-cascade-fail" }],
+			}),
+		});
+
+		// Outer catch previously turned this into an opaque 502 with
+		// "Body already used" as the error detail.
+		expect(res.status).toBe(429);
+		const data: any = await res.json();
+		expect(data.error).toContain("fallback candidates exhausted");
+		expect(Array.isArray(data.chain)).toBe(true);
+		expect(data.chain.length).toBeGreaterThan(0);
+		expect(data.chain[0].model).toBe("trigger-429");
 	});
 });
 

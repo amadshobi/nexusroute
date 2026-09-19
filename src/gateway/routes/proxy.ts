@@ -508,16 +508,18 @@ export async function handleProxyRequest(
 		});
 
 		let upstreamResp: Response;
+		const fetchPromise = fetch(targetUrl, {
+			method,
+			headers: outboundHeaders,
+			body: ["GET", "HEAD"].includes(method) ? undefined : finalReqBody,
+			signal: abortController.signal,
+		});
+		// Mark rejection as handled early: when the TTFB timeout wins the race,
+		// the losing fetch rejects with AbortError and would otherwise surface
+		// as an unhandled rejection dump (raw DOMException) in the journal.
+		fetchPromise.catch(() => {});
 		try {
-			upstreamResp = await Promise.race([
-				fetch(targetUrl, {
-					method,
-					headers: outboundHeaders,
-					body: ["GET", "HEAD"].includes(method) ? undefined : finalReqBody,
-					signal: abortController.signal,
-				}),
-				timeoutPromise,
-			]);
+			upstreamResp = await Promise.race([fetchPromise, timeoutPromise]);
 		} catch (fetchErr: any) {
 			if (fetchErr.message === "TTFB_TIMEOUT") {
 				upstreamResp = new Response(
@@ -575,12 +577,22 @@ export async function handleProxyRequest(
 				);
 				if (!fallbackBody) continue;
 
+				// Fresh controller per hop: the primary controller is already
+				// aborted after a TTFB timeout, so reusing its signal would
+				// instantly fail every fallback fetch with AbortError.
+				const hopController = new AbortController();
+				if (req.signal) {
+					req.signal.addEventListener("abort", () => {
+						hopController.abort();
+					});
+				}
+
 				try {
 					const retryResp = await fetch(targetUrl, {
 						method,
 						headers: outboundHeaders,
 						body: fallbackBody,
-						signal: abortController.signal,
+						signal: hopController.signal,
 					});
 
 					if (
@@ -626,6 +638,20 @@ export async function handleProxyRequest(
 				fallbackUsedInfo = `primary=${primaryModel}; fallback=${successfulCandidate}; trigger=${effectiveStatus}`;
 				upstreamResp = fallbackResp;
 				primaryModel = successfulCandidate;
+			} else {
+				// The primary response body was already canceled above, so reading
+				// it again would throw "Body already used". Synthesize a
+				// deterministic error response carrying the full fallback chain.
+				upstreamResp = new Response(
+					JSON.stringify({
+						error: "Upstream failed and all fallback candidates exhausted",
+						chain: fallbackChain,
+					}),
+					{
+						status: effectiveStatus,
+						headers: { "content-type": "application/json" },
+					},
+				);
 			}
 		} else if (primaryModel && upstreamResp.ok) {
 			recordModelSuccess(primaryModel);
@@ -1120,6 +1146,13 @@ export async function handleProxyRequest(
 		});
 	} catch (err: any) {
 		ctx.stats.errorsCount++;
+		// Concise observability for aborts (client disconnect / hop timeout);
+		// detailed context is preserved in the structured access log below.
+		if (err?.name === "AbortError") {
+			console.warn(
+				`[proxy] request aborted: ${url.pathname} client=${clientApp || "unknown"}`,
+			);
+		}
 		const errServedModel = primaryModel || initialModel || "unknown";
 		const entry = {
 			ts: reqStartTime,
